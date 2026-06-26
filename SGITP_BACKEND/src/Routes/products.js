@@ -1,27 +1,22 @@
-import express from "express";
+import { Router } from "express";
 import productController from "../Controller/productController.js";
+import { validateAuthCookie } from "../Middlewares/authMiddleware.js";
+import upload from "../utils/cloudinaryConfig.js";
 
-//Router() nos ayudará a colocar los métodos
-//que tendrá el endpoint
-const router = express.Router();
+const router = Router();
 
-router
-  .route("/")
+router.post("/search", productController.searchByName);
+router.post("/price-range", productController.getProductsByPriceRange);
+router.get("/status/low-stock", productController.getLowStock);
+router.get("/status/count", productController.countProducts);
+
+router.route("/")
   .get(productController.getProducts)
-  .post(productController.insertProducts);
+  .post(validateAuthCookie(["employee", "admin"]), upload.array("images", 5), productController.insertProducts);
 
-router.route("/searchByName").post(productController.searchByName);
-
-router.route("/low-stock").get(productController.getLowStock);
-
-router.route("/price-range").post(productController.getProductsByPriceRange);
-
-router.route("/count").get(productController.countProducts);
-
-router
-  .route("/:id")
+router.route("/:id")
   .get(productController.getProductById)
-  .put(productController.updateProducts)
-  .delete(productController.deleteProducts);
+  .put(validateAuthCookie(["employee", "admin"]), upload.array("images", 5), productController.updateProducts)
+  .delete(validateAuthCookie(["employee", "admin"]), productController.deleteProducts);
 
 export default router;
