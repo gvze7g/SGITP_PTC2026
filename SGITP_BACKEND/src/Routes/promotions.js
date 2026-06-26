@@ -1,3 +1,5 @@
+// Rutas de promotions
+
 import express from "express";
 import promotionsController from "../Controller/promotionsController.js";
 
