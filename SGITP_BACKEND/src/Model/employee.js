@@ -1,4 +1,4 @@
-import mongoose, {Schema, model} from "mongoose"
+import mongoose, { Schema, model } from "mongoose";
 
 const EmployeeSchema = new Schema({
     full_name: {type: String},
