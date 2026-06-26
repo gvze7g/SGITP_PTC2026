@@ -1,64 +1,115 @@
-//Creo un array de métodos
+import productsModel from "../Model/products.js";
+import { v2 as cloudinary } from "cloudinary";
+
 const productController = {};
 
-//Import del Schema de la colección
-//que vamos a ocupar
-import productsModel from "../Model/products.js";
-
-//SELECT
 productController.getProducts = async (req, res) => {
-  const products = await productsModel.find();
-  res.json(products);
+  try {
+    const products = await productsModel.find();
+    res.json(products);
+  } catch (error) {
+    console.log("Error: " + error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-//INSERTAR
 productController.insertProducts = async (req, res) => {
-  //#1- Solicitamos los campos
-  const { name, description, category, images, variants, price, cost } = req.body;
+  try {
+    const { name, description, category, variants, price, cost } = req.body;
+    let imagesArray = [];
 
-  const newProduct = new productsModel({ name, description, category, images, variants, price, cost });
+    if (req.files && req.files.length > 0) {
+      imagesArray = req.files.map((file) => ({
+        image: file.path,
+        public_id: file.filename
+      }));
+    }
 
-  await newProduct.save();
-
-  res.json({ message: "Product save" });
-};
-
-//ELIMINAR
-productController.deleteProducts = async (req, res) => {
-  await productsModel.findByIdAndDelete(req.params.id);
-  res.json({ message: "product deleted" });
-};
-
-//ACTUALIZAR
-productController.updateProducts = async (req, res) => {
-  //1- solicitamos los nuevos valores
-  const { name, description, category, images, variants, price, cost } = req.body;
-  await productsModel.findByIdAndUpdate(
-    req.params.id,
-    {
+    const newProduct = new productsModel({
       name,
       description,
       category,
-      images,
+      images: imagesArray,
       variants,
       price,
       cost
-    },
-    { new: true },
-  );
+    });
 
-  res.json({ message: "product updated" });
+    await newProduct.save();
+    res.status(201).json({ message: "Product saved successfully" });
+  } catch (error) {
+    console.log("Error: " + error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-//SELECT POR ID
-productController.getProductById = async (req, res) => {
+productController.deleteProducts = async (req, res) => {
   try {
     const product = await productsModel.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({ message: "product not found" });
+      return res.status(404).json({ message: "Product not found" });
     }
 
+    if (product.images && product.images.length > 0) {
+      for (const img of product.images) {
+        if (img.public_id) {
+          await cloudinary.uploader.destroy(img.public_id);
+        }
+      }
+    }
+
+    await productsModel.findByIdAndDelete(req.params.id);
+    res.json({ message: "Product deleted successfully" });
+  } catch (error) {
+    console.log("Error: " + error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+productController.updateProducts = async (req, res) => {
+  try {
+    const { name, description, category, variants, price, cost } = req.body;
+    const product = await productsModel.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    let imagesArray = product.images;
+
+    if (req.files && req.files.length > 0) {
+      if (product.images && product.images.length > 0) {
+        for (const img of product.images) {
+          if (img.public_id) {
+            await cloudinary.uploader.destroy(img.public_id);
+          }
+        }
+      }
+
+      imagesArray = req.files.map((file) => ({
+        image: file.path,
+        public_id: file.filename
+      }));
+    }
+
+    await productsModel.findByIdAndUpdate(
+      req.params.id,
+      { name, description, category, images: imagesArray, variants, price, cost },
+      { new: true }
+    );
+
+    res.json({ message: "Product updated successfully" });
+  } catch (error) {
+    console.log("Error: " + error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+productController.getProductById = async (req, res) => {
+  try {
+    const product = await productsModel.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "product not found" });
     return res.status(200).json(product);
   } catch (error) {
     console.log("error" + error);
@@ -66,20 +117,11 @@ productController.getProductById = async (req, res) => {
   }
 };
 
-//BUSCAR por nombre
 productController.searchByName = async (req, res) => {
   try {
-    //#1- Solicitar los datos
     const { name } = req.body;
-
-    const products = await productsModel.find({
-      name: { $regex: name, $options: "i" },
-    });
-
-    if (!products) {
-      return res.status(404).json({ message: "Products not found" });
-    }
-
+    const products = await productsModel.find({ name: { $regex: name, $options: "i" } });
+    if (!products) return res.status(404).json({ message: "Products not found" });
     return res.status(200).json(products);
   } catch (error) {
     console.log("error" + error);
@@ -87,15 +129,10 @@ productController.searchByName = async (req, res) => {
   }
 };
 
-//Productos con stock bajo
 productController.getLowStock = async (req, res) => {
   try {
     const products = await productsModel.find({ stock: { $lt: 5 } });
-
-    if (!products) {
-      return res.status(404).json({ message: "Not products with low stock" });
-    }
-
+    if (!products) return res.status(404).json({ message: "Not products with low stock" });
     return res.status(200).json(products);
   } catch (error) {
     console.log("error" + error);
@@ -103,20 +140,11 @@ productController.getLowStock = async (req, res) => {
   }
 };
 
-//FILTROS que el usuario coloque
 productController.getProductsByPriceRange = async (req, res) => {
   try {
-    //#1- Solicito los datos
     const { min, max } = req.body;
-
-    const products = await productsModel.find({
-      price: { $gte: min, $lte: max },
-    });
-
-    if (!products) {
-      return res.status(404).json({ message: "Products not found" });
-    }
-
+    const products = await productsModel.find({ price: { $gte: min, $lte: max } });
+    if (!products) return res.status(404).json({ message: "Products not found" });
     return res.status(200).json(products);
   } catch (error) {
     console.log("error" + error);
@@ -124,11 +152,9 @@ productController.getProductsByPriceRange = async (req, res) => {
   }
 };
 
-//Contar cuantos elemetos hay en una colección
 productController.countProducts = async (req, res) => {
   try {
     const count = await productsModel.countDocuments();
-
     return res.status(200).json(count);
   } catch (error) {
     console.log("error" + error);
