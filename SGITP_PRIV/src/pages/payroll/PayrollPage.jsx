@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PayrollTable from '../../components/payroll/PayrollTable';
-import PayrollReceiptModal from '../../components/payroll/PayrollReceiptModal';
-
+import PayrollReceiptModal from '../../components/payroll/payrollReceiptModal';
 function PayrollPage({ currentView, onNavigate, theme, onToggleTheme }) {
   const [selectedPayroll, setSelectedPayroll] = useState(null);
 
