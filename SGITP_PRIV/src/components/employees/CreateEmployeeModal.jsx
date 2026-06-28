@@ -142,6 +142,7 @@ function CreateEmployeeModal({ open, onClose, employeeData = null }) {
                 <button
                   type="button"
                   className="employee-field-icon-btn"
+                  aria-label={showPassword ? 'Ocultar contraseña temporal' : 'Mostrar contraseña temporal'}
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? <EyeOff size={22} strokeWidth={1.8} /> : <Eye size={22} strokeWidth={1.8} />}
