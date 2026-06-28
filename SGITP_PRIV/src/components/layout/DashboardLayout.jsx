@@ -4,8 +4,6 @@ import AdminTopbar from './AdminTopbar';
 
 function DashboardLayout({
   children,
-  currentView,
-  onNavigate,
   theme,
   onToggleTheme,
 }) {
@@ -14,8 +12,6 @@ function DashboardLayout({
   return (
     <div className="admin-shell">
       <AdminSidebar
-        currentView={currentView}
-        onNavigate={onNavigate}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
       />

@@ -1,30 +1,32 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import SalesHistoryTable from '../../components/sales/SalesHistoryTable';
 import SaleDetailsModal from '../../components/sales/SaleDetailsModal';
 
-function SalesHistoryPage({ currentView, onNavigate, theme, onToggleTheme }) {
+function SalesHistoryPage({ theme, onToggleTheme }) {
   const [selectedSale, setSelectedSale] = useState(null);
+  const navigate = useNavigate();
 
   return (
-    <DashboardLayout
-      currentView={currentView}
-      onNavigate={onNavigate}
-      theme={theme}
-      onToggleTheme={onToggleTheme}
-    >
+    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="page-title-row">
         <h1 className="admin-page-title">Historial de ventas</h1>
 
         <div className="page-actions-row">
-          <button type="button" className="admin-secondary-btn">
+          <button
+            type="button"
+            className="admin-secondary-btn"
+            onClick={() => toast.success('Exportación iniciada correctamente.')}
+          >
             ↓ Exportar
           </button>
 
           <button
             type="button"
             className="admin-primary-btn"
-            onClick={() => onNavigate('point-of-sale')}
+            onClick={() => navigate('/point-of-sale')}
           >
             + Nueva Venta
           </button>

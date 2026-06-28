@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import ClientsTable from '../../components/clients/ClientsTable';
 import ClientFormModal from '../../components/clients/ClientFormModal';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 
-function ClientsPage({ currentView, onNavigate, theme, onToggleTheme }) {
+function ClientsPage({ theme, onToggleTheme }) {
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -25,12 +26,7 @@ function ClientsPage({ currentView, onNavigate, theme, onToggleTheme }) {
   };
 
   return (
-    <DashboardLayout
-      currentView={currentView}
-      onNavigate={onNavigate}
-      theme={theme}
-      onToggleTheme={onToggleTheme}
-    >
+    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="page-title-row">
         <h1 className="admin-page-title">Clientes</h1>
 
@@ -53,7 +49,10 @@ function ClientsPage({ currentView, onNavigate, theme, onToggleTheme }) {
       <ConfirmDeleteModal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => setDeleteModalOpen(false)}
+        onConfirm={() => {
+          setDeleteModalOpen(false);
+          toast.success('Cliente eliminado correctamente.');
+        }}
       />
     </DashboardLayout>
   );

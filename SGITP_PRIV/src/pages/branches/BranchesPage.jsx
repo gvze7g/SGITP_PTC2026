@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import BranchesGrid from '../../components/branches/BranchesGrid';
 import BranchFormModal from '../../components/branches/BranchesFormModal';
 
-function BranchesPage({ currentView, onNavigate, theme, onToggleTheme }) {
+function BranchesPage({ theme, onToggleTheme }) {
   const [branchModalOpen, setBranchModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
+  const navigate = useNavigate();
 
   const handleCreate = () => {
     setSelectedBranch(null);
@@ -23,12 +25,7 @@ function BranchesPage({ currentView, onNavigate, theme, onToggleTheme }) {
   };
 
   return (
-    <DashboardLayout
-      currentView={currentView}
-      onNavigate={onNavigate}
-      theme={theme}
-      onToggleTheme={onToggleTheme}
-    >
+    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="page-title-row">
         <h1 className="admin-page-title">Sucursales y bodegas</h1>
 
@@ -39,7 +36,7 @@ function BranchesPage({ currentView, onNavigate, theme, onToggleTheme }) {
 
       <BranchesGrid
         onEditBranch={handleEdit}
-        onViewInventory={() => onNavigate('inventory')}
+        onViewInventory={() => navigate('/inventory')}
       />
 
       <BranchFormModal

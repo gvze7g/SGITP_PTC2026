@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
 import { useEffect, useState } from "react";
 
 import LoginPage from "./pages/auth/LoginPage";
@@ -32,114 +33,56 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Toaster position="top-right" richColors closeButton duration={2500} />
+
       <Routes>
         <Route path="/" element={<LoginPage />} />
-
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
         <Route path="/verify-code" element={<VerifyCodePage />} />
-
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         <Route
           path="/dashboard"
-          element={
-            <DashboardPage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<DashboardPage theme={theme} onToggleTheme={toggleTheme} />}
         />
-
         <Route
           path="/inventory"
-          element={
-            <InventoryPage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<InventoryPage theme={theme} onToggleTheme={toggleTheme} />}
         />
-
         <Route
           path="/point-of-sale"
-          element={
-            <PointOfSalePage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<PointOfSalePage theme={theme} onToggleTheme={toggleTheme} />}
         />
-
         <Route
           path="/sales-history"
-          element={
-            <SalesHistoryPage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<SalesHistoryPage theme={theme} onToggleTheme={toggleTheme} />}
         />
-
         <Route
           path="/employees"
-          element={
-            <EmployeesPage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<EmployeesPage theme={theme} onToggleTheme={toggleTheme} />}
         />
-
         <Route
           path="/payroll"
-          element={
-            <PayrollPage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<PayrollPage theme={theme} onToggleTheme={toggleTheme} />}
         />
-
         <Route
           path="/clients"
-          element={
-            <ClientsPage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<ClientsPage theme={theme} onToggleTheme={toggleTheme} />}
         />
-
         <Route
           path="/branches"
-          element={
-            <BranchesPage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<BranchesPage theme={theme} onToggleTheme={toggleTheme} />}
         />
-
         <Route
           path="/promotions"
-          element={
-            <PromotionsPage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<PromotionsPage theme={theme} onToggleTheme={toggleTheme} />}
         />
-
         <Route
           path="/expenses"
-          element={
-            <ExpensesPage
-              theme={theme}
-              onToggleTheme={toggleTheme}
-            />
-          }
+          element={<ExpensesPage theme={theme} onToggleTheme={toggleTheme} />}
         />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

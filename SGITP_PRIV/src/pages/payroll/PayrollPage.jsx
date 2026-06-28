@@ -1,17 +1,14 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PayrollTable from '../../components/payroll/PayrollTable';
 import PayrollReceiptModal from '../../components/payroll/PayrollReceiptModal';
-function PayrollPage({ currentView, onNavigate, theme, onToggleTheme }) {
+
+function PayrollPage({ theme, onToggleTheme }) {
   const [selectedPayroll, setSelectedPayroll] = useState(null);
 
   return (
-    <DashboardLayout
-      currentView={currentView}
-      onNavigate={onNavigate}
-      theme={theme}
-      onToggleTheme={onToggleTheme}
-    >
+    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="page-title-row">
         <h1 className="admin-page-title">Historial de nómina</h1>
 
@@ -20,7 +17,11 @@ function PayrollPage({ currentView, onNavigate, theme, onToggleTheme }) {
             Octubre 2023
           </button>
 
-          <button type="button" className="admin-primary-btn">
+          <button
+            type="button"
+            className="admin-primary-btn"
+            onClick={() => toast.success('Mes cerrado correctamente.')}
+          >
             Cerrar mes actual
           </button>
         </div>

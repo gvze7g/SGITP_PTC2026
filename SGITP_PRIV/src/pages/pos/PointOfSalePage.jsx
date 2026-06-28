@@ -31,14 +31,9 @@ const PRODUCTS = [
   },
 ];
 
-function PointOfSalePage({ currentView, onNavigate, theme, onToggleTheme }) {
+function PointOfSalePage({ theme, onToggleTheme }) {
   return (
-    <DashboardLayout
-      currentView={currentView}
-      onNavigate={onNavigate}
-      theme={theme}
-      onToggleTheme={onToggleTheme}
-    >
+    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="pos-page-grid">
         <section className="pos-catalog-section">
           <div className="pos-categories-row">

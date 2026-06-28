@@ -11,26 +11,25 @@ import {
   Tag,
   ReceiptText,
 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const SIDEBAR_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { key: 'inventory', label: 'Inventario', icon: Package },
-  { key: 'point-of-sale', label: 'Punto de venta', icon: Store },
-  { key: 'sales-history', label: 'Historial de ventas', icon: BadgeDollarSign },
-  { key: 'employees', label: 'Empleados', icon: BriefcaseBusiness },
-  { key: 'payroll', label: 'Nómina', icon: Landmark },
-  { key: 'clients', label: 'Clientes', icon: Users },
-  { key: 'branches', label: 'Sucursales', icon: StoreIcon },
-  { key: 'promotions', label: 'Promociones', icon: Tag },
-  { key: 'expenses', label: 'Gastos', icon: ReceiptText },
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { key: 'inventory', label: 'Inventario', icon: Package, path: '/inventory' },
+  { key: 'point-of-sale', label: 'Punto de venta', icon: Store, path: '/point-of-sale' },
+  { key: 'sales-history', label: 'Historial de ventas', icon: BadgeDollarSign, path: '/sales-history' },
+  { key: 'employees', label: 'Empleados', icon: BriefcaseBusiness, path: '/employees' },
+  { key: 'payroll', label: 'Nómina', icon: Landmark, path: '/payroll' },
+  { key: 'clients', label: 'Clientes', icon: Users, path: '/clients' },
+  { key: 'branches', label: 'Sucursales', icon: StoreIcon, path: '/branches' },
+  { key: 'promotions', label: 'Promociones', icon: Tag, path: '/promotions' },
+  { key: 'expenses', label: 'Gastos', icon: ReceiptText, path: '/expenses' },
 ];
 
-function AdminSidebar({
-  currentView,
-  onNavigate,
-  isMobileOpen,
-  onCloseMobileMenu,
-}) {
+function AdminSidebar({ isMobileOpen, onCloseMobileMenu }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
     <>
       <div
@@ -53,7 +52,7 @@ function AdminSidebar({
         <nav className="admin-sidebar-nav">
           {SIDEBAR_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = currentView === item.key;
+            const isActive = location.pathname === item.path;
 
             return (
               <button
@@ -61,7 +60,7 @@ function AdminSidebar({
                 type="button"
                 className={`admin-sidebar-item ${isActive ? 'admin-sidebar-item-active' : ''}`}
                 onClick={() => {
-                  onNavigate(item.key);
+                  navigate(item.path);
                   onCloseMobileMenu();
                 }}
               >

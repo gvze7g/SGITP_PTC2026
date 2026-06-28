@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PromotionsGrid from '../../components/promotions/PromotionsGrid';
 import PromotionFormModal from '../../components/promotions/PromotionFormModal';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 
-function PromotionsPage({ currentView, onNavigate, theme, onToggleTheme }) {
+function PromotionsPage({ theme, onToggleTheme }) {
   const [promotionModalOpen, setPromotionModalOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false);
@@ -25,12 +26,7 @@ function PromotionsPage({ currentView, onNavigate, theme, onToggleTheme }) {
   };
 
   return (
-    <DashboardLayout
-      currentView={currentView}
-      onNavigate={onNavigate}
-      theme={theme}
-      onToggleTheme={onToggleTheme}
-    >
+    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="page-title-row">
         <h1 className="admin-page-title promotions-title-break">
           Campañas y
@@ -60,18 +56,19 @@ function PromotionsPage({ currentView, onNavigate, theme, onToggleTheme }) {
       <ConfirmDeleteModal
         open={confirmDeactivateOpen}
         onClose={() => {
-            setConfirmDeactivateOpen(false);
-            setSelectedPromotion(null);
+          setConfirmDeactivateOpen(false);
+          setSelectedPromotion(null);
         }}
         onConfirm={() => {
-            setConfirmDeactivateOpen(false);
-            setSelectedPromotion(null);
+          setConfirmDeactivateOpen(false);
+          toast.success('Promoción desactivada correctamente.');
+          setSelectedPromotion(null);
         }}
         title="¿Desea desactivar este código?"
         description="El código no se eliminará, pero su estado cambiará a expirado y dejará de estar disponible para uso."
         confirmText="DESACTIVAR"
         cancelText="CANCELAR"
-    />
+      />
     </DashboardLayout>
   );
 }

@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import ExpensesTable from '../../components/expenses/ExpensesTable';
 import ExpenseFormModal from '../../components/expenses/ExpensesFormModal';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 
-function ExpensesPage({ currentView, onNavigate, theme, onToggleTheme }) {
+function ExpensesPage({ theme, onToggleTheme }) {
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -25,12 +26,7 @@ function ExpensesPage({ currentView, onNavigate, theme, onToggleTheme }) {
   };
 
   return (
-    <DashboardLayout
-      currentView={currentView}
-      onNavigate={onNavigate}
-      theme={theme}
-      onToggleTheme={onToggleTheme}
-    >
+    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="page-title-row">
         <h1 className="admin-page-title">Gastos operativos</h1>
 
@@ -59,7 +55,10 @@ function ExpensesPage({ currentView, onNavigate, theme, onToggleTheme }) {
       <ConfirmDeleteModal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={() => setDeleteModalOpen(false)}
+        onConfirm={() => {
+          setDeleteModalOpen(false);
+          toast.success('Gasto eliminado correctamente.');
+        }}
       />
     </DashboardLayout>
   );

@@ -1,12 +1,16 @@
-import { useState } from 'react';
-import AuthButton from '../../components/auth/AuthButton';
-import AuthCard from '../../components/auth/AuthCard';
-import AuthInput from '../../components/auth/AuthInput';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import AuthButton from "../../components/auth/AuthButton";
+import AuthCard from "../../components/auth/AuthCard";
+import AuthInput from "../../components/auth/AuthInput";
 
-function ResetPasswordPage({ onVerify }) {
+function ResetPasswordPage() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: '',
+    password: "",
+    confirmPassword: "",
   });
 
   const handleChange = (event) => {
@@ -18,18 +22,56 @@ function ResetPasswordPage({ onVerify }) {
     }));
   };
 
+  const validateForm = () => {
+    const password = formData.password.trim();
+    const confirmPassword = formData.confirmPassword.trim();
+
+    if (!password || !confirmPassword) {
+      toast.error("Debes completar ambos campos de contraseña.");
+      return false;
+    }
+
+    if (password.length < 8) {
+      toast.error("La nueva contraseña debe tener al menos 8 caracteres.");
+      return false;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      toast.error("La contraseña debe incluir al menos una letra mayúscula.");
+      return false;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      toast.error("La contraseña debe incluir al menos una letra minúscula.");
+      return false;
+    }
+
+    if (!/\d/.test(password)) {
+      toast.error("La contraseña debe incluir al menos un número.");
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("Las contraseñas no coinciden.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    if (onVerify) {
-      onVerify(formData);
-    }
+    if (!validateForm()) return;
+
+    toast.success("Contraseña restablecida correctamente.");
+    navigate("/");
   };
 
   return (
     <section className="auth-screen">
       <AuthCard>
-        <h1 className="auth-title" style={{ marginTop: '20px' }}>
+        <h1 className="auth-title" style={{ marginTop: "20px" }}>
           Restablecer contraseña
         </h1>
 
@@ -37,9 +79,10 @@ function ResetPasswordPage({ onVerify }) {
           Ingrese la nueva contraseña para continuar
         </p>
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginTop: '84px' }}>
+        <form onSubmit={handleSubmit} noValidate>
+          <div style={{ marginTop: "84px" }}>
             <AuthInput
+              label="Nueva contraseña"
               name="password"
               type="password"
               placeholder="••••••••"
@@ -49,8 +92,9 @@ function ResetPasswordPage({ onVerify }) {
             />
           </div>
 
-          <div style={{ marginTop: '44px' }}>
+          <div style={{ marginTop: "44px" }}>
             <AuthInput
+              label="Confirmar contraseña"
               name="confirmPassword"
               type="password"
               placeholder="••••••••"
@@ -60,8 +104,8 @@ function ResetPasswordPage({ onVerify }) {
             />
           </div>
 
-          <div style={{ marginTop: '110px' }}>
-            <AuthButton type="submit">Verificar</AuthButton>
+          <div style={{ marginTop: "110px" }}>
+            <AuthButton type="submit">Guardar contraseña</AuthButton>
           </div>
         </form>
       </AuthCard>

@@ -1,24 +1,49 @@
-import { useState } from 'react';
-import AuthButton from '../../components/auth/AuthButton';
-import AuthCard from '../../components/auth/AuthCard';
-import AuthInput from '../../components/auth/AuthInput';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import AuthButton from "../../components/auth/AuthButton";
+import AuthCard from "../../components/auth/AuthCard";
+import AuthInput from "../../components/auth/AuthInput";
 
-function VerifyCodePage({ onBackToForgotPassword, onVerifyCode }) {
-  const [code, setCode] = useState('');
+function VerifyCodePage() {
+  const navigate = useNavigate();
+  const [code, setCode] = useState("");
+
+  const validateCode = () => {
+    const cleanCode = code.trim();
+
+    if (!cleanCode) {
+      toast.error("El código de verificación es obligatorio.");
+      return false;
+    }
+
+    if (!/^\d+$/.test(cleanCode)) {
+      toast.error("El código debe contener solo números.");
+      return false;
+    }
+
+    if (cleanCode.length !== 6) {
+      toast.error("El código debe tener exactamente 6 dígitos.");
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    if (onVerifyCode) {
-      onVerifyCode({ code });
-    }
+    if (!validateCode()) return;
+
+    toast.success("Código verificado correctamente.");
+    navigate("/reset-password");
   };
 
   return (
     <section className="auth-screen">
       <AuthCard className="justify-between">
         <div>
-          <h1 className="auth-title" style={{ marginTop: '18px' }}>
+          <h1 className="auth-title" style={{ marginTop: "18px" }}>
             Verificar código
           </h1>
 
@@ -26,8 +51,8 @@ function VerifyCodePage({ onBackToForgotPassword, onVerifyCode }) {
             Ingresa el código enviado a tu correo electrónico.
           </p>
 
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginTop: '132px' }}>
+          <form onSubmit={handleSubmit} noValidate>
+            <div style={{ marginTop: "132px" }}>
               <AuthInput
                 label="Código de verificación"
                 name="code"
@@ -39,18 +64,18 @@ function VerifyCodePage({ onBackToForgotPassword, onVerifyCode }) {
               />
             </div>
 
-            <div style={{ marginTop: '42px' }}>
+            <div style={{ marginTop: "42px" }}>
               <AuthButton type="submit">Verificar código</AuthButton>
             </div>
           </form>
         </div>
 
-        <div className="flex justify-center" style={{ marginBottom: '8px' }}>
+        <div className="flex justify-center" style={{ marginBottom: "8px" }}>
           <button
             type="button"
-            onClick={onBackToForgotPassword}
+            onClick={() => navigate("/forgot-password")}
             className="auth-text-button"
-            style={{ color: '#3d3430' }}
+            style={{ color: "#3d3430" }}
           >
             &lt; Volver
           </button>

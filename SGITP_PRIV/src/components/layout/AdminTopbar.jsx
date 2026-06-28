@@ -1,7 +1,15 @@
-import { Bell, Menu, Moon, Search, Settings, Sun } from 'lucide-react';
+import { Bell, Menu, Moon, Search, Settings, Sun, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 function AdminTopbar({ theme, onToggleTheme, onOpenMobileMenu }) {
   const isDark = theme === 'dark';
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    toast.success('Sesión cerrada correctamente.');
+    navigate('/');
+  };
 
   return (
     <header className="admin-topbar">
@@ -36,12 +44,31 @@ function AdminTopbar({ theme, onToggleTheme, onOpenMobileMenu }) {
           {isDark ? <Sun size={20} strokeWidth={1.8} /> : <Moon size={20} strokeWidth={1.8} />}
         </button>
 
-        <button type="button" className="admin-icon-btn" aria-label="Notificaciones">
+        <button
+          type="button"
+          className="admin-icon-btn"
+          aria-label="Notificaciones"
+          onClick={() => toast('No hay notificaciones nuevas.')}
+        >
           <Bell size={20} strokeWidth={1.8} />
         </button>
 
-        <button type="button" className="admin-icon-btn" aria-label="Configuración">
+        <button
+          type="button"
+          className="admin-icon-btn"
+          aria-label="Configuración"
+          onClick={() => toast('Configuración disponible próximamente.')}
+        >
           <Settings size={20} strokeWidth={1.8} />
+        </button>
+
+        <button
+          type="button"
+          className="admin-icon-btn"
+          aria-label="Cerrar sesión"
+          onClick={handleLogout}
+        >
+          <LogOut size={20} strokeWidth={1.8} />
         </button>
       </div>
     </header>
