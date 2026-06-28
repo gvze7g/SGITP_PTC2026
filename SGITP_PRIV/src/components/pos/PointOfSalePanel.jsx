@@ -17,7 +17,7 @@ function PointOfSalePanel() {
             <p>maria.perez@boutique.co</p>
           </div>
 
-          <button type="button" className="pos-search-btn">
+          <button type="button" className="pos-search-btn" aria-label="Buscar cliente">
             <Search size={18} strokeWidth={1.8} />
           </button>
         </div>
