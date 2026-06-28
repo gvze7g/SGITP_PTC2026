@@ -40,7 +40,7 @@ function ForgotPasswordPage({ onBackToLogin, onSendCode }) {
             </div>
 
             <div style={{ marginTop: '42px' }}>
-              <AuthButton type="submit">Enviar codigo</AuthButton>
+              <AuthButton type="submit">Enviar código</AuthButton>
             </div>
           </form>
         </div>
