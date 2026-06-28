@@ -6,8 +6,8 @@ function ConfirmDeleteModal({
   onConfirm,
   title = '¿Está seguro de eliminar este registro?',
   description = 'Esta acción no se puede deshacer. Por favor, confirme si desea proceder con la eliminación.',
-  confirmText = 'DELETE',
-  cancelText = 'CANCEL',
+  confirmText = 'ELIMINAR',
+  cancelText = 'CANCELAR',
 }) {
   if (!open) return null;
 
