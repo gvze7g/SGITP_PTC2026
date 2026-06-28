@@ -148,7 +148,7 @@ function PromotionFormModal({ open, onClose, promotionData = null }) {
           </button>
 
           <button type="button" className="modal-save-btn" onClick={onClose}>
-            {isEditMode ? 'Guardar cambios' : 'Guardar codigo'}
+            {isEditMode ? 'Guardar cambios' : 'Guardar código'}
             <span className="modal-save-arrow">›</span>
           </button>
         </div>
