@@ -18,7 +18,7 @@ const SIDEBAR_ITEMS = [
   { key: 'point-of-sale', label: 'Punto de venta', icon: Store },
   { key: 'sales-history', label: 'Historial de ventas', icon: BadgeDollarSign },
   { key: 'employees', label: 'Empleados', icon: BriefcaseBusiness },
-  { key: 'payroll', label: 'Nomina', icon: Landmark },
+  { key: 'payroll', label: 'Nómina', icon: Landmark },
   { key: 'clients', label: 'Clientes', icon: Users },
   { key: 'branches', label: 'Sucursales', icon: StoreIcon },
   { key: 'promotions', label: 'Promociones', icon: Tag },

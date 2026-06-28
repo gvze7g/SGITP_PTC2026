@@ -157,14 +157,14 @@ function SalesHistoryTable({ onViewSale }) {
       </div>
 
       <div className="sales-footer">
-        <p>Mostrando 1 a 10 de 124 ventas</p>
+        <p>Mostrando 1 a {SALES.length} de {SALES.length} ventas</p>
 
         <div className="sales-pagination">
-          <button type="button">‹</button>
+          <button type="button" aria-label="Página anterior">‹</button>
           <button type="button" className="sales-page-active">1</button>
           <button type="button">2</button>
           <button type="button">3</button>
-          <button type="button">›</button>
+          <button type="button" aria-label="Página siguiente">›</button>
         </div>
       </div>
     </section>

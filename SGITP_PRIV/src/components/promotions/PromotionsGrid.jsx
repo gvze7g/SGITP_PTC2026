@@ -64,7 +64,7 @@ function PromotionsGrid({ onEditPromotion, onDeactivatePromotion }) {
     <section className="promotions-page">
       <div className="promotions-summary-block">
         <span>CÓDIGOS ACTIVOS</span>
-        <strong>4</strong>
+        <strong>{PROMOTIONS.filter((p) => p.status !== 'Expirado').length}</strong>
       </div>
 
       <div className="promotions-grid">

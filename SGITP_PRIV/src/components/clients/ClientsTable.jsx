@@ -24,11 +24,11 @@ const CLIENTS = [
     type: 'Mayorista',
     phone: '+503 4343-4343',
     email: 'sofia.v@editorial.com',
-    addressLabel: 'Oficia',
+    addressLabel: 'Oficina',
     phones: ['+503 4343-4343'],
     addresses: [
       {
-        label: 'Oficia',
+        label: 'Oficina',
         street: 'Avenida Olímpica 45',
         city: 'San Salvador',
         reference: 'Edificio azul',
