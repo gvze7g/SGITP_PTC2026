@@ -61,21 +61,7 @@ function AdminSidebar({
                 type="button"
                 className={`admin-sidebar-item ${isActive ? 'admin-sidebar-item-active' : ''}`}
                 onClick={() => {
-                  if (
-                    item.key === 'dashboard' ||
-                    item.key === 'inventory' ||
-                    item.key === 'point-of-sale' ||
-                    item.key === 'sales-history' ||
-                    item.key === 'employees' ||
-                    item.key === 'payroll' ||
-                    item.key === 'clients' ||
-                    item.key === 'branches' ||
-                    item.key === 'promotions' ||
-                    item.key === 'expenses'
-                    ) {
-                        onNavigate(item.key);
-                    }
-
+                  onNavigate(item.key);
                   onCloseMobileMenu();
                 }}
               >
