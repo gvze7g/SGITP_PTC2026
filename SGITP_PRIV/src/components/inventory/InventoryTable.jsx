@@ -102,7 +102,7 @@ function InventoryTable({ onOpenCreateModal, onOpenDeleteModal }) {
       </div>
 
       <div className="inventory-footer">
-        <p>Mostrando 1 a 10 de 124 ventas</p>
+        <p>Mostrando 1 a 10 de 124 productos</p>
 
         <div className="inventory-pagination">
           <button type="button">‹</button>
