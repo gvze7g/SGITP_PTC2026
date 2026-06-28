@@ -44,7 +44,7 @@ registerCustomerController.register = async (req, res) => {
         password: passwordHash,
         addresses,
         phone_numbers,
-        isVerified: isVerifies || false,
+        isVerified: isVerified || false,
         loginAttempts,
         timeOut,
     });
