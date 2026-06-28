@@ -100,6 +100,7 @@ function PayrollTable({ onEditPayroll }) {
                 type="button"
                 className="payroll-action-icon"
                 onClick={() => onEditPayroll?.(item)}
+                aria-label="Editar nómina"
               >
                 <Pencil size={20} strokeWidth={2} />
               </button>

@@ -80,6 +80,7 @@ function ExpensesTable({ onEditExpense, onDeleteExpense }) {
                 type="button"
                 className="expenses-action-icon"
                 onClick={() => onEditExpense?.(expense)}
+                aria-label="Editar gasto"
               >
                 <Pencil size={20} strokeWidth={2} />
               </button>
@@ -88,6 +89,7 @@ function ExpensesTable({ onEditExpense, onDeleteExpense }) {
                 type="button"
                 className="expenses-action-icon"
                 onClick={onDeleteExpense}
+                aria-label="Eliminar gasto"
               >
                 <Trash2 size={20} strokeWidth={2} />
               </button>

@@ -86,6 +86,7 @@ function ClientsTable({ onEditClient, onDeleteClient }) {
                 type="button"
                 className="clients-action-icon"
                 onClick={() => onEditClient?.(client)}
+                aria-label="Editar cliente"
               >
                 <Pencil size={20} strokeWidth={2} />
               </button>
@@ -94,6 +95,7 @@ function ClientsTable({ onEditClient, onDeleteClient }) {
                 type="button"
                 className="clients-action-icon"
                 onClick={onDeleteClient}
+                aria-label="Eliminar cliente"
               >
                 <Trash2 size={20} strokeWidth={2} />
               </button>

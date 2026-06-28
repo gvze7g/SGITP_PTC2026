@@ -21,6 +21,7 @@ function AdminTopbar({ theme, onToggleTheme, onOpenMobileMenu }) {
             type="text"
             placeholder="Buscar..."
             className="admin-search-input"
+            aria-label="Buscar"
           />
         </div>
       </div>
@@ -35,11 +36,11 @@ function AdminTopbar({ theme, onToggleTheme, onOpenMobileMenu }) {
           {isDark ? <Sun size={20} strokeWidth={1.8} /> : <Moon size={20} strokeWidth={1.8} />}
         </button>
 
-        <button type="button" className="admin-icon-btn">
+        <button type="button" className="admin-icon-btn" aria-label="Notificaciones">
           <Bell size={20} strokeWidth={1.8} />
         </button>
 
-        <button type="button" className="admin-icon-btn">
+        <button type="button" className="admin-icon-btn" aria-label="Configuración">
           <Settings size={20} strokeWidth={1.8} />
         </button>
       </div>

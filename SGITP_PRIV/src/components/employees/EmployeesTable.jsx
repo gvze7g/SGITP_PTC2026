@@ -63,6 +63,7 @@ function EmployeesTable({ onOpenDeleteModal, onEditEmployee }) {
                 type="button"
                 className="employees-action-icon"
                 onClick={() => onEditEmployee?.(employee)}
+                aria-label="Editar empleado"
               >
                 <Pencil size={20} strokeWidth={2} />
               </button>
@@ -71,6 +72,7 @@ function EmployeesTable({ onOpenDeleteModal, onEditEmployee }) {
                 type="button"
                 className="employees-action-icon"
                 onClick={onOpenDeleteModal}
+                aria-label="Eliminar empleado"
               >
                 <Trash2 size={20} strokeWidth={2} />
               </button>

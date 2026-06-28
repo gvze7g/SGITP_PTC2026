@@ -86,13 +86,14 @@ function InventoryTable({ onOpenCreateModal, onOpenDeleteModal }) {
             </div>
 
             <div className="inventory-actions-cell">
-              <button type="button" className="inventory-action-icon">
+              <button type="button" className="inventory-action-icon" aria-label="Editar producto">
                 <Pencil size={22} strokeWidth={2} />
               </button>
               <button
                 type="button"
                 className="inventory-action-icon"
                 onClick={onOpenDeleteModal}
+                aria-label="Eliminar producto"
               >
                 <Trash2 size={22} strokeWidth={2} />
               </button>

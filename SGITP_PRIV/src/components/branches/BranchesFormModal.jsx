@@ -116,7 +116,7 @@ function BranchFormModal({ open, onClose, branchData = null }) {
           </button>
 
           <button type="button" className="modal-save-btn" onClick={onClose}>
-            {isEditMode ? 'Guardar cambios' : 'Guardar Instalacion'}
+            {isEditMode ? 'Guardar cambios' : 'Guardar Instalación'}
             <span className="modal-save-arrow">›</span>
           </button>
         </div>

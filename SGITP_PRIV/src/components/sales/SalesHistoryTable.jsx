@@ -147,6 +147,7 @@ function SalesHistoryTable({ onViewSale }) {
                 type="button"
                 className="sales-action-icon"
                 onClick={() => onViewSale?.(sale)}
+                aria-label="Ver venta"
               >
                 <Eye size={22} strokeWidth={2} />
               </button>
