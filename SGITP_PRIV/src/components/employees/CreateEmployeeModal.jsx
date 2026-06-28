@@ -107,9 +107,8 @@ function CreateEmployeeModal({ open, onClose, employeeData = null }) {
             </div>
 
             <div className="employee-line-field">
-              <label>Fecha de contratacion</label>
+              <label>Fecha de contratación</label>
               <input
-                type="text"
                 value={formData.hireDate}
                 onChange={(event) => handleChange('hireDate', event.target.value)}
               />
