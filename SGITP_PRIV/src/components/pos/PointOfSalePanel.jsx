@@ -24,7 +24,7 @@ function PointOfSalePanel() {
       </div>
 
       <div className="pos-field-block">
-        <span className="pos-field-label">ORIGIN</span>
+        <span className="pos-field-label">ORIGEN</span>
         <button type="button" className="pos-select-field">
           <span>Tienda Física</span>
           <ChevronDown size={22} strokeWidth={1.8} />
@@ -32,12 +32,12 @@ function PointOfSalePanel() {
       </div>
 
       <div className="pos-field-block">
-        <span className="pos-field-label">DATOS DE ENVIO</span>
+        <span className="pos-field-label">DATOS DE ENVÍO</span>
         <div className="pos-textarea-placeholder" />
       </div>
 
       <div className="pos-field-block">
-        <span className="pos-field-label">TELEFONO</span>
+        <span className="pos-field-label">TELÉFONO</span>
         <div className="pos-input-placeholder" />
       </div>
 
