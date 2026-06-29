@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion';
+
 const PRODUCTS = [
   {
     id: 1,
@@ -27,7 +29,12 @@ const PRODUCTS = [
 
 function StarProductsCard() {
   return (
-    <section className="panel-card star-products-card">
+    <motion.section
+      className="panel-card star-products-card"
+      initial={{ opacity: 0, x: 16 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       <div className="star-products-header">
         <h3 className="panel-title">Productos Estrella</h3>
         <button type="button" className="panel-link-button">
@@ -36,8 +43,15 @@ function StarProductsCard() {
       </div>
 
       <div className="star-products-list">
-        {PRODUCTS.map((product) => (
-          <article key={product.id} className="star-product-item">
+        {PRODUCTS.map((product, index) => (
+          <motion.article
+            key={product.id}
+            className="star-product-item"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.08 }}
+            whileHover={{ x: 4 }}
+          >
             <img src={product.image} alt={product.name} className="star-product-image" />
 
             <div className="star-product-info">
@@ -46,10 +60,10 @@ function StarProductsCard() {
             </div>
 
             <span className="star-product-rank">{product.rank}</span>
-          </article>
+          </motion.article>
         ))}
       </div>
-    </section>
+    </motion.section>
   );
 }
 

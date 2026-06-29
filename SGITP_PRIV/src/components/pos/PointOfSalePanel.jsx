@@ -1,8 +1,15 @@
 import { ChevronDown, Search } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 function PointOfSalePanel() {
   return (
-    <aside className="pos-panel">
+    <motion.aside
+      className="pos-panel"
+      initial={{ opacity: 0, x: 18 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+    >
       <div className="pos-client-card">
         <div className="pos-client-header">
           <span>DETALLES DEL CLIENTE</span>
@@ -17,7 +24,12 @@ function PointOfSalePanel() {
             <p>maria.perez@boutique.co</p>
           </div>
 
-          <button type="button" className="pos-search-btn" aria-label="Buscar cliente">
+          <button
+            type="button"
+            className="pos-search-btn"
+            aria-label="Buscar cliente"
+            onClick={() => toast('Búsqueda de clientes disponible próximamente.')}
+          >
             <Search size={18} strokeWidth={1.8} />
           </button>
         </div>
@@ -44,7 +56,12 @@ function PointOfSalePanel() {
       <div className="pos-order-section">
         <span className="pos-field-label">ORDEN ACTUAL</span>
 
-        <div className="pos-order-item">
+        <motion.div
+          className="pos-order-item"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.25 }}
+        >
           <img
             src="https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=300&q=80"
             alt="Producto"
@@ -67,7 +84,7 @@ function PointOfSalePanel() {
               <button type="button">+</button>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <div className="pos-total-section">
@@ -76,11 +93,15 @@ function PointOfSalePanel() {
           <strong>$48.60</strong>
         </div>
 
-        <button type="button" className="pos-confirm-btn">
+        <button
+          type="button"
+          className="pos-confirm-btn"
+          onClick={() => toast.success('Venta confirmada correctamente.')}
+        >
           Confirmar venta <span>→</span>
         </button>
       </div>
-    </aside>
+    </motion.aside>
   );
 }
 
