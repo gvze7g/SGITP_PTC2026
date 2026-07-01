@@ -13,7 +13,7 @@ const productSchema = new Schema({
         color: {type: String},
         design: {type: String},
         fabric: {type: String},
-        stock: {type: String}
+        stock: {type: String},
     }],
     price: {type: Number},
     cost: {type: Number},

@@ -20,6 +20,16 @@ const uploadBufferToCloudinary = (buffer, folder = "SGITP_BACKEND/products") => 
   });
 };
 
+const getTotalStock = (variants = []) => {
+  if (!Array.isArray(variants)) return 0;
+
+  return variants.reduce((total, variant) => {
+    const stock = Number(variant?.stock || 0);
+    return total + stock;
+  }, 0);
+};
+
+// GET ALL
 productController.getProducts = async (req, res) => {
   try {
     const products = await productsModel.find();
@@ -30,6 +40,7 @@ productController.getProducts = async (req, res) => {
   }
 };
 
+// GET BY ID
 productController.getProductById = async (req, res) => {
   try {
     const product = await productsModel.findById(req.params.id);
@@ -45,6 +56,92 @@ productController.getProductById = async (req, res) => {
   }
 };
 
+// SEARCH BY NAME
+productController.searchByName = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    const products = await productsModel.find({
+      name: { $regex: name || "", $options: "i" },
+    });
+
+    return res.status(200).json(products);
+  } catch (error) {
+    console.log("Error: " + error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// FILTER BY PRICE RANGE
+productController.getProductsByPriceRange = async (req, res) => {
+  try {
+    const { minPrice, maxPrice } = req.body;
+
+    const filters = {};
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filters.price = {};
+
+      if (minPrice !== undefined && minPrice !== "") {
+        filters.price.$gte = Number(minPrice);
+      }
+
+      if (maxPrice !== undefined && maxPrice !== "") {
+        filters.price.$lte = Number(maxPrice);
+      }
+    }
+
+    const products = await productsModel.find(filters);
+
+    return res.status(200).json(products);
+  } catch (error) {
+    console.log("Error: " + error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// LOW STOCK
+productController.getLowStock = async (req, res) => {
+  try {
+    const threshold = Number(req.query.threshold || 5);
+
+    const products = await productsModel.find();
+
+    const lowStockProducts = products.filter((product) => {
+      const totalStock = getTotalStock(product.variants);
+      return totalStock <= threshold;
+    });
+
+    return res.status(200).json(lowStockProducts);
+  } catch (error) {
+    console.log("Error: " + error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// COUNT PRODUCTS
+productController.countProducts = async (req, res) => {
+  try {
+    const totalProducts = await productsModel.countDocuments();
+
+    const products = await productsModel.find();
+
+    const lowStockCount = products.filter((product) => {
+      const totalStock = getTotalStock(product.variants);
+      return totalStock <= 5;
+    }).length;
+
+    return res.status(200).json({
+      totalProducts,
+      lowStockCount,
+    });
+  } catch (error) {
+    console.log("Error: " + error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// INSERT
 productController.insertProducts = async (req, res) => {
   try {
     const { name, description, category, variants, price, cost } = req.body;
@@ -87,6 +184,7 @@ productController.insertProducts = async (req, res) => {
   }
 };
 
+// UPDATE
 productController.updateProducts = async (req, res) => {
   try {
     const { name, description, category, variants, price, cost } = req.body;
@@ -145,6 +243,7 @@ productController.updateProducts = async (req, res) => {
   }
 };
 
+// DELETE
 productController.deleteProducts = async (req, res) => {
   try {
     const product = await productsModel.findById(req.params.id);

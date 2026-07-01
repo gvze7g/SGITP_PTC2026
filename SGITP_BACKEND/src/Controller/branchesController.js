@@ -1,41 +1,103 @@
 import branchesModel from "../Model/branches.js";
 
-//SELECT
-export const getBranches = async (req, res) => {
-  const branches = await branchesModel.find();
-  res.json(branches);
+const branchesController = {};
+
+branchesController.getBranches = async (req, res) => {
+  try {
+    const branches = await branchesModel.find();
+    return res.status(200).json(branches);
+  } catch (error) {
+    console.log("getBranches error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-//INSERT
- export const insertBranches = async (req, res) => {
-  const { name, address, phone, email, isActive, opening_date} = req.body;
-  const newBranch = new branchesModel({ name, address, phone, email, employee_id, isActive, opening_date });
-  await newBranch.save();
-  res.json({ message: "Branch save" });
+branchesController.getBranchById = async (req, res) => {
+  try {
+    const branch = await branchesModel.findById(req.params.id);
+
+    if (!branch) {
+      return res.status(404).json({ message: "Branch not found" });
+    }
+
+    return res.status(200).json(branch);
+  } catch (error) {
+    console.log("getBranchById error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-//UPDATE
-export const updateBranches = async (req, res) => {
-  const {name, address, phone, email, employee_id, isActive, opening_date } = req.body;
-  await branchesModel.findByIdAndUpdate(
-    req.params.id,
-    {
+branchesController.insertBranch = async (req, res) => {
+  try {
+    const { name, address, phone, email, employee_id, isActive, opening_date } = req.body;
+
+    const newBranch = new branchesModel({
       name,
-      addres,
+      address,
       phone,
       email,
       employee_id,
       isActive,
-      opening_date
-    },
-    { new: true },
-  );
+      opening_date,
+    });
 
-  res.json({ message: "branch updated" });
+    await newBranch.save();
+
+    return res.status(201).json({
+      message: "Branch saved successfully",
+      branch: newBranch,
+    });
+  } catch (error) {
+    console.log("insertBranch error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-//DELETE
-export const  deleteBranches = async (req, res) => {
-  await branchesModel.findByIdAndDelete(req.params.id);
-  res.json({ message: "branch deleted" });
+branchesController.updateBranch = async (req, res) => {
+  try {
+    const { name, address, phone, email, employee_id, isActive, opening_date } = req.body;
+
+    const updatedBranch = await branchesModel.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        address,
+        phone,
+        email,
+        employee_id,
+        isActive,
+        opening_date,
+      },
+      { new: true }
+    );
+
+    if (!updatedBranch) {
+      return res.status(404).json({ message: "Branch not found" });
+    }
+
+    return res.status(200).json({
+      message: "Branch updated successfully",
+      branch: updatedBranch,
+    });
+  } catch (error) {
+    console.log("updateBranch error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
+
+branchesController.deleteBranch = async (req, res) => {
+  try {
+    const deletedBranch = await branchesModel.findByIdAndDelete(req.params.id);
+
+    if (!deletedBranch) {
+      return res.status(404).json({ message: "Branch not found" });
+    }
+
+    return res.status(200).json({ message: "Branch deleted successfully" });
+  } catch (error) {
+    console.log("deleteBranch error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export default branchesController;

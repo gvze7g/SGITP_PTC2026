@@ -1,4 +1,6 @@
+import mongoose from "mongoose"
 import {Schema, model} from "mongoose"
+
 
 const salesSchema = new Schema({
      sales_date: {type: Date},
