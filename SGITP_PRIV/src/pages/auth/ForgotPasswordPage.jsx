@@ -4,9 +4,11 @@ import { toast } from "sonner";
 import AuthButton from "../../components/auth/AuthButton";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthInput from "../../components/auth/AuthInput";
+import usePasswordRecovery from "../../hooks/auth/UsePasswordRecovery";
 
 function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const { loading, requestCode } = usePasswordRecovery();
   const [email, setEmail] = useState("");
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,10 +34,17 @@ function ForgotPasswordPage() {
     return true;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!validateEmail()) return;
+
+    const result = await requestCode(email.trim());
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
 
     toast.success("Código enviado correctamente.");
     navigate("/verify-code");
@@ -50,7 +59,7 @@ function ForgotPasswordPage() {
           </h1>
 
           <p className="auth-subtitle">
-            Te enviaremos un enlace para restablecerla.
+            Te enviaremos un código para restablecerla.
           </p>
 
           <form onSubmit={handleSubmit} noValidate>
@@ -67,7 +76,9 @@ function ForgotPasswordPage() {
             </div>
 
             <div style={{ marginTop: "42px" }}>
-              <AuthButton type="submit">Enviar código</AuthButton>
+              <AuthButton type="submit" disabled={loading}>
+                {loading ? "Enviando..." : "Enviar código"}
+              </AuthButton>
             </div>
           </form>
         </div>
@@ -78,6 +89,7 @@ function ForgotPasswordPage() {
             onClick={() => navigate("/")}
             className="auth-text-button"
             style={{ color: "#3d3430" }}
+            disabled={loading}
           >
             &lt; Volver al inicio de sesión
           </button>

@@ -1,9 +1,9 @@
 import { Router } from "express";
-import logoutController from "../Controller/logoutController.js";
+import authController from "../Controller/authController.js";
 import { validateAuthCookie } from "../Middlewares/authMiddleware.js";
 
 const router = Router();
 
-router.post("/", validateAuthCookie(["Employee", "Customer"]), logoutController.logout);
+router.get("/me", validateAuthCookie(["Employee", "Customer"]), authController.me);
 
 export default router;

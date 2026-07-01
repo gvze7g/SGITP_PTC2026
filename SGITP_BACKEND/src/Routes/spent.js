@@ -1,18 +1,42 @@
-// Rutas de promotions
+import { Router } from "express";
+import spentController from "../Controller/spentController.js";
+import { validateAuthCookie, validateEmployeeRole } from "../Middlewares/authMiddleware.js";
 
-import express from "express";
-import SpentController from "../Controller/spentController.js";
+const router = Router();
 
-const router = express.Router();
+router.get(
+  "/",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Contabilidad"),
+  spentController.getSpent
+);
 
-router
-  .route("/")
-  .get(SpentController.getSpent)
-  .post(SpentController.insertSpent);
+router.get(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Contabilidad"),
+  spentController.getSpentById
+);
 
-router
-    .route("/:id")
-    .put(SpentController.updateSpent)
-    .delete(SpentController.deleteSpent);
-  
-  export default router;
+router.post(
+  "/",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Contabilidad"),
+  spentController.insertSpent
+);
+
+router.put(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Contabilidad"),
+  spentController.updateSpent
+);
+
+router.delete(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador"),
+  spentController.deleteSpent
+);
+
+export default router;
