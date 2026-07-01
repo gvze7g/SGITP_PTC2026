@@ -1,13 +1,42 @@
-import express from "express";
+import { Router } from "express";
 import employeeController from "../Controller/employeeController.js";
+import { validateAuthCookie, validateEmployeeRole } from "../Middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router = Router();
 
-router.route("/")
-    .get(employeeController.getEmployee);
+router.get(
+  "/",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente"),
+  employeeController.getEmployees
+);
 
-router.route("/:id")
-    .put(employeeController.updateEmployee)
-    .delete(employeeController.deleteEmployee);
+router.get(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente"),
+  employeeController.getEmployeeById
+);
+
+router.post(
+  "/",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador"),
+  employeeController.insertEmployee
+);
+
+router.put(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador"),
+  employeeController.updateEmployee
+);
+
+router.delete(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador"),
+  employeeController.deleteEmployee
+);
 
 export default router;

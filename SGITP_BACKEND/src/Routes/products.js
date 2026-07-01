@@ -1,22 +1,71 @@
 import { Router } from "express";
 import productController from "../Controller/productController.js";
-import { validateAuthCookie } from "../Middlewares/authMiddleware.js";
+import { validateAuthCookie, validateEmployeeRole } from "../Middlewares/authMiddleware.js";
 import upload from "../utils/cloudinaryConfig.js";
 
 const router = Router();
 
-router.post("/search", productController.searchByName);
-router.post("/price-range", productController.getProductsByPriceRange);
-router.get("/status/low-stock", productController.getLowStock);
-router.get("/status/count", productController.countProducts);
+router.post(
+  "/search",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  productController.searchByName
+);
 
-router.route("/")
-  .get(productController.getProducts)
-  .post(validateAuthCookie(["employee", "admin"]), upload.array("images", 5), productController.insertProducts);
+router.post(
+  "/price-range",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  productController.getProductsByPriceRange
+);
 
-router.route("/:id")
-  .get(productController.getProductById)
-  .put(validateAuthCookie(["employee", "admin"]), upload.array("images", 5), productController.updateProducts)
-  .delete(validateAuthCookie(["employee", "admin"]), productController.deleteProducts);
+router.get(
+  "/status/low-stock",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  productController.getLowStock
+);
+
+router.get(
+  "/status/count",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  productController.countProducts
+);
+
+router.get(
+  "/",
+  validateAuthCookie(["Employee"]),
+  productController.getProducts
+);
+
+router.get(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  productController.getProductById
+);
+
+router.post(
+  "/",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  upload.array("images", 5),
+  productController.insertProducts
+);
+
+router.put(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  upload.array("images", 5),
+  productController.updateProducts
+);
+
+router.delete(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  productController.deleteProducts
+);
 
 export default router;
