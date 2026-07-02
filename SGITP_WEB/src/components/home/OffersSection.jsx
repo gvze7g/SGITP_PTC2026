@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 const OFFERS = [
   {
     title: 'Cubrepañal de algodon',
-    price: '€22,00',
-    oldPrice: '€32,00',
+    price: '$22.00',
+    oldPrice: '$32.00',
     image: 'https://images.unsplash.com/photo-1522771930-78848d9293e8?auto=format&fit=crop&w=900&q=85',
   },
   {
     title: 'Body en lana merino',
-    price: '€22,00',
-    oldPrice: '€32,00',
+    price: '$22.00',
+    oldPrice: '$32.00',
     image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=900&q=85',
   },
 ];

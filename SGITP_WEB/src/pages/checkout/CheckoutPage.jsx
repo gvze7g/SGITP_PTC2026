@@ -21,7 +21,7 @@ const CHECKOUT_ITEMS = [
   },
 ];
 
-const formatPrice = (value) => `€${value.toFixed(2)}`;
+const formatPrice = (value) => `$${value.toFixed(2)}`;
 
 function CheckoutPage() {
   const navigate = useNavigate();
@@ -94,7 +94,7 @@ function CheckoutPage() {
                   <strong>Entrega expres</strong>
                   Entrega al dia siguiente
                 </span>
-                <em>€25.00</em>
+                <em>$25.00</em>
               </label>
             </div>
           </section>

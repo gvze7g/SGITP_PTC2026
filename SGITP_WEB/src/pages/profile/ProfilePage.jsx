@@ -1,19 +1,21 @@
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { logoutCustomer } from '../../services/customerAuthService';
 
 const ORDERS = [
   {
     name: 'Capsula de Lana Merino - Otono',
     date: '12.09.2023',
-    price: '€1,240.00',
+    price: '$1,240.00',
     status: 'Entregado',
     image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=340&q=90',
   },
   {
     name: "Coleccion de Calzado L'Artisan",
     date: '01.09.2023',
-    price: '€420.00',
+    price: '$420.00',
     status: 'En transito',
     image: 'https://images.unsplash.com/photo-1616406432452-07bc5938759d?auto=format&fit=crop&w=340&q=90',
   },
@@ -21,6 +23,16 @@ const ORDERS = [
 
 function ProfilePage() {
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logoutCustomer();
+      toast.success('Sesion cerrada correctamente.');
+      navigate('/login', { replace: true });
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo cerrar sesion.');
+    }
+  };
 
   return (
     <div className="profile-page">
@@ -49,7 +61,9 @@ function ProfilePage() {
             <button type="button" onClick={() => navigate('/returns')}>
               Devoluciones y Cambios
             </button>
-            <button type="button" className="profile-logout">Cerrar sesion</button>
+            <button type="button" className="profile-logout" onClick={handleLogout}>
+              Cerrar sesion
+            </button>
           </aside>
 
           <section className="profile-content">
