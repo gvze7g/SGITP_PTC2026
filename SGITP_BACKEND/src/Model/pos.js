@@ -1,3 +1,5 @@
+//crud 
+
 import mongoose, {Schema, model} from "mongoose"
 
 const PosSchema = new Schema({
