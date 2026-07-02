@@ -39,7 +39,8 @@ function ForgotPasswordPage() {
 
     if (!validateEmail()) return;
 
-    const result = await requestCode(email.trim());
+    const cleanEmail = email.trim();
+    const result = await requestCode(cleanEmail);
 
     if (!result.success) {
       toast.error(result.message);
@@ -47,7 +48,10 @@ function ForgotPasswordPage() {
     }
 
     toast.success("Código enviado correctamente.");
-    navigate("/verify-code");
+
+    navigate("/verify-code", {
+      state: { email: cleanEmail },
+    });
   };
 
   return (

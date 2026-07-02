@@ -1,33 +1,29 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AuthButton from "../../components/auth/AuthButton";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthInput from "../../components/auth/AuthInput";
 import usePasswordRecovery from "../../hooks/auth/UsePasswordRecovery";
 
-function ForgotPasswordPage() {
+function VerifyCodePage() {
   const navigate = useNavigate();
-  const { loading, requestCode } = usePasswordRecovery();
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const { loading, verifyCode, requestCode } = usePasswordRecovery();
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const [code, setCode] = useState("");
+  const email = location.state?.email || "";
 
-  const validateEmail = () => {
-    const cleanEmail = email.trim();
+  const validateCode = () => {
+    const cleanCode = code.trim();
 
-    if (!cleanEmail) {
-      toast.error("El correo electrónico es obligatorio.");
+    if (!cleanCode) {
+      toast.error("Debes ingresar el código de verificación.");
       return false;
     }
 
-    if (!cleanEmail.includes("@")) {
-      toast.error("El correo debe incluir el símbolo @.");
-      return false;
-    }
-
-    if (!emailRegex.test(cleanEmail)) {
-      toast.error("Ingresa un correo electrónico válido.");
+    if (cleanCode.length < 4) {
+      toast.error("El código ingresado no es válido.");
       return false;
     }
 
@@ -37,17 +33,37 @@ function ForgotPasswordPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!validateEmail()) return;
+    if (!validateCode()) return;
 
-    const result = await requestCode(email.trim());
+    const result = await verifyCode(code.trim());
 
     if (!result.success) {
       toast.error(result.message);
       return;
     }
 
-    toast.success("Código enviado correctamente.");
-    navigate("/verify-code");
+    toast.success("Código verificado correctamente.");
+
+    navigate("/reset-password", {
+      state: { email },
+    });
+  };
+
+  const handleResendCode = async () => {
+    if (!email) {
+      toast.error("No se encontró el correo. Vuelve a solicitar el código.");
+      navigate("/forgot-password");
+      return;
+    }
+
+    const result = await requestCode(email);
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success("Código reenviado correctamente.");
   };
 
   return (
@@ -55,43 +71,55 @@ function ForgotPasswordPage() {
       <AuthCard className="justify-between">
         <div>
           <h1 className="auth-title" style={{ marginTop: "18px" }}>
-            Recuperar contraseña
+            Verificar código
           </h1>
 
           <p className="auth-subtitle">
-            Te enviaremos un código para restablecerla.
+            Ingresa el código que enviamos a tu correo.
           </p>
 
           <form onSubmit={handleSubmit} noValidate>
             <div style={{ marginTop: "132px" }}>
               <AuthInput
-                label="Correo electrónico"
-                name="email"
-                type="email"
-                placeholder="ejemplo@correo.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="email"
+                label="Código de verificación"
+                name="code"
+                type="text"
+                placeholder="Ingresa el código"
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
+                autoComplete="one-time-code"
               />
             </div>
 
             <div style={{ marginTop: "42px" }}>
               <AuthButton type="submit" disabled={loading}>
-                {loading ? "Enviando..." : "Enviar código"}
+                {loading ? "Verificando..." : "Verificar código"}
               </AuthButton>
             </div>
           </form>
+
+          <div className="flex justify-center" style={{ marginTop: "18px" }}>
+            <button
+              type="button"
+              onClick={handleResendCode}
+              className="auth-text-button"
+              style={{ color: "#3d3430" }}
+              disabled={loading}
+            >
+              Reenviar código
+            </button>
+          </div>
         </div>
 
         <div className="flex justify-center" style={{ marginBottom: "8px" }}>
           <button
             type="button"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/forgot-password", { state: { email } })}
             className="auth-text-button"
             style={{ color: "#3d3430" }}
             disabled={loading}
           >
-            &lt; Volver al inicio de sesión
+            &lt; Volver
           </button>
         </div>
       </AuthCard>
@@ -99,4 +127,4 @@ function ForgotPasswordPage() {
   );
 }
 
-export default ForgotPasswordPage;
+export default VerifyCodePage;
