@@ -4,9 +4,11 @@ import { toast } from "sonner";
 import AuthButton from "../../components/auth/AuthButton";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthInput from "../../components/auth/AuthInput";
+import usePasswordRecovery from "../../hooks/auth/UsePasswordRecovery";
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
+  const { loading, resetPassword } = usePasswordRecovery();
 
   const [formData, setFormData] = useState({
     password: "",
@@ -59,10 +61,20 @@ function ResetPasswordPage() {
     return true;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!validateForm()) return;
+
+    const result = await resetPassword({
+      newPassword: formData.password,
+      confirmNewPassword: formData.confirmPassword,
+    });
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
 
     toast.success("Contraseña restablecida correctamente.");
     navigate("/");
@@ -105,7 +117,9 @@ function ResetPasswordPage() {
           </div>
 
           <div style={{ marginTop: "110px" }}>
-            <AuthButton type="submit">Guardar contraseña</AuthButton>
+            <AuthButton type="submit" disabled={loading}>
+              {loading ? "Guardando..." : "Guardar contraseña"}
+            </AuthButton>
           </div>
         </form>
       </AuthCard>

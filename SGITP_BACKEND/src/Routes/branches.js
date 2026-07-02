@@ -1,25 +1,42 @@
-import express from "express";
-import {
-  getBranches,
-  deleteBranches,
-  insertBranches,
-  updateBranches,
-} from "../Controller/branchesController.js";
-import { validateAuthCookie } from "../middlewares/authMiddleware.js";
+import { Router } from "express";
+import branchesController from "../Controller/branchesController.js";
+import { validateAuthCookie, validateEmployeeRole } from "../Middlewares/authMiddleware.js";
 
-//Router() nos ayuda a colocar los métodos
-//que tendrá mi endpoint
+const router = Router();
 
-const router = express.Router();
+router.get(
+  "/",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente"),
+  branchesController.getBranches
+);
 
-router
-  .route("/")
-  .get(validateAuthCookie(["Customer", "admin"]), getBranches)
-  .post(validateAuthCookie(["admin"]), insertBranches);
+router.get(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente"),
+  branchesController.getBranchById
+);
 
-router
-  .route("/:id")
-  .put(validateAuthCookie(["admin"]), updateBranches)
-  .delete(validateAuthCookie(["admin"]), deleteBranches);
+router.post(
+  "/",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador"),
+  branchesController.insertBranch
+);
+
+router.put(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador"),
+  branchesController.updateBranch
+);
+
+router.delete(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador"),
+  branchesController.deleteBranch
+);
 
 export default router;

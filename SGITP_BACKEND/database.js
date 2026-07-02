@@ -1,18 +1,19 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 import { config } from "./src/config.js";
 
-mongoose.connect(config.db.URI)
+mongoose.connect(config.db.URI);
 
-//Comprobar que todo funciona
+// Comprobar que todo funciona
 const connection = mongoose.connection;
 
-connection.once("open", ()=>{
-    console.log("DB is connected")
-})
-connection.on("disconnected", ()=>{
-    console.log("DB is disconnected")
-})
+connection.once("open", () => {
+  console.log("DB is connected");
+});
 
-connection.on("error", (error)=>{
-    console.log("error found" + error)
-})
+connection.on("disconnected", () => {
+  console.log("DB is disconnected");
+});
+
+connection.on("error", (error) => {
+  console.log("error found " + error);
+});

@@ -38,7 +38,7 @@ const FAQS = [
   {
     question: 'El servicio de recogida tiene costo?',
     answer:
-      'Como parte de nuestro compromiso de excelencia, la primera recogida por devolucion o cambio en pedidos superiores a 150 euros es cortesia de la casa.',
+      'Como parte de nuestro compromiso de excelencia, la primera recogida por devolucion o cambio en pedidos superiores a $150 es cortesia de la casa.',
   },
 ];
 

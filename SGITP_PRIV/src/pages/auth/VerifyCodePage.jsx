@@ -1,42 +1,69 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AuthButton from "../../components/auth/AuthButton";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthInput from "../../components/auth/AuthInput";
+import usePasswordRecovery from "../../hooks/auth/UsePasswordRecovery";
 
 function VerifyCodePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { loading, verifyCode, requestCode } = usePasswordRecovery();
+
   const [code, setCode] = useState("");
+  const email = location.state?.email || "";
 
   const validateCode = () => {
     const cleanCode = code.trim();
 
     if (!cleanCode) {
-      toast.error("El código de verificación es obligatorio.");
+      toast.error("Debes ingresar el código de verificación.");
       return false;
     }
 
-    if (!/^\d+$/.test(cleanCode)) {
-      toast.error("El código debe contener solo números.");
-      return false;
-    }
-
-    if (cleanCode.length !== 6) {
-      toast.error("El código debe tener exactamente 6 dígitos.");
+    if (cleanCode.length < 4) {
+      toast.error("El código ingresado no es válido.");
       return false;
     }
 
     return true;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!validateCode()) return;
 
+    const result = await verifyCode(code.trim());
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+
     toast.success("Código verificado correctamente.");
-    navigate("/reset-password");
+
+    navigate("/reset-password", {
+      state: { email },
+    });
+  };
+
+  const handleResendCode = async () => {
+    if (!email) {
+      toast.error("No se encontró el correo. Vuelve a solicitar el código.");
+      navigate("/forgot-password");
+      return;
+    }
+
+    const result = await requestCode(email);
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success("Código reenviado correctamente.");
   };
 
   return (
@@ -48,7 +75,7 @@ function VerifyCodePage() {
           </h1>
 
           <p className="auth-subtitle">
-            Ingresa el código enviado a tu correo electrónico.
+            Ingresa el código que enviamos a tu correo.
           </p>
 
           <form onSubmit={handleSubmit} noValidate>
@@ -57,7 +84,7 @@ function VerifyCodePage() {
                 label="Código de verificación"
                 name="code"
                 type="text"
-                placeholder="Ej. 123456"
+                placeholder="Ingresa el código"
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
                 autoComplete="one-time-code"
@@ -65,17 +92,32 @@ function VerifyCodePage() {
             </div>
 
             <div style={{ marginTop: "42px" }}>
-              <AuthButton type="submit">Verificar código</AuthButton>
+              <AuthButton type="submit" disabled={loading}>
+                {loading ? "Verificando..." : "Verificar código"}
+              </AuthButton>
             </div>
           </form>
+
+          <div className="flex justify-center" style={{ marginTop: "18px" }}>
+            <button
+              type="button"
+              onClick={handleResendCode}
+              className="auth-text-button"
+              style={{ color: "#3d3430" }}
+              disabled={loading}
+            >
+              Reenviar código
+            </button>
+          </div>
         </div>
 
         <div className="flex justify-center" style={{ marginBottom: "8px" }}>
           <button
             type="button"
-            onClick={() => navigate("/forgot-password")}
+            onClick={() => navigate("/forgot-password", { state: { email } })}
             className="auth-text-button"
             style={{ color: "#3d3430" }}
+            disabled={loading}
           >
             &lt; Volver
           </button>

@@ -1,39 +1,29 @@
-import bcrypt from "bcryptjs"; // Encriptar
-import jsonwebtoken from "jsonwebtoken"; // Token
-
-// Asegúrate de que la ruta apunte a tu archivo del esquema de Customer
-import customerModel from "../Model/customer.js"; 
-
+import bcrypt from "bcryptjs";
+import jsonwebtoken from "jsonwebtoken";
+import customerModel from "../Model/customer.js";
 import { config } from "../config.js";
 
 const loginCustomerController = {};
 
 loginCustomerController.login = async (req, res) => {
   try {
-    //#1- Solicitar el correo y la contraseña
     const { email, password } = req.body;
 
-    // Verificar si el correo del cliente existe en la bd
     const userFound = await customerModel.findOne({ email });
 
-    // Si no lo encuentra
     if (!userFound) {
       return res.status(404).json({ message: "Customer not found" });
     }
 
-    // Verificar si la cuenta está bloqueada
     if (userFound.timeOut && userFound.timeOut > Date.now()) {
       return res.status(403).json({ message: "Cuenta bloqueada temporalmente" });
     }
 
-    // Verificar la contraseña
     const isMatch = await bcrypt.compare(password, userFound.password);
 
     if (!isMatch) {
-      // Si se equivoca en la contraseña, sumamos 1 a los intentos fallidos
       userFound.loginAttempts = (userFound.loginAttempts || 0) + 1;
 
-      // Bloquear la cuenta después de 5 intentos fallidos por 15 minutos
       if (userFound.loginAttempts >= 5) {
         userFound.timeOut = Date.now() + 15 * 60 * 1000;
         userFound.loginAttempts = 0;
@@ -43,34 +33,39 @@ loginCustomerController.login = async (req, res) => {
       }
 
       await userFound.save();
-
       return res.status(403).json({ message: "Contraseña incorrecta" });
     }
 
-    // Si todo está bien, reiniciamos el contador de intentos y el bloqueo
     userFound.loginAttempts = 0;
     userFound.timeOut = null;
     await userFound.save();
 
-    // Generar el token
     const token = jsonwebtoken.sign(
-      //#1- Datos que guardamos en el token (Agregamos el customer_type de tu esquema)
-      { 
-        id: userFound._id, 
+      {
+        id: userFound._id,
         userType: "Customer",
-        customerType: userFound.customer_type 
+        customerType: userFound.customer_type,
       },
-      //#2- Secret key
       config.JWT.secret,
-      //#3- Tiempo de expiración
-      { expiresIn: "30d" },
+      { expiresIn: "30d" }
     );
 
-    // Guardamos el token en una cookie
-    res.cookie("authCookie", token);
+    res.cookie("authCookie", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
 
-    // ¡Listo!
-    return res.status(200).json({ message: "Login exitoso" });
+    return res.status(200).json({
+      message: "Login exitoso",
+      user: {
+        id: userFound._id,
+        full_name: userFound.full_name,
+        email: userFound.email,
+        customer_type: userFound.customer_type,
+      },
+    });
   } catch (error) {
     console.log("error: " + error);
     return res.status(500).json({ message: "Internal server error" });

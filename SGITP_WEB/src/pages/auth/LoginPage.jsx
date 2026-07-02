@@ -5,19 +5,16 @@ import AuthButton from '../../components/auth/AuthButton';
 import AuthCard from '../../components/auth/AuthCard';
 import AuthInput from '../../components/auth/AuthInput';
 import PequesBrandPanel from '../../components/auth/PequesBrandPanel';
-
-const DEMO_USER = {
-  email: 'paulcanas7@gmail.com',
-  password: '12345678',
-};
+import { loginCustomer } from '../../services/customerAuthService';
 
 function LoginPage() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    email: DEMO_USER.email,
-    password: DEMO_USER.password,
+    email: '',
+    password: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -31,7 +28,7 @@ function LoginPage() {
     const password = formData.password.trim();
 
     if (!email && !password) {
-      toast.error('Debes completar el correo y la contraseña.');
+      toast.error('Debes completar el correo y la contrasena.');
       return false;
     }
 
@@ -41,27 +38,32 @@ function LoginPage() {
     }
 
     if (!password) {
-      toast.error('La contraseña es obligatoria.');
+      toast.error('La contrasena es obligatoria.');
       return false;
     }
 
     return true;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm() || isSubmitting) return;
 
-    if (
-      formData.email.trim() !== DEMO_USER.email ||
-      formData.password !== DEMO_USER.password
-    ) {
-      toast.error('Correo o contraseña incorrectos.');
-      return;
+    setIsSubmitting(true);
+
+    try {
+      await loginCustomer({
+        email: formData.email.trim(),
+        password: formData.password,
+      });
+
+      toast.success('Inicio de sesion exitoso.');
+      navigate('/home', { replace: true });
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo iniciar sesion.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    toast.success('Inicio de sesion exitoso.');
-    navigate('/home');
   };
 
   return (
@@ -84,7 +86,7 @@ function LoginPage() {
 
             <div>
               <AuthInput
-                label="Contraseña"
+                label="Contrasena"
                 name="password"
                 type="password"
                 placeholder="Minimo 8 caracteres"
@@ -98,11 +100,13 @@ function LoginPage() {
                 className="auth-forgot-link"
                 onClick={() => navigate('/forgot-password')}
               >
-                ¿Olvidaste tu contraseña?
+                Olvidaste tu contrasena?
               </button>
             </div>
 
-            <AuthButton type="submit">Iniciar sesion</AuthButton>
+            <AuthButton type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Iniciando...' : 'Iniciar sesion'}
+            </AuthButton>
           </form>
 
           <AuthButton className="auth-button-secondary" onClick={() => navigate('/')}>
