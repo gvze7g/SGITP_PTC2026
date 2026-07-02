@@ -4,9 +4,11 @@ import { toast } from "sonner";
 import AuthButton from "../../components/auth/AuthButton";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthInput from "../../components/auth/AuthInput";
+import useEmployeeLogin from "../../hooks/auth/UseEmployeeLogin";
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { loading, loginEmployee } = useEmployeeLogin();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -61,10 +63,20 @@ function LoginPage() {
     return true;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!validateForm()) return;
+
+    const result = await loginEmployee({
+      email: formData.email.trim(),
+      password: formData.password,
+    });
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
 
     toast.success("Inicio de sesión exitoso.");
     navigate("/dashboard");
@@ -111,13 +123,16 @@ function LoginPage() {
               type="button"
               onClick={() => navigate("/forgot-password")}
               className="auth-text-button"
+              disabled={loading}
             >
               Olvidé mi contraseña
             </button>
           </div>
 
           <div style={{ marginTop: "42px" }}>
-            <AuthButton type="submit">Iniciar sesión</AuthButton>
+            <AuthButton type="submit" disabled={loading}>
+              {loading ? "Ingresando..." : "Iniciar sesión"}
+            </AuthButton>
           </div>
         </form>
       </AuthCard>

@@ -4,39 +4,50 @@ import { toast } from "sonner";
 import AuthButton from "../../components/auth/AuthButton";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthInput from "../../components/auth/AuthInput";
+import usePasswordRecovery from "../../hooks/auth/UsePasswordRecovery";
 
-function VerifyCodePage() {
+function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const [code, setCode] = useState("");
+  const { loading, requestCode } = usePasswordRecovery();
+  const [email, setEmail] = useState("");
 
-  const validateCode = () => {
-    const cleanCode = code.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!cleanCode) {
-      toast.error("El código de verificación es obligatorio.");
+  const validateEmail = () => {
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail) {
+      toast.error("El correo electrónico es obligatorio.");
       return false;
     }
 
-    if (!/^\d+$/.test(cleanCode)) {
-      toast.error("El código debe contener solo números.");
+    if (!cleanEmail.includes("@")) {
+      toast.error("El correo debe incluir el símbolo @.");
       return false;
     }
 
-    if (cleanCode.length !== 6) {
-      toast.error("El código debe tener exactamente 6 dígitos.");
+    if (!emailRegex.test(cleanEmail)) {
+      toast.error("Ingresa un correo electrónico válido.");
       return false;
     }
 
     return true;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!validateCode()) return;
+    if (!validateEmail()) return;
 
-    toast.success("Código verificado correctamente.");
-    navigate("/reset-password");
+    const result = await requestCode(email.trim());
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success("Código enviado correctamente.");
+    navigate("/verify-code");
   };
 
   return (
@@ -44,28 +55,30 @@ function VerifyCodePage() {
       <AuthCard className="justify-between">
         <div>
           <h1 className="auth-title" style={{ marginTop: "18px" }}>
-            Verificar código
+            Recuperar contraseña
           </h1>
 
           <p className="auth-subtitle">
-            Ingresa el código enviado a tu correo electrónico.
+            Te enviaremos un código para restablecerla.
           </p>
 
           <form onSubmit={handleSubmit} noValidate>
             <div style={{ marginTop: "132px" }}>
               <AuthInput
-                label="Código de verificación"
-                name="code"
-                type="text"
-                placeholder="Ej. 123456"
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                autoComplete="one-time-code"
+                label="Correo electrónico"
+                name="email"
+                type="email"
+                placeholder="ejemplo@correo.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
               />
             </div>
 
             <div style={{ marginTop: "42px" }}>
-              <AuthButton type="submit">Verificar código</AuthButton>
+              <AuthButton type="submit" disabled={loading}>
+                {loading ? "Enviando..." : "Enviar código"}
+              </AuthButton>
             </div>
           </form>
         </div>
@@ -73,11 +86,12 @@ function VerifyCodePage() {
         <div className="flex justify-center" style={{ marginBottom: "8px" }}>
           <button
             type="button"
-            onClick={() => navigate("/forgot-password")}
+            onClick={() => navigate("/")}
             className="auth-text-button"
             style={{ color: "#3d3430" }}
+            disabled={loading}
           >
-            &lt; Volver
+            &lt; Volver al inicio de sesión
           </button>
         </div>
       </AuthCard>
@@ -85,4 +99,4 @@ function VerifyCodePage() {
   );
 }
 
-export default VerifyCodePage;
+export default ForgotPasswordPage;

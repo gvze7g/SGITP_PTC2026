@@ -1,49 +1,58 @@
-import jsonwebtoken from "jsonwebtoken"; 
-import bcrypt from "bcryptjs"; 
-import crypto from "crypto"; 
-import nodemailer from "nodemailer"; 
-import HTMLRecoveryEmail from "../utils/sendMailRecoveryPassword.js";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
+import jsonwebtoken from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
+import employeeModel from "../Model/employee.js";
+import customerModel from "../Model/customer.js";
 import { config } from "../config.js";
-
-// Importamos AMBOS modelos
-import customerModel from "../Model/customer.js"; 
-import employeeModel from "../Model/employee.js"; 
 
 const recoveryPasswordController = {};
 
-recoveryPasswordController.requestCode = async (req, res) => {
+const HTMLRecoveryEmail = (code) => {
+  return `
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+      <h2>Código de recuperación</h2>
+      <p>Tu código de recuperación es:</p>
+      <h1 style="letter-spacing: 4px;">${code}</h1>
+      <p>Este código vence en 15 minutos.</p>
+    </div>
+  `;
+};
+
+recoveryPasswordController.sendRecoveryCode = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, userType } = req.body;
 
-    // 1. Buscamos primero si es un cliente
-    let userFound = await customerModel.findOne({ email });
-    let userType = "Customer";
+    let userFound = null;
 
-    // 2. Si no es cliente, buscamos si es empleado
-    if (!userFound) {
+    if (userType === "Employee") {
       userFound = await employeeModel.findOne({ email });
-      userType = "Employee";
+    } else if (userType === "Customer") {
+      userFound = await customerModel.findOne({ email });
+    } else {
+      return res.status(400).json({ message: "Invalid user type" });
     }
 
-    // 3. Si no es ninguno de los dos, el correo no existe
     if (!userFound) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Generar el número aleatorio de 6 caracteres (hexadecimal)
     const randomCode = crypto.randomBytes(3).toString("hex");
 
-    // Guardamos todo en un token
     const token = jsonwebtoken.sign(
-      { email, randomCode, userType: userType, verified: false },
+      { email, randomCode, userType, verified: false },
       config.JWT.secret,
-      { expiresIn: "15m" } 
+      { expiresIn: "15m" }
     );
 
-    res.cookie("recoveryCookie", token, { maxAge: 15 * 60 * 1000 });
+    res.cookie("recoveryCookie", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 15 * 60 * 1000,
+    });
 
-    // Enviar el correo
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -56,11 +65,11 @@ recoveryPasswordController.requestCode = async (req, res) => {
       from: config.email.user_email,
       to: email,
       subject: "Código de recuperación de contraseña",
-      text: "Tu código es: " + randomCode + ". Vence en 15 minutos.", 
+      text: "Tu código es: " + randomCode + ". Vence en 15 minutos.",
       html: HTMLRecoveryEmail(randomCode),
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
+    transporter.sendMail(mailOptions, (error) => {
       if (error) {
         console.log("Error nodemailer:", error);
         return res.status(500).json({ message: "Error al enviar correo" });
@@ -80,7 +89,7 @@ recoveryPasswordController.verifyCode = async (req, res) => {
     const token = req.cookies.recoveryCookie;
 
     if (!token) {
-        return res.status(401).json({ message: "Token missing or expired" });
+      return res.status(401).json({ message: "Token missing or expired" });
     }
 
     const decoded = jsonwebtoken.verify(token, config.JWT.secret);
@@ -89,14 +98,18 @@ recoveryPasswordController.verifyCode = async (req, res) => {
       return res.status(400).json({ message: "Invalid code" });
     }
 
-    // IMPORTANTE: Aquí pasamos el userType dinámicamente para el siguiente paso
     const newToken = jsonwebtoken.sign(
       { email: decoded.email, userType: decoded.userType, verified: true },
       config.JWT.secret,
       { expiresIn: "15m" }
     );
 
-    res.cookie("recoveryCookie", newToken, { maxAge: 15 * 60 * 1000 });
+    res.cookie("recoveryCookie", newToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 15 * 60 * 1000,
+    });
 
     return res.status(200).json({ message: "Code verified successfully" });
   } catch (error) {
@@ -114,8 +127,9 @@ recoveryPasswordController.newPassword = async (req, res) => {
     }
 
     const token = req.cookies.recoveryCookie;
+
     if (!token) {
-        return res.status(401).json({ message: "Token missing or expired" });
+      return res.status(401).json({ message: "Token missing or expired" });
     }
 
     const decoded = jsonwebtoken.verify(token, config.JWT.secret);
@@ -124,19 +138,30 @@ recoveryPasswordController.newPassword = async (req, res) => {
       return res.status(400).json({ message: "Code not verified" });
     }
 
-    // Encriptar la nueva contraseña
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
-    // IMPORTANTE: Elegimos el modelo dinámicamente basado en el userType del token
-    const ModelToUpdate = decoded.userType === "Customer" ? customerModel : employeeModel;
+    if (decoded.userType === "Employee") {
+      await employeeModel.findOneAndUpdate(
+        { email: decoded.email },
+        {
+          password: passwordHash,
+          loginAttempts: 0,
+          timeOut: null,
+        }
+      );
+    } else if (decoded.userType === "Customer") {
+      await customerModel.findOneAndUpdate(
+        { email: decoded.email },
+        {
+          password: passwordHash,
+          loginAttempts: 0,
+          timeOut: null,
+        }
+      );
+    } else {
+      return res.status(400).json({ message: "Invalid user type" });
+    }
 
-    await ModelToUpdate.findOneAndUpdate(
-      { email: decoded.email },
-      { password: passwordHash },
-      { new: true }
-    );
-
-    // Limpiamos la cookie de recuperación una vez completado el proceso
     res.clearCookie("recoveryCookie");
 
     return res.status(200).json({ message: "Password updated successfully" });

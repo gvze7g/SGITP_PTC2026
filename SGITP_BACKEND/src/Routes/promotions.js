@@ -1,18 +1,42 @@
-// Rutas de promotions
-
-import express from "express";
+import { Router } from "express";
 import promotionsController from "../Controller/promotionsController.js";
+import { validateAuthCookie, validateEmployeeRole } from "../Middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router = Router();
 
-router
-  .route("/")
-  .get(promotionsController.getPromotions)
-  .post(promotionsController.insertPromotions);
+router.get(
+  "/",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente"),
+  promotionsController.getPromotions
+);
 
-router
-    .route("/:id")
-    .put(promotionsController.updatePromotions)
-    .delete(promotionsController.deletePromotions);
-  
-  export default router;
+router.get(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente"),
+  promotionsController.getPromotionById
+);
+
+router.post(
+  "/",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente"),
+  promotionsController.insertPromotion
+);
+
+router.put(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador", "Gerente"),
+  promotionsController.updatePromotion
+);
+
+router.delete(
+  "/:id",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrador"),
+  promotionsController.deletePromotion
+);
+
+export default router;

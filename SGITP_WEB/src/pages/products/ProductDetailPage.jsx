@@ -6,7 +6,7 @@ import StoreAvailabilityPanel from '../../components/products/StoreAvailabilityP
 
 const PRODUCT = {
   name: 'El Peleles Lino',
-  price: '€185.00',
+  price: '$185.00',
   image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=1400&q=90',
   thumbnail: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=500&q=90',
   description:
