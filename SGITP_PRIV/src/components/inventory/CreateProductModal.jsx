@@ -1,7 +1,78 @@
-import { ChevronDown, ImagePlus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useState } from "react";
+import { ChevronDown, ImagePlus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-function CreateProductModal({ open, onClose }) {
+const emptyVariant = {
+  size: "",
+  color: "",
+  design: "",
+  embroidery: "",
+  fabric: "",
+  stock: "",
+  minorista: "",
+  mayorista: "",
+};
+
+function CreateProductModal({ open, onClose, onSubmit }) {
+  const [form, setForm] = useState({
+    name: "",
+    category: "",
+    description: "",
+    price: "",
+    cost: "",
+    images: [],
+    variants: [{ ...emptyVariant }],
+  });
+
+  const previewImages = useMemo(
+    () => form.images.map((file) => URL.createObjectURL(file)),
+    [form.images]
+  );
+
+  const updateVariant = (index, field, value) => {
+    setForm((prev) => {
+      const next = [...prev.variants];
+      next[index] = { ...next[index], [field]: value };
+      return { ...prev, variants: next };
+    });
+  };
+
+  const addVariant = () => {
+    setForm((prev) => ({ ...prev, variants: [...prev.variants, { ...emptyVariant }] }));
+  };
+
+  const handleChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setForm((prev) => ({ ...prev, images: files.slice(0, 5) }));
+  };
+
+  const handleSave = async () => {
+    const payload = {
+      name: form.name,
+      category: form.category,
+      description: form.description,
+      price: Number(form.price || 0),
+      cost: Number(form.cost || 0),
+      images: form.images,
+      variants: form.variants.map((v) => ({
+        size: v.size,
+        color: v.color,
+        design: v.design,
+        embroidery: v.embroidery,
+        fabric: v.fabric,
+        stock: Number(v.stock || 0),
+        minorista: Number(v.minorista || 0),
+        mayorista: Number(v.mayorista || 0),
+      })),
+    };
+
+    await onSubmit(payload);
+  };
+
   return (
     <AnimatePresence>
       {open ? (
@@ -16,7 +87,7 @@ function CreateProductModal({ open, onClose }) {
             initial={{ opacity: 0, scale: 0.96, y: 28 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 20 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
           >
             <div className="create-product-header">
               <h2>Crear producto</h2>
@@ -26,15 +97,22 @@ function CreateProductModal({ open, onClose }) {
               <div className="create-product-left">
                 <span className="modal-section-label">IMAGEN PRINCIPAL</span>
 
-                <div className="upload-main-box">
+                <label className="upload-main-box" style={{ cursor: "pointer" }}>
                   <ImagePlus size={38} strokeWidth={1.6} />
                   <span>SUBIR</span>
-                </div>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImagesChange}
+                    style={{ display: "none" }}
+                  />
+                </label>
 
                 <div className="upload-gallery-row">
-                  <button type="button" className="upload-thumb-box upload-thumb-box-add">+</button>
-                  <div className="upload-thumb-box" />
-                  <div className="upload-thumb-box" />
+                  {previewImages.map((src, idx) => (
+                    <img key={idx} src={src} alt={`preview-${idx}`} className="upload-thumb-box" />
+                  ))}
                 </div>
               </div>
 
@@ -43,32 +121,52 @@ function CreateProductModal({ open, onClose }) {
                   <span className="modal-section-label">NOMBRE DEL PRODUCTO</span>
                   <input
                     type="text"
-                    placeholder="ej: luis Boton body"
+                    placeholder="Ej: Body bebé"
                     className="modal-line-input"
+                    value={form.name}
+                    onChange={(e) => handleChange("name", e.target.value)}
                   />
                 </div>
 
                 <div className="modal-two-columns">
                   <div className="modal-input-group">
-                    <span className="modal-section-label">CATEGORIA</span>
-                    <button type="button" className="modal-select-like">
-                      <span>SELECCIONAR</span>
-                      <ChevronDown size={22} strokeWidth={1.8} />
-                    </button>
+                    <span className="modal-section-label">CATEGORÍA</span>
+                    <input
+                      type="text"
+                      className="modal-line-input"
+                      value={form.category}
+                      onChange={(e) => handleChange("category", e.target.value)}
+                    />
                   </div>
 
                   <div className="modal-input-group">
-                    <span className="modal-section-label">TEMPORADA</span>
-                    <button type="button" className="modal-select-like">
-                      <span>Invierno</span>
-                      <ChevronDown size={22} strokeWidth={1.8} />
-                    </button>
+                    <span className="modal-section-label">PRECIO / COSTO</span>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        type="number"
+                        className="modal-line-input"
+                        placeholder="Precio"
+                        value={form.price}
+                        onChange={(e) => handleChange("price", e.target.value)}
+                      />
+                      <input
+                        type="number"
+                        className="modal-line-input"
+                        placeholder="Costo"
+                        value={form.cost}
+                        onChange={(e) => handleChange("cost", e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <div className="modal-input-group">
-                  <span className="modal-section-label">DESCRIPCION</span>
-                  <textarea className="modal-description-area" />
+                  <span className="modal-section-label">DESCRIPCIÓN</span>
+                  <textarea
+                    className="modal-description-area"
+                    value={form.description}
+                    onChange={(e) => handleChange("description", e.target.value)}
+                  />
                 </div>
               </div>
             </div>
@@ -88,28 +186,24 @@ function CreateProductModal({ open, onClose }) {
                   <span>MAYORISTA</span>
                 </div>
 
-                <div className="variant-table-row">
-                  <input defaultValue="0-3M" />
-                  <input defaultValue="Avena" />
-                  <input defaultValue="Tejido acanalado" />
-                  <input defaultValue="None" />
-                  <input defaultValue="Algodon" />
-                  <input defaultValue="24" />
-                  <input defaultValue="$ 85.00" />
-                  <input defaultValue="$ 42.50" />
-                </div>
-
-                <div className="variant-table-row variant-table-row-muted">
-                  <input placeholder="Tamaño" />
-                  <input placeholder="Color" />
-                  <input placeholder="Diseño" />
-                  <input placeholder="Bordado" />
-                  <input placeholder="Tela" />
-                  <input placeholder="-" />
-                  <input placeholder="$ 0.00" />
-                  <input placeholder="$ 0.00" />
-                </div>
+                {form.variants.map((v, index) => (
+                  <div className="variant-table-row" key={index}>
+                    <input value={v.size} onChange={(e) => updateVariant(index, "size", e.target.value)} />
+                    <input value={v.color} onChange={(e) => updateVariant(index, "color", e.target.value)} />
+                    <input value={v.design} onChange={(e) => updateVariant(index, "design", e.target.value)} />
+                    <input value={v.embroidery} onChange={(e) => updateVariant(index, "embroidery", e.target.value)} />
+                    <input value={v.fabric} onChange={(e) => updateVariant(index, "fabric", e.target.value)} />
+                    <input value={v.stock} onChange={(e) => updateVariant(index, "stock", e.target.value)} />
+                    <input value={v.minorista} onChange={(e) => updateVariant(index, "minorista", e.target.value)} />
+                    <input value={v.mayorista} onChange={(e) => updateVariant(index, "mayorista", e.target.value)} />
+                  </div>
+                ))}
               </div>
+
+              <button type="button" className="modal-select-like" onClick={addVariant}>
+                <span>Agregar variante</span>
+                <ChevronDown size={18} />
+              </button>
             </div>
 
             <div className="create-product-footer">
@@ -117,7 +211,7 @@ function CreateProductModal({ open, onClose }) {
                 CANCELAR
               </button>
 
-              <button type="button" className="modal-save-btn" onClick={onClose}>
+              <button type="button" className="modal-save-btn" onClick={handleSave}>
                 Guardar producto
                 <span className="modal-save-arrow">›</span>
               </button>

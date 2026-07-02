@@ -4,7 +4,7 @@ dotenv.config();
 
 export const config = {
   db: {
-    URI: process.env.MONGODB_URI,
+    URI: process.env.DB_URI,
   },
   server: {
     port: process.env.SERVER_PORT,

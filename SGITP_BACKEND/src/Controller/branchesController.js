@@ -29,14 +29,13 @@ branchesController.getBranchById = async (req, res) => {
 
 branchesController.insertBranch = async (req, res) => {
   try {
-    const { name, address, phone, email, employee_id, isActive, opening_date } = req.body;
+    const { name, address, phone, email, isActive, opening_date } = req.body;
 
     const newBranch = new branchesModel({
       name,
       address,
       phone,
       email,
-      employee_id,
       isActive,
       opening_date,
     });
@@ -55,7 +54,7 @@ branchesController.insertBranch = async (req, res) => {
 
 branchesController.updateBranch = async (req, res) => {
   try {
-    const { name, address, phone, email, employee_id, isActive, opening_date } = req.body;
+    const { name, address, phone, email, isActive, opening_date } = req.body;
 
     const updatedBranch = await branchesModel.findByIdAndUpdate(
       req.params.id,
@@ -64,7 +63,6 @@ branchesController.updateBranch = async (req, res) => {
         address,
         phone,
         email,
-        employee_id,
         isActive,
         opening_date,
       },
