@@ -1,12 +1,15 @@
 import { useCallback, useState } from "react";
 
+//URL de la API
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
+//Hook personalizado de clientes
 function useClients() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  //realiza peticiones a la API de clientes
   const request = async (path = "", options = {}) => {
     const response = await fetch(`${API_URL}/customer${path}`, {
       credentials: "include",
@@ -26,6 +29,7 @@ function useClients() {
     return data;
   };
 
+  //Obtener Clientes
   const getClients = useCallback(async () => {
     try {
       setLoading(true);
@@ -44,6 +48,7 @@ function useClients() {
     }
   }, []);
 
+  //Actualizar clientes
   const updateClient = async (id, payload) => {
     try {
       setLoading(true);
@@ -64,6 +69,7 @@ function useClients() {
     }
   };
 
+  //Eliminar Cliente
   const deleteClient = async (id) => {
     try {
       setLoading(true);

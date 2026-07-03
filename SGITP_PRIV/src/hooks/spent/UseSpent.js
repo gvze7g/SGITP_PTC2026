@@ -1,12 +1,15 @@
 import { useCallback, useState } from "react";
 
+//URL de la API
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
+//Hook personalizado de gastos
 function useSpent() {
   const [spent, setSpent] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  //Realiza peticiones a la API de gastos
   const request = async (path = "", options = {}) => {
     const response = await fetch(`${API_URL}/spent${path}`, {
       credentials: "include",
@@ -26,6 +29,7 @@ function useSpent() {
     return data;
   };
 
+  //Obtener gastos
   const getSpent = useCallback(async () => {
     try {
       setLoading(true);
@@ -44,6 +48,7 @@ function useSpent() {
     }
   }, []);
 
+  //Obtener gastos por ID
   const getSpentById = async (id) => {
     try {
       setLoading(true);
@@ -61,6 +66,8 @@ function useSpent() {
     }
   };
 
+
+  //Crear nuevo gasto
   const createSpent = async (payload) => {
     try {
       setLoading(true);
@@ -81,6 +88,8 @@ function useSpent() {
     }
   };
 
+
+  //Actualizar gasto
   const updateSpent = async (id, payload) => {
     try {
       setLoading(true);
@@ -101,6 +110,7 @@ function useSpent() {
     }
   };
 
+  //Borrar gasto
   const deleteSpent = async (id) => {
     try {
       setLoading(true);

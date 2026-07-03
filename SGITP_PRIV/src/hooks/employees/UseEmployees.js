@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 
+//URL de la API
 const API_URL = "http://localhost:4000";
 
 function useEmployees() {
@@ -52,6 +53,7 @@ function useEmployees() {
     }
   }, []);
 
+  //Obtener empleados por ID
   const getEmployeeById = async (id) => {
     try {
       setLoading(true);

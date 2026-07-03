@@ -1,10 +1,13 @@
 import { useState } from "react";
 
+//URL de la api
 const API_URL = "http://localhost:4000";
 
+//Hook personalizado de la recuperación de contraseña
 function usePasswordRecovery() {
   const [loading, setLoading] = useState(false);
 
+  //Envia el correo con el código de recuperación de contraseña
   const requestCode = async (email) => {
     try {
       setLoading(true);
@@ -46,6 +49,8 @@ function usePasswordRecovery() {
     }
   };
 
+
+  //verifica el código
   const verifyCode = async (code) => {
     try {
       setLoading(true);
@@ -86,6 +91,7 @@ function usePasswordRecovery() {
     }
   };
 
+  //resetea la contraseña despues de colocar el código
   const resetPassword = async ({ newPassword, confirmNewPassword }) => {
     try {
       setLoading(true);

@@ -1,7 +1,9 @@
 import { useCallback, useState } from "react";
 
+//URL de la API
 const API_URL = "http://localhost:4000";
 
+//Hook personalizado de promociones
 function usePromotions() {
   // lista de promociones
   const [promotions, setPromotions] = useState([]);
@@ -52,6 +54,7 @@ function usePromotions() {
     }
   }, []);
 
+  //Obtener promociones por ID
   const getPromotionById = async (id) => {
     try {
       setLoading(true);

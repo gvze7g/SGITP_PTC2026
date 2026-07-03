@@ -1,12 +1,18 @@
 import { useCallback, useState } from "react";
 
+//URL de la api
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
+//Hook personalizado
 function useBranches() {
+  //Lista de sucursales
   const [branches, setBranches] = useState([]);
+  //Loading general
   const [loading, setLoading] = useState(false);
+  //error simple
   const [error, setError] = useState("");
 
+//realiza peticiones a la API de sucursales
   const request = async (path = "", options = {}) => {
     const response = await fetch(`${API_URL}/branches${path}`, {
       credentials: "include",
@@ -26,6 +32,8 @@ function useBranches() {
     return data;
   };
 
+
+  //Obtener Sucursales
   const getBranches = useCallback(async () => {
     try {
       setLoading(true);
@@ -44,6 +52,7 @@ function useBranches() {
     }
   }, []);
 
+  //Obtener sucursales por ID
   const getBranchById = async (id) => {
     try {
       setLoading(true);
@@ -61,6 +70,8 @@ function useBranches() {
     }
   };
 
+
+  //Crear sucursal
   const createBranch = async (payload) => {
     try {
       setLoading(true);
@@ -81,6 +92,7 @@ function useBranches() {
     }
   };
 
+  //Actualizar Sucursal
   const updateBranch = async (id, payload) => {
     try {
       setLoading(true);
@@ -101,6 +113,7 @@ function useBranches() {
     }
   };
 
+  //Eliminar sucursal
   const deleteBranch = async (id) => {
     try {
       setLoading(true);
