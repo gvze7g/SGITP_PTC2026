@@ -16,6 +16,7 @@ import ClientsPage from "./pages/clients/ClientsPage";
 import BranchesPage from "./pages/branches/BranchesPage";
 import PromotionsPage from "./pages/promotions/PromotionsPage";
 import ExpensesPage from "./pages/expenses/ExpensesPage";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 function App() {
   const [theme, setTheme] = useState("light");
@@ -43,43 +44,83 @@ function App() {
 
         <Route
           path="/dashboard"
-          element={<DashboardPage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <DashboardPage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/inventory"
-          element={<InventoryPage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <InventoryPage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/point-of-sale"
-          element={<PointOfSalePage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <PointOfSalePage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/sales-history"
-          element={<SalesHistoryPage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <SalesHistoryPage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/employees"
-          element={<EmployeesPage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <EmployeesPage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/payroll"
-          element={<PayrollPage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <PayrollPage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/clients"
-          element={<ClientsPage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <ClientsPage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/branches"
-          element={<BranchesPage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <BranchesPage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/promotions"
-          element={<PromotionsPage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <PromotionsPage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/expenses"
-          element={<ExpensesPage theme={theme} onToggleTheme={toggleTheme} />}
+          element={
+            <ProtectedRoute>
+              <ExpensesPage theme={theme} onToggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />

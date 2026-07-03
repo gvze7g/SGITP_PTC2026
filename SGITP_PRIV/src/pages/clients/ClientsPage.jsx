@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import ClientsTable from '../../components/clients/ClientsTable';
@@ -27,18 +28,25 @@ function ClientsPage({ theme, onToggleTheme }) {
 
   return (
     <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
-      <div className="page-title-row">
-        <h1 className="admin-page-title">Clientes</h1>
+      <motion.div
+        className="clients-page-shell"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: 'easeOut' }}
+      >
+        <div className="page-title-row">
+          <h1 className="admin-page-title">Clientes</h1>
 
-        <button type="button" className="admin-primary-btn" onClick={handleCreate}>
-          + Nuevo cliente
-        </button>
-      </div>
+          <button type="button" className="admin-primary-btn" onClick={handleCreate}>
+            + Nuevo cliente
+          </button>
+        </div>
 
-      <ClientsTable
-        onEditClient={handleEdit}
-        onDeleteClient={() => setDeleteModalOpen(true)}
-      />
+        <ClientsTable
+          onEditClient={handleEdit}
+          onDeleteClient={() => setDeleteModalOpen(true)}
+        />
+      </motion.div>
 
       <ClientFormModal
         open={clientModalOpen}

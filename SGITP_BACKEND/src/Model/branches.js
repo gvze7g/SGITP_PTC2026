@@ -14,10 +14,6 @@ const branchSchema = new Schema({
     email: {
         type: String
     },
-     employee_id:{
-        type: mongoose.Types.ObjectId,
-        ref: "Employee"
-    },
     isActive: {
         type : Boolean  
     },

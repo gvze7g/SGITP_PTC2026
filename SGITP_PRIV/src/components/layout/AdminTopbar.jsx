@@ -2,13 +2,40 @@ import { Bell, Menu, Moon, Search, Settings, Sun, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+const API_URL = 'http://localhost:4000';
+
 function AdminTopbar({ theme, onToggleTheme, onOpenMobileMenu }) {
   const isDark = theme === 'dark';
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    toast.success('Sesión cerrada correctamente.');
-    navigate('/');
+  const clearClientCookies = () => {
+    const cookieNames = ['token', 'authToken', 'accessToken', 'refreshToken', 'connect.sid'];
+
+    cookieNames.forEach((cookieName) => {
+      document.cookie = `${cookieName}=; Max-Age=0; path=/`;
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    });
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('No se pudo cerrar sesión en el servidor.');
+      }
+
+      toast.success('Sesión cerrada correctamente.');
+    } catch (error) {
+      console.log('logout error:', error);
+      toast.error('No se pudo cerrar la sesión correctamente.');
+    } finally {
+      clearClientCookies();
+      navigate('/', { replace: true });
+    }
   };
 
   return (
