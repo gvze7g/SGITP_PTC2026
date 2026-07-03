@@ -1,12 +1,20 @@
-import { Filter, Pencil, Trash2 } from "lucide-react";
+import { Filter, Pencil, Search, Trash2 } from "lucide-react";
 
 function InventoryTable({
   products = [],
   loading,
+  activeTab = "all",
+  filtersOpen = false,
+  filters,
+  onToggleFilters,
+  onTabChange,
+  onChangeFilter,
+  onSearchSubmit,
+  onApplyPriceFilter,
+  onResetFilters,
   onEditProduct,
   onDeleteProduct,
 }) {
-  // calcular stock total de variantes
   const getTotalStock = (variants = []) => {
     if (!Array.isArray(variants)) return 0;
 
@@ -15,7 +23,6 @@ function InventoryTable({
     }, 0);
   };
 
-  // obtener imagen principal
   const getMainImage = (product) => {
     if (product?.images?.length > 0) {
       return product.images[0].image;
@@ -24,23 +31,131 @@ function InventoryTable({
     return "https://via.placeholder.com/80x80?text=Sin+imagen";
   };
 
+  const getStockLabel = (totalStock) => {
+    if (totalStock <= 5) return "Stock bajo";
+    if (totalStock <= 10) return "Stock medio";
+    return "Stock estable";
+  };
+
+  const handlePriceInputChange = (field, value) => {
+    const sanitized = value.replace(/[^\d.]/g, "");
+    onChangeFilter?.(field, sanitized);
+  };
+
   return (
     <section className="inventory-panel">
       <div className="inventory-panel-header">
         <div className="inventory-tabs">
-          <button type="button" className="inventory-tab inventory-tab-active">
+          <button
+            type="button"
+            className={`inventory-tab ${activeTab === "all" ? "inventory-tab-active" : ""}`}
+            onClick={() => onTabChange?.("all")}
+          >
             PRODUCTOS
           </button>
-          <button type="button" className="inventory-tab">
+
+          <button
+            type="button"
+            className={`inventory-tab ${activeTab === "low-stock" ? "inventory-tab-active" : ""}`}
+            onClick={() => onTabChange?.("low-stock")}
+          >
             STOCK BAJO
           </button>
         </div>
 
-        <button type="button" className="inventory-filter-btn">
+        <button
+          type="button"
+          className="inventory-filter-btn"
+          onClick={onToggleFilters}
+        >
           <Filter size={18} strokeWidth={1.8} />
           Filtros
         </button>
       </div>
+
+      {filtersOpen ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "2fr 1fr 1fr auto auto",
+            gap: "12px",
+            marginBottom: "18px",
+            alignItems: "end",
+          }}
+        >
+          <div className="client-form-group">
+            <label>Buscar por nombre</label>
+            <div style={{ position: "relative" }}>
+              <input
+                type="text"
+                className="form-editable-input"
+                placeholder="Ej. Body, Peleles, Vestido..."
+                value={filters.search}
+                onChange={(event) => onChangeFilter?.("search", event.target.value)}
+                style={{ paddingRight: "42px" }}
+              />
+              <button
+                type="button"
+                onClick={onSearchSubmit}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+                aria-label="Buscar productos"
+              >
+                <Search size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div className="client-form-group">
+            <label>Precio mínimo</label>
+            <input
+              type="text"
+              className="form-editable-input"
+              placeholder="0.00"
+              value={filters.minPrice}
+              onChange={(event) =>
+                handlePriceInputChange("minPrice", event.target.value)
+              }
+            />
+          </div>
+
+          <div className="client-form-group">
+            <label>Precio máximo</label>
+            <input
+              type="text"
+              className="form-editable-input"
+              placeholder="999.99"
+              value={filters.maxPrice}
+              onChange={(event) =>
+                handlePriceInputChange("maxPrice", event.target.value)
+              }
+            />
+          </div>
+
+          <button
+            type="button"
+            className="admin-secondary-btn"
+            onClick={onApplyPriceFilter}
+          >
+            Aplicar
+          </button>
+
+          <button
+            type="button"
+            className="admin-secondary-btn"
+            onClick={onResetFilters}
+          >
+            Limpiar
+          </button>
+        </div>
+      ) : null}
 
       <div className="inventory-table-wrap">
         <div className="inventory-head-row">
@@ -55,17 +170,18 @@ function InventoryTable({
         {loading ? (
           <div style={{ padding: "20px" }}>Cargando productos...</div>
         ) : products.length === 0 ? (
-          <div style={{ padding: "20px" }}>No hay productos registrados.</div>
+          <div style={{ padding: "20px" }}>
+            {activeTab === "low-stock"
+              ? "No hay productos con stock bajo."
+              : "No hay productos registrados."}
+          </div>
         ) : (
           products.map((product) => {
             const firstVariant = product.variants?.[0] || {};
             const totalStock = getTotalStock(product.variants);
 
             return (
-              <article
-                key={product._id}
-                className="inventory-row"
-              >
+              <article key={product._id} className="inventory-row">
                 <div className="inventory-image-cell">
                   <img src={getMainImage(product)} alt={product.name} />
                 </div>
@@ -88,6 +204,7 @@ function InventoryTable({
 
                 <div className="inventory-stock-cell">
                   <span>Total en stock: {totalStock}</span>
+                  <span>{getStockLabel(totalStock)}</span>
                   <span>
                     Variantes: {Array.isArray(product.variants) ? product.variants.length : 0}
                   </span>

@@ -8,6 +8,8 @@ import { config } from "../config.js";
 
 const registerCustomerController = {};
 
+const ALLOWED_CUSTOMER_TYPES = ["Client", "Wholesale"];
+
 registerCustomerController.register = async (req, res) => {
   try {
     let {
@@ -22,6 +24,16 @@ registerCustomerController.register = async (req, res) => {
       loginAttempts,
       timeOut,
     } = req.body;
+
+    full_name = full_name?.trim();
+    email = email?.trim();
+
+    // para registro público: por defecto Client
+    customer_type = customer_type?.trim() || "Client";
+
+    if (!ALLOWED_CUSTOMER_TYPES.includes(customer_type)) {
+      return res.status(400).json({ message: "Invalid customer type" });
+    }
 
     const existCustomer = await customerModel.findOne({ email });
     if (existCustomer) {

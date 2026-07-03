@@ -6,7 +6,6 @@ function EmployeesTable({
   onEditEmployee,
   onDeleteEmployee,
 }) {
-  // mostrar el nombre de la sucursal si viene poblada
   const getBranchName = (employee) => {
     if (employee?.branch_id && typeof employee.branch_id === "object") {
       return employee.branch_id.name || "Sucursal asignada";
@@ -19,9 +18,14 @@ function EmployeesTable({
     return "No asignada";
   };
 
-  // mostrar estado simple
   const getStatusLabel = (employee) => {
     return employee?.isVerified ? "Activo" : "Pendiente";
+  };
+
+  const getRoleLabel = (role) => {
+    if (role === "Administrator") return "Administrador";
+    if (role === "Employee") return "Empleado";
+    return role || "Sin rol";
   };
 
   return (
@@ -43,7 +47,7 @@ function EmployeesTable({
           employees.map((employee) => (
             <article key={employee._id} className="employees-row">
               <div className="employees-name-cell">{employee.full_name}</div>
-              <div className="employees-role-cell">{employee.role || "Sin rol"}</div>
+              <div className="employees-role-cell">{getRoleLabel(employee.role)}</div>
               <div className="employees-branch-cell">{getBranchName(employee)}</div>
               <div className="employees-status-cell">{getStatusLabel(employee)}</div>
 

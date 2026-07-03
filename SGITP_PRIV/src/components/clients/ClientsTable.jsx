@@ -1,60 +1,66 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from "lucide-react";
 
 const CLIENTS = [
   {
     id: 1,
-    fullName: 'Paul Urquilla',
-    type: 'Mayorista',
-    phone: '+503 4343-4343',
-    email: 'sofia.v@editorial.com',
-    addressLabel: 'Casa',
-    phones: ['+503 4343-4343'],
+    fullName: "Paul Urquilla",
+    type: "Wholesale",
+    phone: "+503 4343-4343",
+    email: "sofia.v@editorial.com",
+    addressLabel: "Casa",
+    phones: ["+503 4343-4343"],
     addresses: [
       {
-        label: 'Casa',
-        street: 'Colonia Escalón #12',
-        city: 'San Salvador',
-        reference: 'Frente al parque',
+        label: "Casa",
+        street: "Colonia Escalón #12",
+        city: "San Salvador",
+        reference: "Frente al parque",
       },
     ],
   },
   {
     id: 2,
-    fullName: 'Leonel Adrian',
-    type: 'Mayorista',
-    phone: '+503 4343-4343',
-    email: 'sofia.v@editorial.com',
-    addressLabel: 'Oficina',
-    phones: ['+503 4343-4343'],
+    fullName: "Leonel Adrian",
+    type: "Wholesale",
+    phone: "+503 4343-4343",
+    email: "sofia.v@editorial.com",
+    addressLabel: "Oficina",
+    phones: ["+503 4343-4343"],
     addresses: [
       {
-        label: 'Oficina',
-        street: 'Avenida Olímpica 45',
-        city: 'San Salvador',
-        reference: 'Edificio azul',
+        label: "Oficina",
+        street: "Avenida Olímpica 45",
+        city: "San Salvador",
+        reference: "Edificio azul",
       },
     ],
   },
   {
     id: 3,
-    fullName: 'Eduardo Galvez',
-    type: 'Mayorista',
-    phone: '+503 4343-4343',
-    email: 'sofia.v@editorial.com',
-    addressLabel: 'Casa',
-    phones: ['+503 4343-4343'],
+    fullName: "Eduardo Galvez",
+    type: "Wholesale",
+    phone: "+503 4343-4343",
+    email: "sofia.v@editorial.com",
+    addressLabel: "Casa",
+    phones: ["+503 4343-4343"],
     addresses: [
       {
-        label: 'Casa',
-        street: 'Residencial Las Flores',
-        city: 'Santa Tecla',
-        reference: 'Portón negro',
+        label: "Casa",
+        street: "Residencial Las Flores",
+        city: "Santa Tecla",
+        reference: "Portón negro",
       },
     ],
   },
 ];
 
 function ClientsTable({ onEditClient, onDeleteClient }) {
+  const getClientTypeLabel = (type) => {
+    if (type === "Client") return "Cliente";
+    if (type === "Wholesale") return "Mayorista";
+    return type || "Cliente";
+  };
+
   return (
     <section className="clients-panel">
       <div className="clients-table-wrap">
@@ -71,7 +77,7 @@ function ClientsTable({ onEditClient, onDeleteClient }) {
             <div className="clients-name-cell">{client.fullName}</div>
 
             <div className="clients-type-cell">
-              <span className="clients-type-badge">{client.type}</span>
+              <span className="clients-type-badge">{getClientTypeLabel(client.type)}</span>
             </div>
 
             <div className="clients-contact-cell">
@@ -109,7 +115,9 @@ function ClientsTable({ onEditClient, onDeleteClient }) {
 
         <div className="clients-pagination">
           <button type="button">‹</button>
-          <button type="button" className="clients-page-active">1</button>
+          <button type="button" className="clients-page-active">
+            1
+          </button>
           <button type="button">2</button>
           <button type="button">3</button>
           <button type="button">›</button>

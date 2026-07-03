@@ -2,15 +2,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import CustomDropdown from "../ui/CustomDropdown";
+import DateField from "../ui/DateField";
+
+const EMPLOYEE_ROLE_OPTIONS = [
+  { value: "Administrator", label: "Administrador" },
+  { value: "Employee", label: "Empleado" },
+];
 
 const EMPTY_FORM = {
   fullName: "",
   email: "",
   phone: "",
-  role: "Administrador",
+  role: "Administrator",
   branch: "",
-  hireDate: "",
-  birthDate: "",
+  hireDate: null,
+  birthDate: null,
   temporaryPassword: "",
 };
 
@@ -25,6 +32,7 @@ function CreateEmployeeModal({
   const [showPassword, setShowPassword] = useState(false);
 
   const isEditMode = useMemo(() => Boolean(employeeData), [employeeData]);
+  const isAdministratorRole = formData.role === "Administrator";
 
   const lastNameWarningRef = useRef(0);
   const lastPhoneWarningRef = useRef(0);
@@ -37,14 +45,15 @@ function CreateEmployeeModal({
         fullName: employeeData.full_name || "",
         email: employeeData.email || "",
         phone: employeeData.main_phone || "",
-        role: employeeData.role || "Administrador",
+        role:
+          employeeData.role === "Administrador"
+            ? "Administrator"
+            : employeeData.role === "Empleado"
+            ? "Employee"
+            : employeeData.role || "Administrator",
         branch: "",
-        hireDate: employeeData.hire_date
-          ? new Date(employeeData.hire_date).toISOString().split("T")[0]
-          : "",
-        birthDate: employeeData.birth_date
-          ? new Date(employeeData.birth_date).toISOString().split("T")[0]
-          : "",
+        hireDate: employeeData.hire_date ? new Date(employeeData.hire_date) : null,
+        birthDate: employeeData.birth_date ? new Date(employeeData.birth_date) : null,
         temporaryPassword: "",
       });
     } else {
@@ -57,10 +66,18 @@ function CreateEmployeeModal({
   }, [open, employeeData]);
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      };
+
+      if (field === "role" && value !== "Administrator") {
+        updated.temporaryPassword = "";
+      }
+
+      return updated;
+    });
   };
 
   const showRateLimitedWarning = (ref, message) => {
@@ -140,12 +157,22 @@ function CreateEmployeeModal({
       return false;
     }
 
-    if (!isEditMode && !formData.temporaryPassword.trim()) {
-      toast.error("La contraseña temporal es obligatoria.");
+    if (!["Administrator", "Employee"].includes(formData.role)) {
+      toast.error("Rol de empleado inválido.");
       return false;
     }
 
     if (
+      formData.role === "Administrator" &&
+      !isEditMode &&
+      !formData.temporaryPassword.trim()
+    ) {
+      toast.error("La contraseña temporal es obligatoria para administradores.");
+      return false;
+    }
+
+    if (
+      formData.role === "Administrator" &&
       formData.temporaryPassword.trim() &&
       formData.temporaryPassword.trim().length < 6
     ) {
@@ -172,15 +199,19 @@ function CreateEmployeeModal({
             },
           ]
         : [],
-      birth_date: formData.birthDate || null,
-      hire_date: formData.hireDate || null,
-      role: formData.role.trim() || "Administrador",
+      birth_date: formData.birthDate
+        ? formData.birthDate.toISOString().split("T")[0]
+        : null,
+      hire_date: formData.hireDate
+        ? formData.hireDate.toISOString().split("T")[0]
+        : null,
+      role: formData.role,
       isVerified: true,
       loginAttempts: 0,
       timeOut: null,
     };
 
-    if (formData.temporaryPassword.trim()) {
+    if (formData.role === "Administrator" && formData.temporaryPassword.trim()) {
       payload.password = formData.temporaryPassword.trim();
     }
 
@@ -193,7 +224,6 @@ function CreateEmployeeModal({
     if (!validateForm()) return;
 
     const payload = buildPayload();
-
     await onSubmit?.(payload, isEditMode);
   };
 
@@ -208,17 +238,48 @@ function CreateEmployeeModal({
         >
           <motion.div
             className="create-employee-modal"
-            initial={{ opacity: 0, scale: 0.96, y: 24 }}
+            initial={{ opacity: 0, scale: 0.97, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 18 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            exit={{ opacity: 0, scale: 0.97, y: 18 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            style={{
+              width: "min(820px, 94vw)",
+              maxHeight: "90vh",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              borderRadius: "18px",
+            }}
           >
-            <div className="create-employee-header">
+            <div
+              className="create-employee-header"
+              style={{
+                padding: "18px 22px 12px",
+                flexShrink: 0,
+              }}
+            >
               <h2>{isEditMode ? "Editar empleado" : "Registrar nuevo empleado"}</h2>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="create-employee-body">
+            <form
+              onSubmit={handleSubmit}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                overflowY: "auto",
+                overflowX: "hidden",
+                padding: "0 22px 18px",
+              }}
+            >
+              <div
+                className="create-employee-body"
+                style={{
+                  padding: 0,
+                  display: "grid",
+                  gap: "16px",
+                }}
+              >
                 <div className="employee-section">
                   <div className="employee-section-title">DATOS PERSONALES</div>
 
@@ -231,57 +292,55 @@ function CreateEmployeeModal({
                     />
                   </div>
 
-                  <div className="employee-line-field">
-                    <label>Correo Electrónico</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(event) => handleChange("email", event.target.value)}
-                    />
-                  </div>
-
-                  <div className="employee-line-field">
-                    <label>Teléfono</label>
-                    <input
-                      type="text"
-                      value={formData.phone}
-                      onChange={(event) => handlePhoneChange(event.target.value)}
-                    />
-                  </div>
-
-                  <div className="employee-grid-two">
+                  <div className="employee-grid-two" style={{ gap: "14px" }}>
                     <div className="employee-line-field">
-                      <label>Fecha de contratación</label>
+                      <label>Correo Electrónico</label>
                       <input
-                        type="date"
-                        value={formData.hireDate}
-                        onChange={(event) => handleChange("hireDate", event.target.value)}
+                        type="email"
+                        value={formData.email}
+                        onChange={(event) => handleChange("email", event.target.value)}
                       />
                     </div>
 
                     <div className="employee-line-field">
-                      <label>Fecha de nacimiento</label>
+                      <label>Teléfono</label>
                       <input
-                        type="date"
-                        value={formData.birthDate}
-                        onChange={(event) => handleChange("birthDate", event.target.value)}
+                        type="text"
+                        value={formData.phone}
+                        onChange={(event) => handlePhoneChange(event.target.value)}
                       />
                     </div>
+                  </div>
+
+                  <div className="employee-grid-two" style={{ gap: "14px" }}>
+                    <DateField
+                      label="Fecha de contratación"
+                      value={formData.hireDate}
+                      onChange={(date) => handleChange("hireDate", date)}
+                      placeholder="Seleccionar fecha"
+                      maxDate={new Date()}
+                    />
+
+                    <DateField
+                      label="Fecha de nacimiento"
+                      value={formData.birthDate}
+                      onChange={(date) => handleChange("birthDate", date)}
+                      placeholder="Seleccionar fecha"
+                      maxDate={new Date()}
+                    />
                   </div>
                 </div>
 
                 <div className="employee-section">
                   <div className="employee-section-title">ACCESOS Y PERMISOS</div>
 
-                  <div className="employee-grid-two">
-                    <div className="employee-line-field">
-                      <label>Rol del sistema</label>
-                      <input
-                        type="text"
-                        value={formData.role}
-                        onChange={(event) => handleChange("role", event.target.value)}
-                      />
-                    </div>
+                  <div className="employee-grid-two" style={{ gap: "14px" }}>
+                    <CustomDropdown
+                      label="Rol del sistema"
+                      value={formData.role}
+                      options={EMPLOYEE_ROLE_OPTIONS}
+                      onChange={(value) => handleChange("role", value)}
+                    />
 
                     <div className="employee-line-field">
                       <label>Sucursal asignada</label>
@@ -297,9 +356,11 @@ function CreateEmployeeModal({
 
                   <div className="employee-line-field">
                     <label>
-                      {isEditMode
-                        ? "Nueva contraseña temporal (opcional)"
-                        : "Contraseña temporal"}
+                      {isAdministratorRole
+                        ? isEditMode
+                          ? "Nueva contraseña temporal (opcional)"
+                          : "Contraseña temporal"
+                        : "Contraseña deshabilitada para empleados"}
                     </label>
 
                     <div style={{ position: "relative" }}>
@@ -310,6 +371,12 @@ function CreateEmployeeModal({
                           handleChange("temporaryPassword", event.target.value)
                         }
                         style={{ paddingRight: "44px" }}
+                        disabled={!isAdministratorRole}
+                        placeholder={
+                          isAdministratorRole
+                            ? "Ingresa una contraseña temporal"
+                            : "Los empleados no ingresan al sistema privado"
+                        }
                       />
 
                       <button
@@ -322,8 +389,13 @@ function CreateEmployeeModal({
                           transform: "translateY(-50%)",
                           background: "transparent",
                           border: "none",
-                          cursor: "pointer",
+                          cursor: isAdministratorRole ? "pointer" : "not-allowed",
+                          opacity: isAdministratorRole ? 1 : 0.5,
                         }}
+                        aria-label={
+                          showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                        }
+                        disabled={!isAdministratorRole}
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
@@ -337,7 +409,10 @@ function CreateEmployeeModal({
                   display: "flex",
                   justifyContent: "flex-end",
                   gap: "12px",
-                  marginTop: "20px",
+                  marginTop: "16px",
+                  paddingTop: "14px",
+                  borderTop: "1px solid var(--admin-border-soft)",
+                  flexWrap: "wrap",
                 }}
               >
                 <button

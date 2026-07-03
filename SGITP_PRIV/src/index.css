@@ -3561,3 +3561,566 @@ body.theme-dark {
     align-items: flex-start;
   }
 }
+
+/* =========================
+   APP FIELD SYSTEM
+========================= */
+
+.app-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.app-field-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+/* =========================
+   CUSTOM DROPDOWN
+========================= */
+
+.app-dropdown {
+  position: relative;
+}
+
+.app-dropdown-trigger,
+.app-date-trigger {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--admin-border);
+  background: color-mix(in srgb, var(--admin-surface-2) 55%, transparent);
+  border-radius: 12px;
+  color: var(--admin-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  transition: 0.18s ease;
+}
+
+.app-dropdown-trigger:hover,
+.app-date-trigger:hover {
+  border-color: color-mix(in srgb, var(--admin-accent) 38%, var(--admin-border));
+}
+
+.app-dropdown.is-open .app-dropdown-trigger,
+.app-dropdown-trigger:focus,
+.app-date-trigger:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-accent) 16%, transparent);
+}
+
+.app-dropdown.is-disabled .app-dropdown-trigger,
+.app-date-trigger.is-disabled,
+.app-date-trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.app-dropdown-icon,
+.app-date-icon {
+  flex-shrink: 0;
+  color: var(--admin-text-soft);
+}
+
+.app-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+.app-dropdown-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--admin-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 14px;
+  cursor: pointer;
+  transition: 0.16s ease;
+}
+
+.app-dropdown-item:hover {
+  background: color-mix(in srgb, var(--admin-surface-2) 70%, transparent);
+}
+
+.app-dropdown-item.is-selected {
+  background: color-mix(in srgb, var(--admin-accent) 10%, transparent);
+  color: var(--admin-accent);
+}
+
+.has-value {
+  color: var(--admin-text);
+}
+
+.is-placeholder {
+  color: var(--admin-text-soft);
+}
+
+/* =========================
+   DATEPICKER
+========================= */
+
+.app-datepicker-popper {
+  z-index: 40 !important;
+}
+
+.app-datepicker-calendar {
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background: var(--admin-surface) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18) !important;
+  padding: 8px !important;
+}
+
+.react-datepicker {
+  border: none !important;
+  background: transparent !important;
+  color: var(--admin-text) !important;
+}
+
+.react-datepicker__header {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+.app-datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 6px 14px;
+}
+
+.app-datepicker-current {
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.app-datepicker-nav {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--admin-border);
+  background: color-mix(in srgb, var(--admin-surface-2) 70%, transparent);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.react-datepicker__day-name,
+.react-datepicker__day,
+.react-datepicker__time-name {
+  color: var(--admin-text) !important;
+}
+
+.react-datepicker__day:hover {
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--admin-accent) 12%, transparent) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  border-radius: 10px !important;
+  background: var(--admin-accent) !important;
+  color: white !important;
+}
+
+/* =========================
+   REUSABLE MODAL SHELL
+========================= */
+
+.app-modal-shell {
+  width: min(calc(100vw - 28px), 920px);
+  max-height: min(88vh, 860px);
+  display: flex;
+  flex-direction: column;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.app-modal-sm {
+  width: min(calc(100vw - 28px), 640px);
+}
+
+.app-modal-md {
+  width: min(calc(100vw - 28px), 820px);
+}
+
+.app-modal-lg {
+  width: min(calc(100vw - 28px), 980px);
+}
+
+.app-modal-shell-header {
+  padding: 20px 22px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--admin-border-soft);
+}
+
+.app-modal-shell-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: var(--admin-text);
+}
+
+.app-modal-close-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--admin-border);
+  background: color-mix(in srgb, var(--admin-surface-2) 65%, transparent);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.app-modal-shell-body {
+  padding: 18px 22px;
+  overflow: auto;
+}
+
+.app-modal-shell-footer {
+  padding: 14px 22px 18px;
+  border-top: 1px solid var(--admin-border-soft);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* =========================
+   MODAL CONTENT COMPACT
+========================= */
+
+.create-employee-modal,
+.client-form-modal,
+.branch-form-modal,
+.promotion-form-modal,
+.expense-form-modal,
+.payroll-receipt-modal,
+.sale-details-modal {
+  width: min(calc(100vw - 28px), 860px) !important;
+  max-height: 88vh !important;
+  border-radius: 18px !important;
+}
+
+.create-employee-header,
+.create-employee-body,
+.create-employee-footer,
+.client-form-header,
+.client-form-body,
+.client-form-footer,
+.branch-form-header,
+.branch-form-body,
+.branch-form-footer,
+.promotion-form-header,
+.promotion-form-body,
+.promotion-form-footer,
+.expense-form-header,
+.expense-form-body,
+.expense-form-footer,
+.sale-details-header,
+.sale-details-body,
+.sale-details-footer,
+.payroll-receipt-header,
+.payroll-receipt-body,
+.payroll-receipt-footer {
+  padding-left: 22px !important;
+  padding-right: 22px !important;
+}
+
+.create-employee-header,
+.client-form-header,
+.branch-form-header,
+.promotion-form-header,
+.expense-form-header,
+.sale-details-header,
+.payroll-receipt-header {
+  padding-top: 20px !important;
+  padding-bottom: 14px !important;
+}
+
+.create-employee-body,
+.client-form-body,
+.branch-form-body,
+.promotion-form-body,
+.expense-form-body,
+.sale-details-body,
+.payroll-receipt-body {
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+}
+
+.create-employee-footer,
+.client-form-footer,
+.branch-form-footer,
+.promotion-form-footer,
+.expense-form-footer,
+.sale-details-footer,
+.payroll-receipt-footer {
+  padding-top: 14px !important;
+  padding-bottom: 18px !important;
+  gap: 10px !important;
+}
+
+.employee-section,
+.client-address-card,
+.promotion-card,
+.metric-card {
+  min-width: 0;
+}
+
+.employee-grid-two,
+.client-form-row,
+.branch-form-row,
+.promotion-form-row,
+.expense-form-row,
+.expense-form-row-top,
+.payroll-summary-grid,
+.sale-details-grid,
+.sales-filters-grid {
+  gap: 14px !important;
+}
+
+.admin-primary-btn,
+.admin-secondary-btn,
+.modal-save-btn,
+.modal-cancel-text-btn,
+.promotion-action-btn {
+  min-height: 42px;
+  padding-inline: 16px;
+  border-radius: 12px;
+}
+
+/* =========================
+   RESPONSIVE KEEP
+========================= */
+
+@media (max-width: 900px) {
+  .app-modal-shell,
+  .app-modal-sm,
+  .app-modal-md,
+  .app-modal-lg,
+  .create-employee-modal,
+  .client-form-modal,
+  .branch-form-modal,
+  .promotion-form-modal,
+  .expense-form-modal,
+  .payroll-receipt-modal,
+  .sale-details-modal {
+    width: min(calc(100vw - 18px), 100%) !important;
+    max-height: 92vh !important;
+  }
+
+  .app-modal-shell-header,
+  .app-modal-shell-body,
+  .app-modal-shell-footer,
+  .create-employee-header,
+  .create-employee-body,
+  .create-employee-footer,
+  .client-form-header,
+  .client-form-body,
+  .client-form-footer,
+  .branch-form-header,
+  .branch-form-body,
+  .branch-form-footer,
+  .promotion-form-header,
+  .promotion-form-body,
+  .promotion-form-footer,
+  .expense-form-header,
+  .expense-form-body,
+  .expense-form-footer,
+  .sale-details-header,
+  .sale-details-body,
+  .sale-details-footer,
+  .payroll-receipt-header,
+  .payroll-receipt-body,
+  .payroll-receipt-footer {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .app-modal-shell-footer,
+  .client-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* CAMPOS EDITABLES MÁS CLAROS */
+.form-editable-input,
+.pos-input-field,
+.pos-textarea-field,
+.modal-line-input,
+.modal-description-area,
+.client-form-group input,
+.branch-form-group input,
+.expense-line-group-full input,
+.expense-line-group-full textarea,
+.employee-line-field input {
+  width: 100%;
+  border: 1px solid var(--admin-border);
+  background: color-mix(in srgb, var(--admin-surface-2) 78%, white 22%);
+  color: var(--admin-text);
+  border-radius: 12px;
+  padding: 12px 14px;
+  outline: none;
+  transition: 0.18s ease;
+  font: inherit;
+}
+
+.form-editable-input::placeholder,
+.pos-input-field::placeholder,
+.pos-textarea-field::placeholder,
+.modal-line-input::placeholder,
+.modal-description-area::placeholder {
+  color: var(--admin-text-soft);
+}
+
+.form-editable-input:focus,
+.pos-input-field:focus,
+.pos-textarea-field:focus,
+.modal-line-input:focus,
+.modal-description-area:focus,
+.client-form-group input:focus,
+.branch-form-group input:focus,
+.expense-line-group-full input:focus,
+.expense-line-group-full textarea:focus,
+.employee-line-field input:focus {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-accent) 16%, transparent);
+}
+
+/* POS */
+.pos-textarea-field {
+  min-height: 96px;
+  resize: none;
+}
+
+.pos-editable-field {
+  margin-top: 6px;
+}
+
+/* MÁS AIRE EN SUCURSALES Y GASTOS */
+.branch-form-group,
+.client-form-group,
+.expense-line-group-full,
+.employee-line-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.branch-form-row,
+.client-form-row,
+.expense-form-row,
+.expense-form-row-top,
+.employee-grid-two {
+  gap: 16px !important;
+}
+
+/* DATEPICKER SÓLIDO */
+.app-datepicker-popper {
+  z-index: 70 !important;
+}
+
+.app-datepicker-calendar,
+.react-datepicker {
+  background: var(--admin-surface) !important;
+  opacity: 1 !important;
+}
+
+.react-datepicker {
+  border: none !important;
+  color: var(--admin-text) !important;
+}
+
+.react-datepicker__month-container {
+  background: var(--admin-surface) !important;
+}
+
+.react-datepicker__header {
+  background: var(--admin-surface) !important;
+  border-bottom: 1px solid var(--admin-border-soft) !important;
+}
+
+.app-datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 6px 12px;
+}
+
+.app-datepicker-selectors {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-datepicker-select {
+  border: 1px solid var(--admin-border);
+  background: color-mix(in srgb, var(--admin-surface-2) 70%, white 10%);
+  color: var(--admin-text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  outline: none;
+}
+
+.app-datepicker-select:focus {
+  border-color: var(--admin-accent);
+}
+
+.app-datepicker-nav {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--admin-border);
+  background: color-mix(in srgb, var(--admin-surface-2) 70%, white 10%);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.react-datepicker__day-name,
+.react-datepicker__day,
+.react-datepicker__time-name {
+  color: var(--admin-text) !important;
+}
+
+.react-datepicker__day:hover {
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--admin-accent) 12%, transparent) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  border-radius: 10px !important;
+  background: var(--admin-accent) !important;
+  color: #fff !important;
+}

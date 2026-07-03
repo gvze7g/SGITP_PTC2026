@@ -7,35 +7,35 @@ const router = Router();
 router.get(
   "/",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Contabilidad"),
+  validateEmployeeRole("Administrator"),
   paymentController.getPayments
 );
 
 router.get(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Contabilidad"),
+  validateEmployeeRole("Administrator"),
   paymentController.getPaymentById
 );
 
 router.post(
   "/",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Contabilidad"),
+  validateEmployeeRole("Administrator"),
   paymentController.insertPayment
 );
 
 router.put(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Contabilidad"),
+  validateEmployeeRole("Administrator"),
   paymentController.updatePayment
 );
 
 router.delete(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador"),
+  validateEmployeeRole("Administrator"),
   paymentController.deletePayment
 );
 

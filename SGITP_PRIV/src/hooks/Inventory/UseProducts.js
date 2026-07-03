@@ -3,13 +3,28 @@ import { useCallback, useState } from "react";
 const API_URL = "http://localhost:4000";
 
 function useProducts() {
-  // lista de productos
   const [products, setProducts] = useState([]);
-
-  // loading general de peticiones
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
+
+  const handleJsonResponse = async (response, fallbackMessage) => {
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = data.message || fallbackMessage;
+      setError(message);
+      return {
+        success: false,
+        message,
+        data,
+      };
+    }
+
+    return {
+      success: true,
+      data,
+    };
+  };
 
   const getProducts = useCallback(async () => {
     try {
@@ -21,22 +36,15 @@ function useProducts() {
         credentials: "include",
       });
 
-      const data = await response.json();
+      const result = await handleJsonResponse(
+        response,
+        "No se pudieron obtener los productos."
+      );
 
-      if (!response.ok) {
-        setError(data.message || "No se pudieron obtener los productos.");
-        return {
-          success: false,
-          message: data.message || "No se pudieron obtener los productos.",
-        };
-      }
+      if (!result.success) return result;
 
-      setProducts(Array.isArray(data) ? data : []);
-
-      return {
-        success: true,
-        data,
-      };
+      setProducts(Array.isArray(result.data) ? result.data : []);
+      return result;
     } catch (err) {
       console.log("getProducts error:", err);
       setError("Error de conexión con el servidor.");
@@ -50,7 +58,137 @@ function useProducts() {
     }
   }, []);
 
-  // crear producto
+  const getLowStockProducts = useCallback(async (threshold = 5) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(
+        `${API_URL}/api/products/status/low-stock?threshold=${threshold}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const result = await handleJsonResponse(
+        response,
+        "No se pudieron obtener los productos con stock bajo."
+      );
+
+      if (!result.success) return result;
+
+      setProducts(Array.isArray(result.data) ? result.data : []);
+      return result;
+    } catch (err) {
+      console.log("getLowStockProducts error:", err);
+      setError("Error de conexión con el servidor.");
+
+      return {
+        success: false,
+        message: "Error de conexión con el servidor.",
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const searchProductsByName = useCallback(async (name = "") => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_URL}/api/products/search`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name }),
+      });
+
+      const result = await handleJsonResponse(
+        response,
+        "No se pudieron buscar los productos."
+      );
+
+      if (!result.success) return result;
+
+      setProducts(Array.isArray(result.data) ? result.data : []);
+      return result;
+    } catch (err) {
+      console.log("searchProductsByName error:", err);
+      setError("Error de conexión con el servidor.");
+
+      return {
+        success: false,
+        message: "Error de conexión con el servidor.",
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getProductsByPriceRange = useCallback(async (minPrice = "", maxPrice = "") => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_URL}/api/products/price-range`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ minPrice, maxPrice }),
+      });
+
+      const result = await handleJsonResponse(
+        response,
+        "No se pudieron filtrar los productos por precio."
+      );
+
+      if (!result.success) return result;
+
+      setProducts(Array.isArray(result.data) ? result.data : []);
+      return result;
+    } catch (err) {
+      console.log("getProductsByPriceRange error:", err);
+      setError("Error de conexión con el servidor.");
+
+      return {
+        success: false,
+        message: "Error de conexión con el servidor.",
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getProductsCount = useCallback(async () => {
+    try {
+      setError("");
+
+      const response = await fetch(`${API_URL}/api/products/status/count`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      return await handleJsonResponse(
+        response,
+        "No se pudieron obtener las estadísticas del inventario."
+      );
+    } catch (err) {
+      console.log("getProductsCount error:", err);
+      setError("Error de conexión con el servidor.");
+
+      return {
+        success: false,
+        message: "Error de conexión con el servidor.",
+      };
+    }
+  }, []);
+
   const createProduct = async (formData) => {
     try {
       setLoading(true);
@@ -62,20 +200,7 @@ function useProducts() {
         body: formData,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "No se pudo crear el producto.");
-        return {
-          success: false,
-          message: data.message || "No se pudo crear el producto.",
-        };
-      }
-
-      return {
-        success: true,
-        data,
-      };
+      return await handleJsonResponse(response, "No se pudo crear el producto.");
     } catch (err) {
       console.log("createProduct error:", err);
       setError("Error de conexión con el servidor.");
@@ -89,7 +214,6 @@ function useProducts() {
     }
   };
 
-  // actualizar producto
   const updateProduct = async (id, formData) => {
     try {
       setLoading(true);
@@ -101,20 +225,10 @@ function useProducts() {
         body: formData,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "No se pudo actualizar el producto.");
-        return {
-          success: false,
-          message: data.message || "No se pudo actualizar el producto.",
-        };
-      }
-
-      return {
-        success: true,
-        data,
-      };
+      return await handleJsonResponse(
+        response,
+        "No se pudo actualizar el producto."
+      );
     } catch (err) {
       console.log("updateProduct error:", err);
       setError("Error de conexión con el servidor.");
@@ -128,7 +242,6 @@ function useProducts() {
     }
   };
 
-  // eliminar producto
   const deleteProduct = async (id) => {
     try {
       setLoading(true);
@@ -139,20 +252,10 @@ function useProducts() {
         credentials: "include",
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "No se pudo eliminar el producto.");
-        return {
-          success: false,
-          message: data.message || "No se pudo eliminar el producto.",
-        };
-      }
-
-      return {
-        success: true,
-        data,
-      };
+      return await handleJsonResponse(
+        response,
+        "No se pudo eliminar el producto."
+      );
     } catch (err) {
       console.log("deleteProduct error:", err);
       setError("Error de conexión con el servidor.");
@@ -171,6 +274,10 @@ function useProducts() {
     loading,
     error,
     getProducts,
+    getLowStockProducts,
+    searchProductsByName,
+    getProductsByPriceRange,
+    getProductsCount,
     createProduct,
     updateProduct,
     deleteProduct,

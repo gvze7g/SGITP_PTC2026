@@ -1,18 +1,33 @@
-import { Calendar, ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import CustomDropdown from "../ui/CustomDropdown";
+import DateField from "../ui/DateField";
 
-const EMPTY_EXPENSE = {
-  paymentDate: '24 Oct, 2023',
-  category: 'Servicios',
-  branch: 'Tienda principal',
-  amountValue: '0.00',
-  paymentMethod: 'Cheque',
-  description: '',
+const EXPENSE_TYPE_OPTIONS = [
+  { value: "Services", label: "Servicios" },
+  { value: "Payroll", label: "Planilla" },
+  { value: "Supplies", label: "Insumos" },
+  { value: "Transport", label: "Transporte" },
+  { value: "Other", label: "Otro" },
+];
+
+const PAYMENT_METHOD_OPTIONS = [
+  { value: "Cash", label: "Efectivo" },
+  { value: "Transfer", label: "Transferencia" },
+  { value: "Card", label: "Tarjeta" },
+];
+
+const EMPTY_FORM = {
+  description: "",
+  amount: "",
+  expenseType: "Services",
+  paymentMethod: "Cash",
+  expenseDate: null,
+  notes: "",
 };
 
 function ExpenseFormModal({ open, onClose, expenseData = null }) {
-  const [formData, setFormData] = useState(EMPTY_EXPENSE);
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const isEditMode = Boolean(expenseData);
 
   useEffect(() => {
@@ -20,17 +35,50 @@ function ExpenseFormModal({ open, onClose, expenseData = null }) {
 
     if (expenseData) {
       setFormData({
-        paymentDate: expenseData.paymentDate ?? '24 Oct, 2023',
-        category: expenseData.category ?? 'Servicios',
-        branch: expenseData.branch ?? 'Tienda principal',
-        amountValue: expenseData.amountValue ?? '0.00',
-        paymentMethod: expenseData.paymentMethod ?? 'Cheque',
-        description: expenseData.description ?? '',
+        description: expenseData.description ?? "",
+        amount:
+          expenseData.amount !== undefined && expenseData.amount !== null
+            ? String(expenseData.amount)
+            : "",
+        expenseType: expenseData.expense_type ?? "Services",
+        paymentMethod: expenseData.payment_method ?? "Cash",
+        expenseDate: expenseData.expense_date ? new Date(expenseData.expense_date) : null,
+        notes: expenseData.notes ?? "",
       });
     } else {
-      setFormData(EMPTY_EXPENSE);
+      setFormData(EMPTY_FORM);
     }
   }, [open, expenseData]);
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleAmountChange = (value) => {
+    const sanitized = value.replace(/[^\d.]/g, "");
+    handleChange("amount", sanitized);
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const payload = {
+      description: formData.description.trim(),
+      amount: formData.amount ? Number(formData.amount) : 0,
+      expense_type: formData.expenseType,
+      payment_method: formData.paymentMethod,
+      expense_date: formData.expenseDate
+        ? formData.expenseDate.toISOString().split("T")[0]
+        : null,
+      notes: formData.notes.trim(),
+    };
+
+    console.log("Expense payload:", payload);
+    onClose?.();
+  };
 
   return (
     <AnimatePresence>
@@ -43,102 +91,97 @@ function ExpenseFormModal({ open, onClose, expenseData = null }) {
         >
           <motion.div
             className="expense-form-modal"
-            initial={{ opacity: 0, scale: 0.96, y: 24 }}
+            initial={{ opacity: 0, scale: 0.97, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 18 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            exit={{ opacity: 0, scale: 0.97, y: 18 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
           >
             <div className="expense-form-header">
-              <h2>{isEditMode ? 'Editar gasto' : 'Registrar gasto'}</h2>
+              <h2>{isEditMode ? "Editar Gasto" : "Registrar Gasto"}</h2>
             </div>
 
-            <div className="expense-form-body">
-              <div className="expense-form-row expense-form-row-top">
-                <div className="expense-line-group expense-line-group-with-icon">
-                  <label>FECHA DEL GASTO</label>
-
-                  <div className="expense-line-input-wrap">
+            <form onSubmit={handleSubmit}>
+              <div className="expense-form-body">
+                <div className="expense-form-row">
+                  <div className="expense-line-group-full">
+                    <label>Descripción</label>
                     <input
                       type="text"
-                      value={formData.paymentDate}
-                      onChange={(event) =>
-                        setFormData((prev) => ({ ...prev, paymentDate: event.target.value }))
-                      }
-                    />
-                    <button type="button" className="employee-field-icon-btn">
-                      <Calendar size={22} strokeWidth={1.8} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="expense-line-group">
-                  <label>CATEGORÍA</label>
-                  <button type="button" className="expense-line-select">
-                    <span>{formData.category}</span>
-                    <ChevronDown size={20} strokeWidth={1.8} />
-                  </button>
-                </div>
-
-                <div className="expense-line-group">
-                  <label>SUCURSAL ASIGNADA</label>
-                  <button type="button" className="expense-line-select">
-                    <span>{formData.branch}</span>
-                    <ChevronDown size={20} strokeWidth={1.8} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="expense-form-row">
-                <div className="expense-line-group expense-money-group">
-                  <label>MONTO TOTAL</label>
-
-                  <div className="expense-money-input">
-                    <span>$</span>
-                    <input
-                      type="text"
-                      value={formData.amountValue}
-                      onChange={(event) =>
-                        setFormData((prev) => ({ ...prev, amountValue: event.target.value }))
-                      }
+                      className="form-editable-input"
+                      placeholder="Ej. Pago de internet"
+                      value={formData.description}
+                      onChange={(event) => handleChange("description", event.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="expense-line-group">
-                  <label>MÉTODO DE PAGO</label>
-                  <input
-                    type="text"
-                    value={formData.paymentMethod}
-                    onChange={(event) =>
-                      setFormData((prev) => ({ ...prev, paymentMethod: event.target.value }))
-                    }
+                <div className="expense-form-row-top">
+                  <div className="expense-line-group-full">
+                    <label>Monto</label>
+                    <input
+                      type="text"
+                      className="form-editable-input"
+                      placeholder="Ej. 125.50"
+                      value={formData.amount}
+                      onChange={(event) => handleAmountChange(event.target.value)}
+                    />
+                  </div>
+
+                  <CustomDropdown
+                    label="Tipo de gasto"
+                    value={formData.expenseType}
+                    options={EXPENSE_TYPE_OPTIONS}
+                    onChange={(value) => handleChange("expenseType", value)}
                   />
                 </div>
+
+                <div className="expense-form-row">
+                  <CustomDropdown
+                    label="Método de pago"
+                    value={formData.paymentMethod}
+                    options={PAYMENT_METHOD_OPTIONS}
+                    onChange={(value) => handleChange("paymentMethod", value)}
+                  />
+
+                  <DateField
+                    label="Fecha del gasto"
+                    value={formData.expenseDate}
+                    onChange={(date) => handleChange("expenseDate", date)}
+                    placeholder="Seleccionar fecha"
+                    maxDate={new Date()}
+                  />
+                </div>
+
+                <div className="expense-form-row">
+                  <div className="expense-line-group-full">
+                    <label>Notas</label>
+                    <textarea
+                      className="form-editable-input"
+                      placeholder="Detalle adicional"
+                      value={formData.notes}
+                      onChange={(event) => handleChange("notes", event.target.value)}
+                      rows={4}
+                      style={{ resize: "none" }}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="expense-line-group expense-line-group-full">
-                <label>DESCRIPCIÓN / CONCEPTO</label>
-                <input
-                  type="text"
-                  placeholder="Ej. Renovación de empaques"
-                  value={formData.description}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, description: event.target.value }))
-                  }
-                />
+              <div className="expense-form-footer">
+                <button
+                  type="button"
+                  className="modal-cancel-text-btn"
+                  onClick={onClose}
+                >
+                  CANCELAR
+                </button>
+
+                <button type="submit" className="modal-save-btn">
+                  {isEditMode ? "Guardar cambios" : "Guardar gasto"}
+                  <span className="modal-save-arrow">›</span>
+                </button>
               </div>
-            </div>
-
-            <div className="expense-form-footer">
-              <button type="button" className="modal-cancel-text-btn" onClick={onClose}>
-                CANCELAR
-              </button>
-
-              <button type="button" className="modal-save-btn" onClick={onClose}>
-                {isEditMode ? 'Guardar cambios' : 'Guardar Gasto'}
-                <span className="modal-save-arrow">›</span>
-              </button>
-            </div>
+            </form>
           </motion.div>
         </motion.div>
       ) : null}

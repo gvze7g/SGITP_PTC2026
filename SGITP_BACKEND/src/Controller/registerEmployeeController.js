@@ -8,6 +8,8 @@ import { config } from "../config.js";
 
 const registerEmployeeController = {};
 
+const ALLOWED_EMPLOYEE_ROLES = ["Administrator", "Employee"];
+
 registerEmployeeController.register = async (req, res) => {
   try {
     let {
@@ -25,6 +27,14 @@ registerEmployeeController.register = async (req, res) => {
       loginAttempts,
       timeOut,
     } = req.body;
+
+    full_name = full_name?.trim();
+    email = email?.trim();
+    role = role?.trim() || "Employee";
+
+    if (!ALLOWED_EMPLOYEE_ROLES.includes(role)) {
+      return res.status(400).json({ message: "Invalid employee role" });
+    }
 
     const existEmployee = await employeeModel.findOne({ email });
     if (existEmployee) {

@@ -16,8 +16,19 @@ function ProtectedRoute({ children }) {
           credentials: "include",
         });
 
+        if (!response.ok) {
+          if (!ignore) setStatus("unauthenticated");
+          return;
+        }
+
+        const data = await response.json();
+
+        const isAdministrator =
+          data?.userType === "Employee" &&
+          data?.user?.role === "Administrator";
+
         if (!ignore) {
-          setStatus(response.ok ? "authenticated" : "unauthenticated");
+          setStatus(isAdministrator ? "authenticated" : "unauthorized");
         }
       } catch (error) {
         if (!ignore) {

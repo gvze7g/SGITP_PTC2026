@@ -8,47 +8,49 @@ const router = Router();
 router.post(
   "/search",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  validateEmployeeRole("Administrator"),
   productController.searchByName
 );
 
 router.post(
   "/price-range",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  validateEmployeeRole("Administrator"),
   productController.getProductsByPriceRange
 );
 
 router.get(
   "/status/low-stock",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  validateEmployeeRole("Administrator"),
   productController.getLowStock
 );
 
 router.get(
   "/status/count",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  validateEmployeeRole("Administrator"),
   productController.countProducts
 );
 
 router.get(
   "/",
   validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrator"),
   productController.getProducts
 );
 
 router.get(
   "/:id",
   validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrator"),
   productController.getProductById
 );
 
 router.post(
   "/",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  validateEmployeeRole("Administrator"),
   upload.array("images", 5),
   productController.insertProducts
 );
@@ -56,7 +58,7 @@ router.post(
 router.put(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  validateEmployeeRole("Administrator"),
   upload.array("images", 5),
   productController.updateProducts
 );
@@ -64,7 +66,8 @@ router.put(
 router.delete(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente", "Inventario"),
+  validateEmployeeRole("Administrator"),
+  upload.array("images", 5),
   productController.deleteProducts
 );
 
