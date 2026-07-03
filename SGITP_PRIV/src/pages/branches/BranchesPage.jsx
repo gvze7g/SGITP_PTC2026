@@ -7,15 +7,20 @@ import BranchesGrid from '../../components/branches/BranchesGrid';
 import BranchFormModal from '../../components/branches/BranchesFormModal';
 import useBranches from '../../hooks/branches/UseBranches';
 
+const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
+
 function BranchesPage({ theme, onToggleTheme }) {
   const [branchModalOpen, setBranchModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
   const navigate = useNavigate();
   const {
     branches,
     loading,
     error,
     getBranches,
+    getBranchById,
     createBranch,
     updateBranch,
     deleteBranch,
@@ -24,6 +29,39 @@ function BranchesPage({ theme, onToggleTheme }) {
   useEffect(() => {
     getBranches();
   }, [getBranches]);
+
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+
+    if (!value.trim() || !OBJECT_ID_PATTERN.test(value.trim())) {
+      setSearchResult(null);
+    }
+  };
+
+  const handleSearchSubmit = async () => {
+    const query = searchTerm.trim();
+
+    if (!query) {
+      setSearchResult(null);
+      getBranches();
+      return;
+    }
+
+    if (!OBJECT_ID_PATTERN.test(query)) {
+      setSearchResult(null);
+      return;
+    }
+
+    const result = await getBranchById(query);
+
+    if (!result.success) {
+      setSearchResult([]);
+      toast.error(result.message);
+      return;
+    }
+
+    setSearchResult(result.data ? [result.data] : []);
+  };
 
   const handleCreate = () => {
     setSelectedBranch(null);
@@ -75,8 +113,29 @@ function BranchesPage({ theme, onToggleTheme }) {
     getBranches();
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const visibleBranches = searchResult ?? branches.filter((branch) => {
+    if (!normalizedSearch) return true;
+
+    return [
+      branch._id,
+      branch.name,
+      branch.address,
+      branch.phone,
+      branch.email,
+      branch.isActive === false ? 'inactiva' : 'operativa',
+    ].some((value) => String(value ?? '').toLowerCase().includes(normalizedSearch));
+  });
+
   return (
-    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
+    <DashboardLayout
+      theme={theme}
+      onToggleTheme={onToggleTheme}
+      searchValue={searchTerm}
+      onSearchChange={handleSearchChange}
+      onSearchSubmit={handleSearchSubmit}
+      searchPlaceholder="Buscar sucursal por ID, nombre o contacto"
+    >
       <motion.div
         className="branches-page-shell"
         initial={{ opacity: 0, y: 18 }}
@@ -92,7 +151,7 @@ function BranchesPage({ theme, onToggleTheme }) {
         </div>
 
         <BranchesGrid
-          branches={branches}
+          branches={visibleBranches}
           loading={loading}
           error={error}
           onEditBranch={handleEdit}

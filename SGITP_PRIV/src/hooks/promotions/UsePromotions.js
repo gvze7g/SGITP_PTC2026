@@ -52,6 +52,43 @@ function usePromotions() {
     }
   }, []);
 
+  const getPromotionById = async (id) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_URL}/api/promotions/${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "No se pudo encontrar la promociÃ³n.");
+        return {
+          success: false,
+          message: data.message || "No se pudo encontrar la promociÃ³n.",
+        };
+      }
+
+      return {
+        success: true,
+        data,
+      };
+    } catch (error) {
+      console.log("getPromotionById error:", error);
+      setError("Error de conexiÃ³n con el servidor.");
+
+      return {
+        success: false,
+        message: "Error de conexiÃ³n con el servidor.",
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // crear promoción
   const createPromotion = async (payload) => {
     try {
@@ -179,6 +216,7 @@ function usePromotions() {
     loading,
     error,
     getPromotions,
+    getPromotionById,
     createPromotion,
     updatePromotion,
     deletePromotion,

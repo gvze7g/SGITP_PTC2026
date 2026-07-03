@@ -4,7 +4,15 @@ import { toast } from 'sonner';
 
 const API_URL = 'http://localhost:4000';
 
-function AdminTopbar({ theme, onToggleTheme, onOpenMobileMenu }) {
+function AdminTopbar({
+  theme,
+  onToggleTheme,
+  onOpenMobileMenu,
+  searchValue = '',
+  onSearchChange,
+  onSearchSubmit,
+  searchPlaceholder = 'Buscar...',
+}) {
   const isDark = theme === 'dark';
   const navigate = useNavigate();
 
@@ -50,15 +58,23 @@ function AdminTopbar({ theme, onToggleTheme, onOpenMobileMenu }) {
           <Menu size={22} strokeWidth={1.8} />
         </button>
 
-        <div className="admin-search-wrap">
+        <form
+          className="admin-search-wrap"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSearchSubmit?.();
+          }}
+        >
           <Search size={20} strokeWidth={1.8} />
           <input
             type="text"
-            placeholder="Buscar..."
+            placeholder={searchPlaceholder}
             className="admin-search-input"
             aria-label="Buscar"
+            value={searchValue}
+            onChange={(event) => onSearchChange?.(event.target.value)}
           />
-        </div>
+        </form>
       </div>
 
       <div className="admin-topbar-actions">

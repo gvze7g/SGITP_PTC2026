@@ -6,11 +6,14 @@ import CreateEmployeeModal from "../../components/employees/CreateEmployeeModal"
 import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
 import useEmployees from "../../hooks/employees/useEmployees";
 
+const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
+
 function EmployeesPage({ theme, onToggleTheme }) {
   const {
     employees,
     loading,
     getEmployees,
+    getEmployeeById,
     createEmployee,
     updateEmployee,
     deleteEmployee,
@@ -20,6 +23,8 @@ function EmployeesPage({ theme, onToggleTheme }) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResult, setSearchResult] = useState(null);
 
   // TODO:
   // cuando tengas el usuario autenticado real,
@@ -29,6 +34,39 @@ function EmployeesPage({ theme, onToggleTheme }) {
   useEffect(() => {
     getEmployees();
   }, [getEmployees]);
+
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+
+    if (!value.trim() || !OBJECT_ID_PATTERN.test(value.trim())) {
+      setSearchResult(null);
+    }
+  };
+
+  const handleSearchSubmit = async () => {
+    const query = searchTerm.trim();
+
+    if (!query) {
+      setSearchResult(null);
+      getEmployees();
+      return;
+    }
+
+    if (!OBJECT_ID_PATTERN.test(query)) {
+      setSearchResult(null);
+      return;
+    }
+
+    const result = await getEmployeeById(query);
+
+    if (!result.success) {
+      setSearchResult([]);
+      toast.error(result.message);
+      return;
+    }
+
+    setSearchResult(result.data ? [result.data] : []);
+  };
 
   const handleOpenCreate = () => {
     setSelectedEmployee(null);
@@ -135,8 +173,37 @@ function EmployeesPage({ theme, onToggleTheme }) {
     await getEmployees();
   };
 
+  const getBranchName = (employee) => {
+    if (employee?.branch_id && typeof employee.branch_id === "object") {
+      return employee.branch_id.name || "";
+    }
+
+    return employee?.branch_id || "";
+  };
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const visibleEmployees = searchResult ?? employees.filter((employee) => {
+    if (!normalizedSearch) return true;
+
+    return [
+      employee._id,
+      employee.full_name,
+      employee.email,
+      employee.role,
+      employee.isVerified ? "activo" : "pendiente",
+      getBranchName(employee),
+    ].some((value) => String(value ?? "").toLowerCase().includes(normalizedSearch));
+  });
+
   return (
-    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
+    <DashboardLayout
+      theme={theme}
+      onToggleTheme={onToggleTheme}
+      searchValue={searchTerm}
+      onSearchChange={handleSearchChange}
+      onSearchSubmit={handleSearchSubmit}
+      searchPlaceholder="Buscar empleado por ID, nombre, correo o rol"
+    >
       <div className="employees-page-shell">
         <div className="page-title-row">
           <h1 className="admin-page-title">Empleados</h1>
@@ -151,7 +218,7 @@ function EmployeesPage({ theme, onToggleTheme }) {
         </div>
 
         <EmployeesTable
-          employees={employees}
+          employees={visibleEmployees}
           loading={loading}
           onEditEmployee={handleOpenEdit}
           onDeleteEmployee={handleOpenDeleteModal}

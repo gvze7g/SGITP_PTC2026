@@ -58,6 +58,38 @@ function useProducts() {
     }
   }, []);
 
+  const getProductById = useCallback(async (id) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_URL}/api/products/${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const result = await handleJsonResponse(
+        response,
+        "No se pudo encontrar el producto."
+      );
+
+      if (!result.success) return result;
+
+      setProducts(result.data ? [result.data] : []);
+      return result;
+    } catch (err) {
+      console.log("getProductById error:", err);
+      setError("Error de conexiÃ³n con el servidor.");
+
+      return {
+        success: false,
+        message: "Error de conexiÃ³n con el servidor.",
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const getLowStockProducts = useCallback(async (threshold = 5) => {
     try {
       setLoading(true);
@@ -274,6 +306,7 @@ function useProducts() {
     loading,
     error,
     getProducts,
+    getProductById,
     getLowStockProducts,
     searchProductsByName,
     getProductsByPriceRange,

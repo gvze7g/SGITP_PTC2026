@@ -2,13 +2,13 @@ import { useCallback, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
-function useBranches() {
-  const [branches, setBranches] = useState([]);
+function useSpent() {
+  const [spent, setSpent] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const request = async (path = "", options = {}) => {
-    const response = await fetch(`${API_URL}/branches${path}`, {
+    const response = await fetch(`${API_URL}/spent${path}`, {
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
@@ -26,17 +26,17 @@ function useBranches() {
     return data;
   };
 
-  const getBranches = useCallback(async () => {
+  const getSpent = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
       const data = await request();
-      setBranches(Array.isArray(data) ? data : []);
+      setSpent(Array.isArray(data) ? data : []);
 
       return { success: true, data };
     } catch (requestError) {
-      const message = requestError.message || "No se pudieron obtener las sucursales.";
+      const message = requestError.message || "No se pudieron obtener los gastos.";
       setError(message);
       return { success: false, message };
     } finally {
@@ -44,7 +44,7 @@ function useBranches() {
     }
   }, []);
 
-  const getBranchById = async (id) => {
+  const getSpentById = async (id) => {
     try {
       setLoading(true);
       setError("");
@@ -53,7 +53,7 @@ function useBranches() {
 
       return { success: true, data };
     } catch (requestError) {
-      const message = requestError.message || "No se pudo encontrar la sucursal.";
+      const message = requestError.message || "No se pudo encontrar el gasto.";
       setError(message);
       return { success: false, message };
     } finally {
@@ -61,7 +61,7 @@ function useBranches() {
     }
   };
 
-  const createBranch = async (payload) => {
+  const createSpent = async (payload) => {
     try {
       setLoading(true);
       setError("");
@@ -73,7 +73,7 @@ function useBranches() {
 
       return { success: true, data };
     } catch (requestError) {
-      const message = requestError.message || "No se pudo crear la sucursal.";
+      const message = requestError.message || "No se pudo crear el gasto.";
       setError(message);
       return { success: false, message };
     } finally {
@@ -81,7 +81,7 @@ function useBranches() {
     }
   };
 
-  const updateBranch = async (id, payload) => {
+  const updateSpent = async (id, payload) => {
     try {
       setLoading(true);
       setError("");
@@ -93,7 +93,7 @@ function useBranches() {
 
       return { success: true, data };
     } catch (requestError) {
-      const message = requestError.message || "No se pudo actualizar la sucursal.";
+      const message = requestError.message || "No se pudo actualizar el gasto.";
       setError(message);
       return { success: false, message };
     } finally {
@@ -101,7 +101,7 @@ function useBranches() {
     }
   };
 
-  const deleteBranch = async (id) => {
+  const deleteSpent = async (id) => {
     try {
       setLoading(true);
       setError("");
@@ -112,7 +112,7 @@ function useBranches() {
 
       return { success: true, data };
     } catch (requestError) {
-      const message = requestError.message || "No se pudo eliminar la sucursal.";
+      const message = requestError.message || "No se pudo eliminar el gasto.";
       setError(message);
       return { success: false, message };
     } finally {
@@ -121,15 +121,15 @@ function useBranches() {
   };
 
   return {
-    branches,
+    spent,
     loading,
     error,
-    getBranches,
-    getBranchById,
-    createBranch,
-    updateBranch,
-    deleteBranch,
+    getSpent,
+    getSpentById,
+    createSpent,
+    updateSpent,
+    deleteSpent,
   };
 }
 
-export default useBranches;
+export default useSpent;
