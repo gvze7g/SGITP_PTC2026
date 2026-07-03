@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
@@ -21,16 +21,14 @@ function CreateEmployeeModal({
   employeeData = null,
   loading = false,
 }) {
-  // datos del formulario
   const [formData, setFormData] = useState(EMPTY_FORM);
-
-  // mostrar u ocultar contraseña
   const [showPassword, setShowPassword] = useState(false);
 
-  // saber si estamos editando
   const isEditMode = useMemo(() => Boolean(employeeData), [employeeData]);
 
-  // llenar formulario al abrir
+  const lastNameWarningRef = useRef(0);
+  const lastPhoneWarningRef = useRef(0);
+
   useEffect(() => {
     if (!open) return;
 
@@ -54,9 +52,10 @@ function CreateEmployeeModal({
     }
 
     setShowPassword(false);
+    lastNameWarningRef.current = 0;
+    lastPhoneWarningRef.current = 0;
   }, [open, employeeData]);
 
-  // cambiar inputs
   const handleChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -64,9 +63,47 @@ function CreateEmployeeModal({
     }));
   };
 
-  // validar antes de guardar
+  const showRateLimitedWarning = (ref, message) => {
+    const now = Date.now();
+
+    if (now - ref.current > 1500) {
+      toast.warning(message);
+      ref.current = now;
+    }
+  };
+
+  const handleNameChange = (value) => {
+    const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/;
+
+    if (!nameRegex.test(value)) {
+      showRateLimitedWarning(
+        lastNameWarningRef,
+        "El nombre solo puede contener letras y espacios."
+      );
+      return;
+    }
+
+    handleChange("fullName", value);
+  };
+
+  const handlePhoneChange = (value) => {
+    const phoneRegex = /^[0-9-]*$/;
+
+    if (!phoneRegex.test(value)) {
+      showRateLimitedWarning(
+        lastPhoneWarningRef,
+        "El teléfono solo puede contener números y guion."
+      );
+      return;
+    }
+
+    handleChange("phone", value);
+  };
+
   const validateForm = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const fullNameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+$/;
+    const phoneRegex = /^[0-9-]+$/;
 
     if (!formData.fullName.trim()) {
       toast.error("El nombre completo es obligatorio.");
@@ -75,6 +112,11 @@ function CreateEmployeeModal({
 
     if (formData.fullName.trim().length < 3) {
       toast.error("El nombre debe tener al menos 3 caracteres.");
+      return false;
+    }
+
+    if (!fullNameRegex.test(formData.fullName.trim())) {
+      toast.error("El nombre solo puede contener letras y espacios.");
       return false;
     }
 
@@ -90,6 +132,11 @@ function CreateEmployeeModal({
 
     if (!formData.phone.trim()) {
       toast.error("El teléfono es obligatorio.");
+      return false;
+    }
+
+    if (!phoneRegex.test(formData.phone.trim())) {
+      toast.error("El teléfono solo puede contener números y guion.");
       return false;
     }
 
@@ -109,21 +156,13 @@ function CreateEmployeeModal({
     return true;
   };
 
-  // construir payload correcto para el backend
   const buildPayload = () => {
     const payload = {
       full_name: formData.fullName.trim(),
       main_phone: formData.phone.trim(),
       email: formData.email.trim(),
-
-      // por ahora no mandamos nombre de sucursal,
-      // porque el backend espera ObjectId real
       branch_id: null,
-
-      // si luego agregan direcciones reales, aquí se mandan
       addresses: [],
-
-      // el modelo espera objetos, no strings
       phone_numbers: formData.phone.trim()
         ? [
             {
@@ -133,7 +172,6 @@ function CreateEmployeeModal({
             },
           ]
         : [],
-
       birth_date: formData.birthDate || null,
       hire_date: formData.hireDate || null,
       role: formData.role.trim() || "Administrador",
@@ -142,7 +180,6 @@ function CreateEmployeeModal({
       timeOut: null,
     };
 
-    // solo mandar password si se escribió algo
     if (formData.temporaryPassword.trim()) {
       payload.password = formData.temporaryPassword.trim();
     }
@@ -150,7 +187,6 @@ function CreateEmployeeModal({
     return payload;
   };
 
-  // enviar datos
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -191,7 +227,7 @@ function CreateEmployeeModal({
                     <input
                       type="text"
                       value={formData.fullName}
-                      onChange={(event) => handleChange("fullName", event.target.value)}
+                      onChange={(event) => handleNameChange(event.target.value)}
                     />
                   </div>
 
@@ -209,7 +245,7 @@ function CreateEmployeeModal({
                     <input
                       type="text"
                       value={formData.phone}
-                      onChange={(event) => handleChange("phone", event.target.value)}
+                      onChange={(event) => handlePhoneChange(event.target.value)}
                     />
                   </div>
 
