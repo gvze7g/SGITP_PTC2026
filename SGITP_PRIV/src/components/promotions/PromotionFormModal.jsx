@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
 import DateField from "../ui/DateField";
 
@@ -17,7 +18,13 @@ const EMPTY_FORM = {
   isActive: true,
 };
 
-function PromotionFormModal({ open, onClose, promotionData = null }) {
+function PromotionFormModal({
+  open,
+  onClose,
+  promotionData = null,
+  onSubmit,
+  loading = false,
+}) {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const isEditMode = Boolean(promotionData);
 
@@ -68,6 +75,40 @@ function PromotionFormModal({ open, onClose, promotionData = null }) {
     handleChange("discountPercentage", sanitized);
   };
 
+  const validateForm = () => {
+    const code = formData.couponCode.trim();
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+
+    if (!code) {
+      toast.error("El código del cupón es obligatorio.");
+      return false;
+    }
+
+    if (!alphanumericRegex.test(code)) {
+      toast.error("El código solo puede contener letras y números.");
+      return false;
+    }
+
+    if (!formData.startDate || !formData.endDate) {
+      toast.error("Debes seleccionar fecha de inicio y fecha final.");
+      return false;
+    }
+
+    if (formData.endDate <= formData.startDate) {
+      toast.error("La fecha final debe ser posterior a la fecha de inicio.");
+      return false;
+    }
+
+    const discount = Number(formData.discountPercentage || 0);
+
+    if (discount < 0 || discount > 100) {
+      toast.error("El descuento debe estar entre 0 y 100.");
+      return false;
+    }
+
+    return true;
+  };
+
   const buildPayload = () => {
     return {
       coupon_code: formData.couponCode.trim(),
@@ -85,11 +126,13 @@ function PromotionFormModal({ open, onClose, promotionData = null }) {
     };
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!validateForm()) return;
+
     const payload = buildPayload();
-    console.log("Promotion payload:", payload);
-    onClose?.();
+    await onSubmit?.(payload, isEditMode);
   };
 
   return (
@@ -119,6 +162,7 @@ function PromotionFormModal({ open, onClose, promotionData = null }) {
                     <label>Código del cupón</label>
                     <input
                       type="text"
+                      className="form-editable-input"
                       placeholder="Ej. VERANO2026"
                       value={formData.couponCode}
                       onChange={(event) => handleChange("couponCode", event.target.value)}
@@ -129,6 +173,7 @@ function PromotionFormModal({ open, onClose, promotionData = null }) {
                     <label>Porcentaje de descuento</label>
                     <input
                       type="text"
+                      className="form-editable-input"
                       placeholder="Ej. 15"
                       value={formData.discountPercentage}
                       onChange={(event) => handleDiscountChange(event.target.value)}
@@ -140,6 +185,7 @@ function PromotionFormModal({ open, onClose, promotionData = null }) {
                   <label>Descripción</label>
                   <input
                     type="text"
+                    className="form-editable-input"
                     placeholder="Ej. Promoción de temporada"
                     value={formData.descriptions}
                     onChange={(event) => handleChange("descriptions", event.target.value)}
@@ -178,12 +224,17 @@ function PromotionFormModal({ open, onClose, promotionData = null }) {
                   type="button"
                   className="modal-cancel-text-btn"
                   onClick={onClose}
+                  disabled={loading}
                 >
                   CANCELAR
                 </button>
 
-                <button type="submit" className="modal-save-btn">
-                  {isEditMode ? "Guardar cambios" : "Guardar promoción"}
+                <button type="submit" className="modal-save-btn" disabled={loading}>
+                  {loading
+                    ? "Guardando..."
+                    : isEditMode
+                    ? "Guardar cambios"
+                    : "Guardar promoción"}
                   <span className="modal-save-arrow">›</span>
                 </button>
               </div>
