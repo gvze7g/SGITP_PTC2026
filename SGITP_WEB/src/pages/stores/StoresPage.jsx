@@ -1,9 +1,17 @@
 import { Clock3, MapPin, Phone } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
 
+const STORE_MAP_URL =
+  'https://www.google.com/maps?q=Calle%2025%20102-120%20Cali%20Valle%20del%20Cauca&output=embed';
+const STORE_DIRECTIONS_URL =
+  'https://www.google.com/maps/dir/?api=1&destination=Calle%2025%20102-120%20Cali%20Valle%20del%20Cauca';
+
 function StoresPage() {
+  const navigate = useNavigate();
+
   return (
     <div className="stores-page">
       <PublicNavbar activeItem="stores" />
@@ -13,12 +21,12 @@ function StoresPage() {
 
         <section className="store-feature">
           <div className="store-map" aria-label="Mapa de ubicacion">
-            <div className="store-map-art">
-              <span className="store-map-pin" />
-              <span className="store-map-label store-map-label-main">Bosques de la Escalon</span>
-              <span className="store-map-label store-map-label-side">Calle El Volcan</span>
-              <span className="store-map-label store-map-label-bottom">Calle Mano de Leon</span>
-            </div>
+            <iframe
+              title="Mapa de Atelier Ebano Valle del Lili"
+              src={STORE_MAP_URL}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
           </div>
 
           <article className="store-feature-card">
@@ -62,8 +70,15 @@ function StoresPage() {
             </div>
 
             <div className="store-feature-actions">
-              <button type="button">Como llegar ↗</button>
-              <button type="button">Reservar cita privada</button>
+              <button
+                type="button"
+                onClick={() => window.open(STORE_DIRECTIONS_URL, '_blank', 'noopener,noreferrer')}
+              >
+                Como llegar
+              </button>
+              <button type="button" onClick={() => navigate('/concierge')}>
+                Reservar cita privada
+              </button>
             </div>
           </article>
         </section>

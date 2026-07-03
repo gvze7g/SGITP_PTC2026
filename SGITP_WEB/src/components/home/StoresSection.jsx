@@ -3,6 +3,7 @@ const STORES = [
     number: '01',
     name: 'Atelier Ebano - Valle del Lili',
     address: ['Calle 25 # 102 - 120', 'Cali, Valle del Cauca'],
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Calle%2025%20102-120%20Cali%20Valle%20del%20Cauca',
     schedule: [
       ['Lunes - Sabado', '10:00 - 19:00'],
       ['Domingo', '11:00 - 17:00'],
@@ -13,6 +14,7 @@ const STORES = [
     number: '02',
     name: 'Atelier Ebano - La Flora',
     address: ['Avenida 6N # 47 - 10', 'Cali, Valle del Cauca'],
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Avenida%206N%2047-10%20Cali%20Valle%20del%20Cauca',
     schedule: [
       ['Lunes - Sabado', '09:30 - 20:00'],
       ['Domingo', 'Cerrado'],
@@ -55,7 +57,11 @@ function StoresSection() {
               </div>
             </div>
 
-            <button type="button" className="store-map-link">
+            <button
+              type="button"
+              className="store-map-link"
+              onClick={() => window.open(store.mapUrl, '_blank', 'noopener,noreferrer')}
+            >
               Ver en mapa <span>↗</span>
             </button>
           </article>

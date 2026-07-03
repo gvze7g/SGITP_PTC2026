@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductDetailView from '../../components/products/ProductDetailView';
 import PublicNavbar from '../../components/home/PublicNavbar';
-import StoreAvailabilityPanel from '../../components/products/StoreAvailabilityPanel';
 
 const PRODUCT = {
   name: 'El Peleles Lino',
@@ -21,28 +20,19 @@ const PRODUCT = {
 function ProductDetailPage() {
   const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState('0-3M');
-  const [showStoreAvailability, setShowStoreAvailability] = useState(false);
 
   return (
     <div className="product-shell">
       <PublicNavbar />
 
-      {showStoreAvailability ? (
-        <StoreAvailabilityPanel
-          product={PRODUCT}
-          selectedSize={selectedSize}
-          onEdit={() => setShowStoreAvailability(false)}
-        />
-      ) : (
-        <ProductDetailView
-          product={PRODUCT}
-          selectedSize={selectedSize}
-          onSelectSize={setSelectedSize}
-          onAddToCart={() => navigate('/cart')}
-          onBack={() => navigate(-1)}
-          onOpenStoreSearch={() => setShowStoreAvailability(true)}
-        />
-      )}
+      <ProductDetailView
+        product={PRODUCT}
+        selectedSize={selectedSize}
+        onSelectSize={setSelectedSize}
+        onAddToCart={() => navigate('/cart')}
+        onBack={() => navigate(-1)}
+        onOpenStoreSearch={() => navigate('/stores')}
+      />
     </div>
   );
 }

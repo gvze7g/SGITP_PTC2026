@@ -1,4 +1,5 @@
-import { Mail, MapPin } from 'lucide-react';
+import { ArrowLeft, Mail, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
@@ -22,11 +23,18 @@ const SERVICES = [
 ];
 
 function ConciergePage() {
+  const navigate = useNavigate();
+
   return (
     <div className="concierge-page">
       <PublicNavbar />
 
       <main>
+        <button type="button" className="commerce-back-btn concierge-back-btn" onClick={() => navigate(-1)}>
+          <ArrowLeft size={15} strokeWidth={1.6} />
+          Atras
+        </button>
+
         <section className="concierge-hero">
           <h1>
             Servicio de <em>Conserjeria</em>
