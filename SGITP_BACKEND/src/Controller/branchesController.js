@@ -2,6 +2,7 @@ import branchesModel from "../Model/branches.js";
 
 const branchesController = {};
 
+//GET 
 branchesController.getBranches = async (req, res) => {
   try {
     const branches = await branchesModel.find();
@@ -12,6 +13,7 @@ branchesController.getBranches = async (req, res) => {
   }
 };
 
+//GET by ID obtiene una sucursal por su ID
 branchesController.getBranchById = async (req, res) => {
   try {
     const branch = await branchesModel.findById(req.params.id);
@@ -27,6 +29,7 @@ branchesController.getBranchById = async (req, res) => {
   }
 };
 
+//Insert registrar una nueva sucursal
 branchesController.insertBranch = async (req, res) => {
   try {
     const { name, address, phone, email, isActive, opening_date } = req.body;
@@ -52,6 +55,7 @@ branchesController.insertBranch = async (req, res) => {
   }
 };
 
+//Update actualizar una sucursal existente
 branchesController.updateBranch = async (req, res) => {
   try {
     const { name, address, phone, email, isActive, opening_date } = req.body;
@@ -83,6 +87,7 @@ branchesController.updateBranch = async (req, res) => {
   }
 };
 
+//Delete eliminar una sucursal por su ID
 branchesController.deleteBranch = async (req, res) => {
   try {
     const deletedBranch = await branchesModel.findByIdAndDelete(req.params.id);
