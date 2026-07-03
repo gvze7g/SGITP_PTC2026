@@ -1,4 +1,5 @@
-import { ShoppingBag, UserRound } from 'lucide-react';
+import { Menu, ShoppingBag, UserRound, X } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const NAV_ITEMS = [
@@ -10,8 +11,11 @@ const NAV_ITEMS = [
 
 function PublicNavbar({ activeItem = '' }) {
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleNavigate = (path) => {
+    setIsMenuOpen(false);
+
     if (path.includes('#')) {
       window.location.href = path;
       return;
@@ -22,11 +26,46 @@ function PublicNavbar({ activeItem = '' }) {
 
   return (
     <header className="public-navbar">
-      <button type="button" className="public-logo" onClick={() => navigate('/home')}>
-        PEQUES
-      </button>
+      <div className="public-nav-top">
+        <button
+          type="button"
+          className="public-menu-toggle"
+          aria-label={isMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
+          aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen((current) => !current)}
+        >
+          {isMenuOpen ? <X size={18} strokeWidth={1.7} /> : <Menu size={18} strokeWidth={1.7} />}
+        </button>
 
-      <nav className="public-nav-links" aria-label="Navegacion principal">
+        <button type="button" className="public-logo" onClick={() => navigate('/home')}>
+          PEQUES
+        </button>
+
+        <div className="public-nav-actions">
+          <button type="button" aria-label="Carrito" onClick={() => navigate('/cart')}>
+            <ShoppingBag size={17} strokeWidth={1.6} />
+          </button>
+          <button type="button" aria-label="Perfil" onClick={() => navigate('/profile')}>
+            <UserRound size={17} strokeWidth={1.6} />
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className={`public-nav-overlay ${isMenuOpen ? 'public-nav-overlay-open' : ''}`}
+        aria-label="Cerrar menu"
+        onClick={() => setIsMenuOpen(false)}
+      />
+
+      <nav
+        className={`public-nav-links ${isMenuOpen ? 'public-nav-links-open' : ''}`}
+        aria-label="Navegacion principal"
+      >
+        <div className="public-drawer-heading">
+          <strong>PEQUES</strong>
+        </div>
+
         {NAV_ITEMS.map((item) => (
           <button
             key={item.key}
@@ -38,15 +77,6 @@ function PublicNavbar({ activeItem = '' }) {
           </button>
         ))}
       </nav>
-
-      <div className="public-nav-actions">
-        <button type="button" aria-label="Carrito" onClick={() => navigate('/cart')}>
-          <ShoppingBag size={17} strokeWidth={1.6} />
-        </button>
-        <button type="button" aria-label="Perfil" onClick={() => navigate('/profile')}>
-          <UserRound size={17} strokeWidth={1.6} />
-        </button>
-      </div>
     </header>
   );
 }

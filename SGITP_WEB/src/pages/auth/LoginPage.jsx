@@ -107,6 +107,14 @@ function LoginPage() {
             <AuthButton type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Iniciando...' : 'Iniciar sesion'}
             </AuthButton>
+
+            <AuthButton
+              type="button"
+              className="auth-button-secondary"
+              onClick={() => navigate('/home', { replace: true })}
+            >
+              Ingresar como invitado
+            </AuthButton>
           </form>
 
           <AuthButton className="auth-button-secondary" onClick={() => navigate('/')}>

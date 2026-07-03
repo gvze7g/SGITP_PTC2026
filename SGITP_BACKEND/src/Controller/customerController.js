@@ -1,9 +1,10 @@
 import customerModel from "../Model/customer.js";
 
-//creamos un array de funciones
 const customerController = {};
 
-//SELECT
+const ALLOWED_CUSTOMER_TYPES = ["Client", "Wholesale"];
+
+// SELECT
 customerController.getCustomers = async (req, res) => {
   try {
     const customers = await customerModel.find();
@@ -14,12 +15,11 @@ customerController.getCustomers = async (req, res) => {
   }
 };
 
-//DELETE
+// DELETE
 customerController.deleteCustomer = async (req, res) => {
   try {
-    const deletedCustomer = await customerModel.findByIdAndDelete(
-      req.params.id,
-    );
+    const deletedCustomer = await customerModel.findByIdAndDelete(req.params.id);
+
     if (!deletedCustomer) {
       return res.status(404).json({ message: "Customer not found" });
     }
@@ -31,34 +31,34 @@ customerController.deleteCustomer = async (req, res) => {
   }
 };
 
-//UPDATE
+// UPDATE
 customerController.updateCustomer = async (req, res) => {
   try {
-    //Solitamos los datos
     let {
-     customer_type,
-     full_name,
-     main_phone,
-     email,
-     password,
-     addresses,
-     phone_numbers,
-     isVerified,
-     loginAttempts,
-     timeOut,
+      customer_type,
+      full_name,
+      main_phone,
+      email,
+      password,
+      addresses,
+      phone_numbers,
+      isVerified,
+      loginAttempts,
+      timeOut,
     } = req.body;
 
-    //VALIDACIONES
-    //Sanitizar
     full_name = full_name?.trim();
     email = email?.trim();
+    customer_type = customer_type?.trim() || "Client";
 
-    //validar el tamaño del nombre
-    if (full_name.length < 3 || full_name.length > 15) {
+    if (!full_name || full_name.length < 3 || full_name.length > 50) {
       return res.status(400).json({ message: "Invalid name" });
     }
 
-    //Actualizamos
+    if (!ALLOWED_CUSTOMER_TYPES.includes(customer_type)) {
+      return res.status(400).json({ message: "Invalid customer type" });
+    }
+
     const updatedCustomer = await customerModel.findByIdAndUpdate(
       req.params.id,
       {
@@ -73,7 +73,7 @@ customerController.updateCustomer = async (req, res) => {
         loginAttempts,
         timeOut,
       },
-      { new: true },
+      { new: true }
     );
 
     if (!updatedCustomer) {

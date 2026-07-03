@@ -6,7 +6,7 @@ import AuthInput from '../../components/auth/AuthInput';
 
 function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('paulcanas7@gmail.com');
+  const [email, setEmail] = useState('');
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const handleSubmit = (event) => {

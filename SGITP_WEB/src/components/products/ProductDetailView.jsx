@@ -50,7 +50,7 @@ function ProductDetailView({ product, selectedSize, onSelectSize, onAddToCart, o
             Añadir al carrito
           </button>
           <button type="button" className="product-store-btn" onClick={onOpenStoreSearch}>
-            Buscar en tienda
+            Ver tiendas
           </button>
         </div>
       </section>

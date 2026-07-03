@@ -1,18 +1,24 @@
-import { ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import CustomDropdown from "../ui/CustomDropdown";
+import DateField from "../ui/DateField";
 
-const EMPTY_BRANCH = {
-  name: '',
-  type: 'Seleccionar tipo',
-  address: '',
-  phone: '',
-  hours: '',
-  manager: 'Asignar responsable',
+const BRANCH_STATUS_OPTIONS = [
+  { value: "Active", label: "Activa" },
+  { value: "Inactive", label: "Inactiva" },
+];
+
+const EMPTY_FORM = {
+  name: "",
+  address: "",
+  phone: "",
+  manager: "",
+  openingDate: null,
+  status: "Active",
 };
 
 function BranchFormModal({ open, onClose, branchData = null }) {
-  const [formData, setFormData] = useState(EMPTY_BRANCH);
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const isEditMode = Boolean(branchData);
 
   useEffect(() => {
@@ -20,17 +26,50 @@ function BranchFormModal({ open, onClose, branchData = null }) {
 
     if (branchData) {
       setFormData({
-        name: branchData.name ?? '',
-        type: branchData.type ?? 'Seleccionar tipo',
-        address: branchData.address ?? '',
-        phone: branchData.phone ?? '',
-        hours: branchData.hours ?? '',
-        manager: branchData.manager ?? 'Asignar responsable',
+        name: branchData.name ?? "",
+        address: branchData.address ?? "",
+        phone: branchData.phone ?? "",
+        manager: branchData.manager ?? "",
+        openingDate: branchData.opening_date ? new Date(branchData.opening_date) : null,
+        status: branchData.status ?? "Active",
       });
     } else {
-      setFormData(EMPTY_BRANCH);
+      setFormData(EMPTY_FORM);
     }
   }, [open, branchData]);
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handlePhoneChange = (value) => {
+    const phoneRegex = /^[0-9+\-\s]*$/;
+    if (!phoneRegex.test(value)) return;
+    handleChange("phone", value);
+  };
+
+  const buildPayload = () => {
+    return {
+      name: formData.name.trim(),
+      address: formData.address.trim(),
+      phone: formData.phone.trim(),
+      manager: formData.manager.trim(),
+      opening_date: formData.openingDate
+        ? formData.openingDate.toISOString().split("T")[0]
+        : null,
+      status: formData.status,
+    };
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const payload = buildPayload();
+    console.log("Branch payload:", payload);
+    onClose?.();
+  };
 
   return (
     <AnimatePresence>
@@ -43,95 +82,96 @@ function BranchFormModal({ open, onClose, branchData = null }) {
         >
           <motion.div
             className="branch-form-modal"
-            initial={{ opacity: 0, scale: 0.96, y: 24 }}
+            initial={{ opacity: 0, scale: 0.97, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 18 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            exit={{ opacity: 0, scale: 0.97, y: 18 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
           >
             <div className="branch-form-header">
-              <h2>{isEditMode ? 'Editar Instalación' : 'Registrar Instalación'}</h2>
+              <h2>{isEditMode ? "Editar Sucursal" : "Registrar Sucursal"}</h2>
             </div>
 
-            <div className="branch-form-body">
-              <div className="branch-form-row">
-                <div className="branch-line-group">
-                  <label>NOMBRE DE LA SUCURSAL</label>
+            <form onSubmit={handleSubmit}>
+              <div className="branch-form-body">
+                <div className="branch-form-group">
+                  <label>Nombre de la sucursal</label>
                   <input
                     type="text"
-                    placeholder="Ej. Atelier Flagship Store"
+                    className="form-editable-input"
+                    placeholder="Ej. Sucursal Centro"
                     value={formData.name}
-                    onChange={(event) =>
-                      setFormData((prev) => ({ ...prev, name: event.target.value }))
-                    }
+                    onChange={(event) => handleChange("name", event.target.value)}
                   />
                 </div>
 
-                <div className="branch-line-group">
-                  <label>TIPO DE INSTALACIÓN</label>
-                  <button type="button" className="branch-line-select">
-                    <span>{formData.type}</span>
-                    <ChevronDown size={20} strokeWidth={1.8} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="branch-line-group branch-line-group-full">
-                <label>DIRECCIÓN COMPLETA</label>
-                <input
-                  type="text"
-                  placeholder="Calle, Número, Ciudad, CP"
-                  value={formData.address}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, address: event.target.value }))
-                  }
-                />
-              </div>
-
-              <div className="branch-line-group branch-line-group-half">
-                <label>TELÉFONO DE CONTACTO</label>
-                <input
-                  type="text"
-                  placeholder="+503 0000-0000"
-                  value={formData.phone}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, phone: event.target.value }))
-                  }
-                />
-              </div>
-
-              <div className="branch-form-row">
-                <div className="branch-line-group">
-                  <label>HORARIO DE ATENCIÓN</label>
+                <div className="branch-form-group">
+                  <label>Dirección</label>
                   <input
                     type="text"
-                    placeholder="Lun - Sab: 10am - 8pm"
-                    value={formData.hours}
-                    onChange={(event) =>
-                      setFormData((prev) => ({ ...prev, hours: event.target.value }))
-                    }
+                    className="form-editable-input"
+                    placeholder="Ej. Avenida Central, local 12"
+                    value={formData.address}
+                    onChange={(event) => handleChange("address", event.target.value)}
                   />
                 </div>
 
-                <div className="branch-line-group">
-                  <label>GERENTE O ENCARGADO</label>
-                  <button type="button" className="branch-line-select">
-                    <span>{formData.manager}</span>
-                    <ChevronDown size={20} strokeWidth={1.8} />
-                  </button>
+                <div className="branch-form-row">
+                  <div className="branch-form-group">
+                    <label>Teléfono</label>
+                    <input
+                      type="text"
+                      className="form-editable-input"
+                      placeholder="Ej. +503 2222-2222"
+                      value={formData.phone}
+                      onChange={(event) => handlePhoneChange(event.target.value)}
+                    />
+                  </div>
+
+                  <div className="branch-form-group">
+                    <label>Encargado</label>
+                    <input
+                      type="text"
+                      className="form-editable-input"
+                      placeholder="Ej. María López"
+                      value={formData.manager}
+                      onChange={(event) => handleChange("manager", event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="branch-form-row">
+                  <DateField
+                    label="Fecha de apertura"
+                    value={formData.openingDate}
+                    onChange={(date) => handleChange("openingDate", date)}
+                    placeholder="Seleccionar fecha"
+                    maxDate={new Date()}
+                  />
+
+                  <CustomDropdown
+                    label="Estado"
+                    value={formData.status}
+                    options={BRANCH_STATUS_OPTIONS}
+                    onChange={(value) => handleChange("status", value)}
+                  />
                 </div>
               </div>
-            </div>
 
-            <div className="branch-form-footer">
-              <button type="button" className="modal-cancel-text-btn" onClick={onClose}>
-                CANCELAR
-              </button>
+              <div className="branch-form-footer">
+                <button
+                  type="button"
+                  className="modal-cancel-text-btn"
+                  onClick={onClose}
+                >
+                  CANCELAR
+                </button>
 
-              <button type="button" className="modal-save-btn" onClick={onClose}>
-                {isEditMode ? 'Guardar cambios' : 'Guardar Instalación'}
-                <span className="modal-save-arrow">›</span>
-              </button>
-            </div>
+                <button type="submit" className="modal-save-btn">
+                  {isEditMode ? "Guardar cambios" : "Guardar sucursal"}
+                  <span className="modal-save-arrow">›</span>
+                </button>
+              </div>
+            </form>
           </motion.div>
         </motion.div>
       ) : null}

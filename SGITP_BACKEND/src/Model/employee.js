@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
 
+const EMPLOYEE_ROLES = ["Administrator", "Employee"];
+
 const EmployeeSchema = new Schema(
   {
     full_name: { type: String },
@@ -29,7 +31,11 @@ const EmployeeSchema = new Schema(
     ],
     birth_date: { type: Date },
     hire_date: { type: Date },
-    role: { type: String },
+    role: {
+      type: String,
+      enum: EMPLOYEE_ROLES,
+      default: "Employee",
+    },
     isVerified: { type: Boolean, default: false },
     loginAttempts: { type: Number, default: 0 },
     timeOut: { type: Date, default: null },

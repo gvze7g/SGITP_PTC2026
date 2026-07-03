@@ -20,7 +20,7 @@ const EMPTY_FORM = {
   description: "",
   price: "",
   cost: "",
-  variants: [EMPTY_VARIANT],
+  variants: [{ ...EMPTY_VARIANT }],
 };
 
 function CreateProductModal({
@@ -30,24 +30,15 @@ function CreateProductModal({
   productData = null,
   loading = false,
 }) {
-  // datos del formulario
   const [formData, setFormData] = useState(EMPTY_FORM);
-
-  // aquí guardamos 4 espacios de imágenes
   const [imageSlots, setImageSlots] = useState([null, null, null, null]);
-
-  // refs para abrir input file
   const fileInputRefs = useRef([]);
-
-  // saber si estamos editando
   const isEditMode = useMemo(() => Boolean(productData), [productData]);
 
-  // evita que el scroll cambie precio/costo/stock
   const preventWheelChange = (event) => {
     event.target.blur();
   };
 
-  // llenar formulario cuando abre modal
   useEffect(() => {
     if (!open) return;
 
@@ -94,7 +85,6 @@ function CreateProductModal({
     }
   }, [open, productData]);
 
-  // cambiar inputs simples
   const handleChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -102,7 +92,6 @@ function CreateProductModal({
     }));
   };
 
-  // permitir solo positivos y decimales
   const handleDecimalChange = (field, value) => {
     if (value === "") {
       handleChange(field, "");
@@ -117,7 +106,6 @@ function CreateProductModal({
     handleChange(field, value);
   };
 
-  // cambiar una variante
   const handleVariantChange = (index, field, value) => {
     const decimalFields = ["stock", "retail", "wholesale"];
 
@@ -143,7 +131,6 @@ function CreateProductModal({
     });
   };
 
-  // agregar variante
   const handleAddVariant = () => {
     setFormData((prev) => ({
       ...prev,
@@ -151,7 +138,6 @@ function CreateProductModal({
     }));
   };
 
-  // eliminar variante
   const handleRemoveVariant = (index) => {
     if (formData.variants.length === 1) {
       toast.error("Debe existir al menos una variante.");
@@ -164,15 +150,12 @@ function CreateProductModal({
     }));
   };
 
-  // abrir selector de imagen
   const handleClickImageSlot = (index) => {
     fileInputRefs.current[index]?.click();
   };
 
-  // guardar imagen en un slot
   const handleImageChange = (index, event) => {
     const file = event.target.files?.[0];
-
     if (!file) return;
 
     const updatedSlots = [...imageSlots];
@@ -185,14 +168,12 @@ function CreateProductModal({
     setImageSlots(updatedSlots);
   };
 
-  // quitar imagen de un slot
   const handleRemoveImage = (index) => {
     const updatedSlots = [...imageSlots];
     updatedSlots[index] = null;
     setImageSlots(updatedSlots);
   };
 
-  // validar antes de guardar
   const validateForm = () => {
     if (!formData.name.trim()) {
       toast.error("El nombre del producto es obligatorio.");
@@ -229,7 +210,6 @@ function CreateProductModal({
     return true;
   };
 
-  // guardar producto
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -253,7 +233,6 @@ function CreateProductModal({
     await onSubmit?.(payload, isEditMode);
   };
 
-  // render de slots pequeños
   const renderSmallImageSlot = (index) => {
     const slot = imageSlots[index];
 
@@ -333,19 +312,26 @@ function CreateProductModal({
         >
           <motion.div
             className="create-product-modal"
-            initial={{ opacity: 0, scale: 0.96, y: 28 }}
+            initial={{ opacity: 0, scale: 0.97, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 20 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            exit={{ opacity: 0, scale: 0.97, y: 18 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
             style={{
-              width: "min(980px, 94vw)",
-              maxHeight: "92vh",
+              width: "min(940px, 94vw)",
+              maxHeight: "90vh",
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
+              borderRadius: "18px",
             }}
           >
-            <div className="create-product-header" style={{ flexShrink: 0 }}>
+            <div
+              className="create-product-header"
+              style={{
+                flexShrink: 0,
+                padding: "18px 22px 12px",
+              }}
+            >
               <h2>{isEditMode ? "Editar producto" : "Crear producto"}</h2>
             </div>
 
@@ -357,15 +343,16 @@ function CreateProductModal({
                 flex: 1,
                 overflowY: "auto",
                 overflowX: "hidden",
-                padding: "0 20px 20px 20px",
+                padding: "0 22px 18px",
+                gap: "16px",
               }}
             >
               <div
                 className="create-product-body"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "280px 1fr",
-                  gap: "20px",
+                  gridTemplateColumns: "260px 1fr",
+                  gap: "18px",
                   alignItems: "start",
                 }}
               >
@@ -448,7 +435,7 @@ function CreateProductModal({
                   style={{
                     display: "grid",
                     gridTemplateColumns: "1fr 1fr",
-                    gap: "16px",
+                    gap: "14px",
                     alignItems: "start",
                   }}
                 >
@@ -510,22 +497,17 @@ function CreateProductModal({
                       className="modal-description-area"
                       value={formData.description}
                       onChange={(event) => handleChange("description", event.target.value)}
-                      style={{ minHeight: "90px", resize: "none" }}
+                      style={{ minHeight: "86px", resize: "none" }}
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="variant-section" style={{ marginTop: "16px" }}>
+              <div className="variant-section" style={{ marginTop: "4px" }}>
                 <h3 style={{ marginBottom: "10px" }}>Inventario de variantes</h3>
 
                 {formData.variants.map((variant, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      marginBottom: "16px",
-                    }}
-                  >
+                  <div key={index} style={{ marginBottom: "14px" }}>
                     <div
                       style={{
                         display: "flex",
@@ -645,8 +627,9 @@ function CreateProductModal({
                     alignItems: "center",
                     gap: "12px",
                     marginTop: "12px",
-                    paddingTop: "10px",
+                    paddingTop: "12px",
                     borderTop: "1px solid rgba(0,0,0,0.08)",
+                    flexWrap: "wrap",
                   }}
                 >
                   <button
@@ -657,7 +640,7 @@ function CreateProductModal({
                     + Agregar variante
                   </button>
 
-                  <div style={{ display: "flex", gap: "12px" }}>
+                  <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                     <button
                       type="button"
                       className="admin-secondary-btn"

@@ -1,14 +1,33 @@
-import { ChevronDown, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { toast } from 'sonner';
+import { Search } from "lucide-react";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { useState } from "react";
+import CustomDropdown from "../ui/CustomDropdown";
+
+const ORIGIN_OPTIONS = [
+  { value: "Store", label: "Tienda Física" },
+  { value: "Online", label: "En línea" },
+  { value: "WhatsApp", label: "WhatsApp" },
+  { value: "Instagram", label: "Instagram" },
+];
 
 function PointOfSalePanel() {
+  const [origin, setOrigin] = useState("Store");
+  const [shippingData, setShippingData] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const handlePhoneChange = (value) => {
+    const phoneRegex = /^[0-9+\-\s]*$/;
+    if (!phoneRegex.test(value)) return;
+    setPhone(value);
+  };
+
   return (
     <motion.aside
       className="pos-panel"
       initial={{ opacity: 0, x: 18 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
     >
       <div className="pos-client-card">
         <div className="pos-client-header">
@@ -28,7 +47,7 @@ function PointOfSalePanel() {
             type="button"
             className="pos-search-btn"
             aria-label="Buscar cliente"
-            onClick={() => toast('Búsqueda de clientes disponible próximamente.')}
+            onClick={() => toast("Búsqueda de clientes disponible próximamente.")}
           >
             <Search size={18} strokeWidth={1.8} />
           </button>
@@ -36,21 +55,34 @@ function PointOfSalePanel() {
       </div>
 
       <div className="pos-field-block">
-        <span className="pos-field-label">ORIGEN</span>
-        <button type="button" className="pos-select-field">
-          <span>Tienda Física</span>
-          <ChevronDown size={22} strokeWidth={1.8} />
-        </button>
+        <CustomDropdown
+          label="ORIGEN"
+          value={origin}
+          options={ORIGIN_OPTIONS}
+          onChange={setOrigin}
+        />
       </div>
 
       <div className="pos-field-block">
         <span className="pos-field-label">DATOS DE ENVÍO</span>
-        <div className="pos-textarea-placeholder" />
+        <textarea
+          className="pos-textarea-field pos-editable-field"
+          placeholder="Ej. Colonia Escalón, pasaje 4, casa 12. Referencia: portón negro."
+          value={shippingData}
+          onChange={(event) => setShippingData(event.target.value)}
+          rows={4}
+        />
       </div>
 
       <div className="pos-field-block">
         <span className="pos-field-label">TELÉFONO</span>
-        <div className="pos-input-placeholder" />
+        <input
+          type="text"
+          className="pos-input-field pos-editable-field"
+          placeholder="+503 7000-0000"
+          value={phone}
+          onChange={(event) => handlePhoneChange(event.target.value)}
+        />
       </div>
 
       <div className="pos-order-section">
@@ -96,7 +128,7 @@ function PointOfSalePanel() {
         <button
           type="button"
           className="pos-confirm-btn"
-          onClick={() => toast.success('Venta confirmada correctamente.')}
+          onClick={() => toast.success("Venta confirmada correctamente.")}
         >
           Confirmar venta <span>→</span>
         </button>

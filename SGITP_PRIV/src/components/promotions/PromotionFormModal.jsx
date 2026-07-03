@@ -1,55 +1,48 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { toast } from "sonner";
+import CustomDropdown from "../ui/CustomDropdown";
+import DateField from "../ui/DateField";
 
-const EMPTY_PROMOTION = {
-  code: "",
-  description: "",
-  discount: "",
-  startDate: "",
-  endDate: "",
+const PROMOTION_STATUS_OPTIONS = [
+  { value: true, label: "Activa" },
+  { value: false, label: "Inactiva" },
+];
+
+const EMPTY_FORM = {
+  couponCode: "",
+  descriptions: "",
+  discountPercentage: "",
+  startDate: null,
+  endDate: null,
   isActive: true,
 };
 
-function PromotionFormModal({
-  open,
-  onClose,
-  promotionData = null,
-  onSubmit,
-  loading = false,
-}) {
-  // datos del formulario
-  const [formData, setFormData] = useState(EMPTY_PROMOTION);
+function PromotionFormModal({ open, onClose, promotionData = null }) {
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const isEditMode = Boolean(promotionData);
 
-  // saber si estamos editando
-  const isEditMode = useMemo(() => Boolean(promotionData), [promotionData]);
-
-  // llenar formulario al abrir
   useEffect(() => {
     if (!open) return;
 
     if (promotionData) {
       setFormData({
-        code: promotionData.coupon_code || "",
-        description: promotionData.descriptions || "",
-        discount: promotionData.discount_percentage || "",
-        startDate: promotionData.start_date
-          ? new Date(promotionData.start_date).toISOString().split("T")[0]
-          : "",
-        endDate: promotionData.end_date
-          ? new Date(promotionData.end_date).toISOString().split("T")[0]
-          : "",
+        couponCode: promotionData.coupon_code ?? "",
+        descriptions: promotionData.descriptions ?? "",
+        discountPercentage:
+          promotionData.discount_percentage !== undefined &&
+          promotionData.discount_percentage !== null
+            ? String(promotionData.discount_percentage)
+            : "",
+        startDate: promotionData.start_date ? new Date(promotionData.start_date) : null,
+        endDate: promotionData.end_date ? new Date(promotionData.end_date) : null,
         isActive:
-          typeof promotionData.isActive === "boolean"
-            ? promotionData.isActive
-            : true,
+          typeof promotionData.isActive === "boolean" ? promotionData.isActive : true,
       });
     } else {
-      setFormData(EMPTY_PROMOTION);
+      setFormData(EMPTY_FORM);
     }
   }, [open, promotionData]);
 
-  // cambiar campos
   const handleChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -57,57 +50,46 @@ function PromotionFormModal({
     }));
   };
 
-  // validar antes de guardar
-  const validateForm = () => {
-    if (!formData.code.trim()) {
-      toast.error("El código de promoción es obligatorio.");
-      return false;
+  const handleDiscountChange = (value) => {
+    const sanitized = value.replace(/[^\d]/g, "");
+
+    if (sanitized === "") {
+      handleChange("discountPercentage", "");
+      return;
     }
 
-    if (!/^[a-zA-Z0-9]+$/.test(formData.code.trim())) {
-      toast.error("El código solo debe contener letras y números.");
-      return false;
+    const numericValue = Number(sanitized);
+
+    if (numericValue > 100) {
+      handleChange("discountPercentage", "100");
+      return;
     }
 
-    if (formData.discount === "") {
-      toast.error("El descuento es obligatorio.");
-      return false;
-    }
-
-    if (Number(formData.discount) < 0) {
-      toast.error("El descuento no puede ser menor que 0.");
-      return false;
-    }
-
-    if (!formData.startDate || !formData.endDate) {
-      toast.error("Debes completar la fecha de inicio y fin.");
-      return false;
-    }
-
-    if (new Date(formData.endDate) <= new Date(formData.startDate)) {
-      toast.error("La fecha final debe ser mayor que la fecha inicial.");
-      return false;
-    }
-
-    return true;
+    handleChange("discountPercentage", sanitized);
   };
 
-  // enviar datos al padre
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!validateForm()) return;
-
-    const payload = {
-      coupon_code: formData.code.trim(),
-      descriptions: formData.description.trim(),
-      discount_percentage: Number(formData.discount),
-      start_date: formData.startDate,
-      end_date: formData.endDate,
+  const buildPayload = () => {
+    return {
+      coupon_code: formData.couponCode.trim(),
+      descriptions: formData.descriptions.trim(),
+      discount_percentage: formData.discountPercentage
+        ? Number(formData.discountPercentage)
+        : 0,
+      start_date: formData.startDate
+        ? formData.startDate.toISOString().split("T")[0]
+        : null,
+      end_date: formData.endDate
+        ? formData.endDate.toISOString().split("T")[0]
+        : null,
       isActive: formData.isActive,
     };
+  };
 
-    await onSubmit?.(payload, isEditMode);
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const payload = buildPayload();
+    console.log("Promotion payload:", payload);
+    onClose?.();
   };
 
   return (
@@ -121,118 +103,88 @@ function PromotionFormModal({
         >
           <motion.div
             className="promotion-form-modal"
-            initial={{ opacity: 0, scale: 0.96, y: 24 }}
+            initial={{ opacity: 0, scale: 0.97, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 18 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            exit={{ opacity: 0, scale: 0.97, y: 18 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
           >
             <div className="promotion-form-header">
-              <h2>
-                {isEditMode
-                  ? "Editar Código de Descuento"
-                  : "Nuevo Código de Descuento"}
-              </h2>
+              <h2>{isEditMode ? "Editar Promoción" : "Registrar Promoción"}</h2>
             </div>
 
             <form onSubmit={handleSubmit}>
               <div className="promotion-form-body">
-                <div className="promotion-line-group promotion-line-group-full">
-                  <label>NOMBRE DEL CÓDIGO</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: VERANO20"
-                    value={formData.code}
-                    onChange={(event) => handleChange("code", event.target.value)}
-                  />
+                <div className="promotion-form-row">
+                  <div className="client-form-group">
+                    <label>Código del cupón</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. VERANO2026"
+                      value={formData.couponCode}
+                      onChange={(event) => handleChange("couponCode", event.target.value)}
+                    />
+                  </div>
+
+                  <div className="client-form-group">
+                    <label>Porcentaje de descuento</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. 15"
+                      value={formData.discountPercentage}
+                      onChange={(event) => handleDiscountChange(event.target.value)}
+                    />
+                  </div>
                 </div>
 
-                <div className="promotion-line-group promotion-line-group-full">
-                  <label>DESCRIPCIÓN</label>
+                <div className="client-form-group">
+                  <label>Descripción</label>
                   <input
                     type="text"
-                    placeholder="Ej: descuento general de temporada"
-                    value={formData.description}
-                    onChange={(event) =>
-                      handleChange("description", event.target.value)
-                    }
+                    placeholder="Ej. Promoción de temporada"
+                    value={formData.descriptions}
+                    onChange={(event) => handleChange("descriptions", event.target.value)}
                   />
                 </div>
 
                 <div className="promotion-form-row">
-                  <div className="promotion-line-group">
-                    <label>DESCUENTO (%)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="15"
-                      value={formData.discount}
-                      onChange={(event) => handleChange("discount", event.target.value)}
-                    />
-                  </div>
+                  <DateField
+                    label="Fecha de inicio"
+                    value={formData.startDate}
+                    onChange={(date) => handleChange("startDate", date)}
+                    placeholder="Seleccionar fecha"
+                  />
 
-                  <div className="promotion-line-group">
-                    <label>ESTADO</label>
-                    <select
-                      value={formData.isActive ? "active" : "inactive"}
-                      onChange={(event) =>
-                        handleChange("isActive", event.target.value === "active")
-                      }
-                      className="promotion-line-select"
-                    >
-                      <option value="active">Activo</option>
-                      <option value="inactive">Inactivo</option>
-                    </select>
-                  </div>
+                  <DateField
+                    label="Fecha de finalización"
+                    value={formData.endDate}
+                    onChange={(date) => handleChange("endDate", date)}
+                    placeholder="Seleccionar fecha"
+                    minDate={formData.startDate || undefined}
+                  />
                 </div>
 
                 <div className="promotion-form-row">
-                  <div className="promotion-line-group">
-                    <label>FECHA DE INICIO</label>
-                    <input
-                      type="date"
-                      value={formData.startDate}
-                      onChange={(event) => handleChange("startDate", event.target.value)}
-                    />
-                  </div>
-
-                  <div className="promotion-line-group">
-                    <label>FECHA DE FINALIZACIÓN</label>
-                    <input
-                      type="date"
-                      value={formData.endDate}
-                      onChange={(event) => handleChange("endDate", event.target.value)}
-                    />
-                  </div>
+                  <CustomDropdown
+                    label="Estado"
+                    value={formData.isActive}
+                    options={PROMOTION_STATUS_OPTIONS}
+                    onChange={(value) => handleChange("isActive", value)}
+                  />
                 </div>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "12px",
-                  marginTop: "20px",
-                }}
-              >
+              <div className="promotion-form-footer">
                 <button
                   type="button"
-                  className="admin-secondary-btn"
+                  className="modal-cancel-text-btn"
                   onClick={onClose}
-                  disabled={loading}
                 >
-                  Cancelar
+                  CANCELAR
                 </button>
 
-                <button
-                  type="submit"
-                  className="admin-primary-btn"
-                  disabled={loading}
-                >
-                  {loading
-                    ? "Guardando..."
-                    : isEditMode
-                    ? "Actualizar promoción"
-                    : "Guardar promoción"}
+                <button type="submit" className="modal-save-btn">
+                  {isEditMode ? "Guardar cambios" : "Guardar promoción"}
+                  <span className="modal-save-arrow">›</span>
                 </button>
               </div>
             </form>

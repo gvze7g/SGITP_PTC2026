@@ -7,35 +7,35 @@ const router = Router();
 router.get(
   "/",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente"),
+  validateEmployeeRole("Administrator"),
   promotionsController.getPromotions
 );
 
 router.get(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente"),
+  validateEmployeeRole("Administrator"),
   promotionsController.getPromotionById
 );
 
 router.post(
   "/",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente"),
+  validateEmployeeRole("Administrator"),
   promotionsController.insertPromotion
 );
 
 router.put(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente"),
+  validateEmployeeRole("Administrator"),
   promotionsController.updatePromotion
 );
 
 router.delete(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador"),
+  validateEmployeeRole("Administrator"),
   promotionsController.deletePromotion
 );
 

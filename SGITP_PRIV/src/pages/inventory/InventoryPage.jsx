@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import InventoryTable from "../../components/inventory/InventoryTable";
@@ -6,65 +6,112 @@ import CreateProductModal from "../../components/inventory/CreateProductModal";
 import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
 import useProducts from "../../hooks/inventory/UseProducts";
 
+const DEFAULT_FILTERS = {
+  search: "",
+  minPrice: "",
+  maxPrice: "",
+  lowStockThreshold: 5,
+};
+
 function InventoryPage({ theme, onToggleTheme }) {
-  // hook con la lógica del CRUD
   const {
     products,
     loading,
     getProducts,
+    getLowStockProducts,
+    searchProductsByName,
+    getProductsByPriceRange,
+    getProductsCount,
     createProduct,
     updateProduct,
     deleteProduct,
   } = useProducts();
 
-  // controla modal crear/editar
   const [createModalOpen, setCreateModalOpen] = useState(false);
-
-  // controla modal eliminar
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-
-  // producto seleccionado para editar
   const [selectedProduct, setSelectedProduct] = useState(null);
-
-  // producto seleccionado para eliminar
   const [productToDelete, setProductToDelete] = useState(null);
 
-  // cargar productos al entrar a la página
-  useEffect(() => {
-    getProducts();
-  }, [getProducts]);
+  const [activeTab, setActiveTab] = useState("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [inventoryStats, setInventoryStats] = useState({
+    totalProducts: 0,
+    lowStockCount: 0,
+  });
 
-  // abrir modal para crear
+  const loadStats = useCallback(async () => {
+    const result = await getProductsCount();
+
+    if (result?.success && result.data) {
+      setInventoryStats({
+        totalProducts: result.data.totalProducts || 0,
+        lowStockCount: result.data.lowStockCount || 0,
+      });
+    }
+  }, [getProductsCount]);
+
+  const applyCurrentFilters = useCallback(async () => {
+    const trimmedSearch = filters.search.trim();
+    const hasPriceFilter = filters.minPrice !== "" || filters.maxPrice !== "";
+
+    let result;
+
+    if (activeTab === "low-stock") {
+      result = await getLowStockProducts(filters.lowStockThreshold || 5);
+    } else if (trimmedSearch) {
+      result = await searchProductsByName(trimmedSearch);
+    } else if (hasPriceFilter) {
+      result = await getProductsByPriceRange(filters.minPrice, filters.maxPrice);
+    } else {
+      result = await getProducts();
+    }
+
+    if (!result?.success) {
+      toast.error(result?.message || "No se pudo cargar el inventario.");
+    }
+  }, [
+    activeTab,
+    filters,
+    getLowStockProducts,
+    searchProductsByName,
+    getProductsByPriceRange,
+    getProducts,
+  ]);
+
+  useEffect(() => {
+    applyCurrentFilters();
+  }, [applyCurrentFilters]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
   const handleOpenCreate = () => {
     setSelectedProduct(null);
     setCreateModalOpen(true);
   };
 
-  // abrir modal para editar
   const handleOpenEdit = (product) => {
     setSelectedProduct(product);
     setCreateModalOpen(true);
   };
 
-  // cerrar modal crear/editar
   const handleCloseCreateModal = () => {
     setCreateModalOpen(false);
     setSelectedProduct(null);
   };
 
-  // abrir modal eliminar
   const handleOpenDeleteModal = (product) => {
     setProductToDelete(product);
     setDeleteModalOpen(true);
   };
 
-  // cerrar modal eliminar
   const handleCloseDeleteModal = () => {
     setDeleteModalOpen(false);
     setProductToDelete(null);
   };
 
-  // guardar producto nuevo o editado
   const handleSaveProduct = async (payload, isEditMode) => {
     let result;
 
@@ -86,10 +133,10 @@ function InventoryPage({ theme, onToggleTheme }) {
     );
 
     handleCloseCreateModal();
-    await getProducts();
+    await applyCurrentFilters();
+    await loadStats();
   };
 
-  // confirmar eliminación
   const handleConfirmDelete = async () => {
     if (!productToDelete?._id) {
       toast.error("No se encontró el producto a eliminar.");
@@ -105,14 +152,57 @@ function InventoryPage({ theme, onToggleTheme }) {
 
     toast.success("Producto eliminado correctamente.");
     handleCloseDeleteModal();
-    await getProducts();
+    await applyCurrentFilters();
+    await loadStats();
+  };
+
+  const handleChangeFilter = (field, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSearchSubmit = async () => {
+    if (activeTab === "low-stock") {
+      setActiveTab("all");
+    }
+    await applyCurrentFilters();
+  };
+
+  const handleApplyPriceFilter = async () => {
+    if (activeTab === "low-stock") {
+      setActiveTab("all");
+    }
+    await applyCurrentFilters();
+  };
+
+  const handleResetFilters = async () => {
+    setActiveTab("all");
+    setFilters(DEFAULT_FILTERS);
+    setFiltersOpen(false);
+
+    setTimeout(async () => {
+      await getProducts();
+      await loadStats();
+    }, 0);
+  };
+
+  const handleTabChange = async (tab) => {
+    setActiveTab(tab);
   };
 
   return (
     <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="inventory-page-shell">
         <div className="page-title-row">
-          <h1 className="admin-page-title">Gestión de inventario</h1>
+          <div>
+            <h1 className="admin-page-title">Gestión de inventario</h1>
+            <p style={{ marginTop: 6, opacity: 0.75 }}>
+              Total: {inventoryStats.totalProducts} | Stock bajo:{" "}
+              {inventoryStats.lowStockCount}
+            </p>
+          </div>
 
           <button
             type="button"
@@ -126,6 +216,15 @@ function InventoryPage({ theme, onToggleTheme }) {
         <InventoryTable
           products={products}
           loading={loading}
+          activeTab={activeTab}
+          filtersOpen={filtersOpen}
+          filters={filters}
+          onToggleFilters={() => setFiltersOpen((prev) => !prev)}
+          onTabChange={handleTabChange}
+          onChangeFilter={handleChangeFilter}
+          onSearchSubmit={handleSearchSubmit}
+          onApplyPriceFilter={handleApplyPriceFilter}
+          onResetFilters={handleResetFilters}
           onEditProduct={handleOpenEdit}
           onDeleteProduct={handleOpenDeleteModal}
         />

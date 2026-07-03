@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 const PRODUCTS = [
   {
     name: 'Abrigo estructurado',
@@ -32,6 +34,8 @@ const PRODUCTS = [
 ];
 
 function ProductRail() {
+  const navigate = useNavigate();
+
   return (
     <section className="public-section" id="ropa">
       <h2 className="public-section-title">¡En tendencia ahora mismo!</h2>
@@ -39,7 +43,9 @@ function ProductRail() {
       <div className="product-rail">
         {PRODUCTS.map((product, index) => (
           <article key={`${product.name}-${index}`} className="product-card">
-            <img src={product.image} alt={product.name} />
+            <button type="button" onClick={() => navigate('/product-detail')}>
+              <img src={product.image} alt={product.name} />
+            </button>
             <div className="product-card-info">
               <div>
                 <h3>{product.name}</h3>

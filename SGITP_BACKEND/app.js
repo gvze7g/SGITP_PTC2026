@@ -16,7 +16,7 @@ import cartRoutes from "./src/Routes/shopping_cart.js";
 import spentRoutes from "./src/Routes/spent.js";
 import posRoutes from "./src/Routes/pos.js";
 import loginCustomerRoutes from "./src/Routes/loginCustomer.js";
-import loginEmployeeRoutes from "./src/Routes/loginemployee.js";
+import loginEmployeeRoutes from "./src/Routes/loginEmployee.js";
 import logoutRoutes from "./src/Routes/logout.js";
 import recoveryPasswordRoutes from "./src/Routes/recoveryPassword.js";
 

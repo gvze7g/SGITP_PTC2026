@@ -7,35 +7,35 @@ const router = Router();
 router.get(
   "/",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente"),
+  validateEmployeeRole("Administrator"),
   employeeController.getEmployees
 );
 
 router.get(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador", "Gerente"),
+  validateEmployeeRole("Administrator"),
   employeeController.getEmployeeById
 );
 
 router.post(
   "/",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador"),
+  validateEmployeeRole("Administrator"),
   employeeController.insertEmployee
 );
 
 router.put(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador"),
+  validateEmployeeRole("Administrator"),
   employeeController.updateEmployee
 );
 
 router.delete(
   "/:id",
   validateAuthCookie(["Employee"]),
-  validateEmployeeRole("Administrador"),
+  validateEmployeeRole("Administrator"),
   employeeController.deleteEmployee
 );
 

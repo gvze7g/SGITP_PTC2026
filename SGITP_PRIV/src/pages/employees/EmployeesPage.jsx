@@ -7,7 +7,6 @@ import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
 import useEmployees from "../../hooks/employees/useEmployees";
 
 function EmployeesPage({ theme, onToggleTheme }) {
-  // hook con la lógica del CRUD
   const {
     employees,
     loading,
@@ -17,54 +16,80 @@ function EmployeesPage({ theme, onToggleTheme }) {
     deleteEmployee,
   } = useEmployees();
 
-  // controla modal crear/editar
   const [employeeModalOpen, setEmployeeModalOpen] = useState(false);
-
-  // controla modal eliminar
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-
-  // empleado seleccionado para editar
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-  // empleado seleccionado para eliminar
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
-  // cargar empleados al entrar
+  // TODO:
+  // cuando tengas el usuario autenticado real,
+  // reemplaza null por el empleado actual
+  const [currentEmployee] = useState(null);
+
   useEffect(() => {
     getEmployees();
   }, [getEmployees]);
 
-  // abrir modal para crear
   const handleOpenCreate = () => {
     setSelectedEmployee(null);
     setEmployeeModalOpen(true);
   };
 
-  // abrir modal para editar
   const handleOpenEdit = (employee) => {
     setSelectedEmployee(employee);
     setEmployeeModalOpen(true);
   };
 
-  // cerrar modal
   const handleCloseEmployeeModal = () => {
     setEmployeeModalOpen(false);
     setSelectedEmployee(null);
   };
 
-  // abrir eliminar
+  const validateDeleteEmployee = (employee) => {
+    if (!employee?._id) {
+      return {
+        allowed: false,
+        message: "No se encontró el empleado seleccionado.",
+      };
+    }
+
+    if (employees.length === 1) {
+      return {
+        allowed: false,
+        message: "No puedes eliminar el único usuario existente del sistema.",
+      };
+    }
+
+    if (currentEmployee?._id && currentEmployee._id === employee._id) {
+      return {
+        allowed: false,
+        message: "No puedes eliminar el usuario con el que has iniciado sesión.",
+      };
+    }
+
+    return {
+      allowed: true,
+      message: "",
+    };
+  };
+
   const handleOpenDeleteModal = (employee) => {
+    const validation = validateDeleteEmployee(employee);
+
+    if (!validation.allowed) {
+      toast.error(validation.message);
+      return;
+    }
+
     setEmployeeToDelete(employee);
     setDeleteModalOpen(true);
   };
 
-  // cerrar eliminar
   const handleCloseDeleteModal = () => {
     setDeleteModalOpen(false);
     setEmployeeToDelete(null);
   };
 
-  // guardar empleado
   const handleSaveEmployee = async (payload, isEditMode) => {
     let result;
 
@@ -89,10 +114,12 @@ function EmployeesPage({ theme, onToggleTheme }) {
     await getEmployees();
   };
 
-  // confirmar eliminación
   const handleConfirmDelete = async () => {
-    if (!employeeToDelete?._id) {
-      toast.error("No se encontró el empleado a eliminar.");
+    const validation = validateDeleteEmployee(employeeToDelete);
+
+    if (!validation.allowed) {
+      toast.error(validation.message);
+      handleCloseDeleteModal();
       return;
     }
 
