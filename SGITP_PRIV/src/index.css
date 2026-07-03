@@ -256,7 +256,7 @@ body.theme-dark {
 ========================= */
 
 .admin-shell {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   background: var(--admin-bg);
   color: var(--admin-text);
@@ -337,7 +337,7 @@ body.theme-dark {
 .admin-main {
   margin-left: 320px;
   width: calc(100% - 320px);
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -422,6 +422,9 @@ body.theme-dark {
   padding: 20px 32px 24px;
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -452,6 +455,23 @@ body.theme-dark {
   padding: 0 34px;
   font-size: 18px;
   cursor: pointer;
+}
+
+.admin-secondary-btn {
+  border: 1px solid var(--admin-border);
+  background: transparent;
+  color: var(--admin-text);
+  min-height: 52px;
+  padding: 0 22px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.page-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
 /* =========================
@@ -998,7 +1018,6 @@ body.theme-dark {
 .pos-order-section {
   margin-top: 40px;
   padding-top: 8px;
-  border-top: 1px solid var(--admin-border);
 }
 
 .pos-order-item {
@@ -1248,7 +1267,7 @@ body.theme-dark {
 }
 
 .variant-table {
-  overflow-x: auto;
+  overflow: visible;
 }
 
 .variant-table-head,
@@ -1385,7 +1404,33 @@ body.theme-dark {
 }
 
 /* =========================
-   RESPONSIVE
+   PAGE CONTENT FILL
+========================= */
+
+.inventory-page-shell,
+.employees-page-shell,
+.clients-page-shell,
+.promotions-page-shell,
+.expenses-page-shell,
+.branches-page-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.inventory-page-shell .inventory-panel,
+.employees-page-shell .employees-panel,
+.clients-page-shell .clients-panel,
+.promotions-page-shell .promotions-page,
+.expenses-page-shell .expenses-page,
+.branches-page-shell .branches-page {
+  flex: 1;
+  min-height: 0;
+}
+
+/* =========================
+   RESPONSIVE BASE
 ========================= */
 
 @media (max-width: 1440px) {
@@ -1422,8 +1467,46 @@ body.theme-dark {
     width: calc(100% - 260px);
   }
 
+  .admin-content {
+    padding: 18px 20px 22px;
+  }
+
+  .page-title-row {
+    margin-top: 4px;
+    margin-bottom: 18px;
+    gap: 14px;
+  }
+
+  .admin-page-title {
+    font-size: clamp(30px, 6vw, 42px);
+    line-height: 1.08;
+  }
+
   .create-product-body {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-panel {
+    padding: 22px 20px 20px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .admin-shell {
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .admin-main {
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .pos-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    border-left: none;
   }
 }
 
@@ -1470,7 +1553,7 @@ body.theme-dark {
   }
 
   .admin-content {
-    padding: 20px 18px 28px;
+    padding: 14px 16px 18px;
   }
 
   .dashboard-metrics-grid {
@@ -1496,6 +1579,36 @@ body.theme-dark {
   .variant-section {
     margin: 0 20px;
   }
+
+  .page-title-row {
+    margin-top: 0;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+
+  .admin-page-title {
+    font-size: clamp(26px, 7vw, 36px);
+    line-height: 1.05;
+  }
+
+  .admin-primary-btn,
+  .admin-secondary-btn {
+    min-height: 50px;
+    height: auto;
+    padding: 12px 18px;
+    font-size: 16px;
+  }
+
+  .inventory-panel {
+    padding: 18px 16px 18px;
+  }
+
+  .inventory-table-wrap,
+  .employees-table-wrap,
+  .clients-table-wrap,
+  .expenses-table-wrap {
+    margin-top: 20px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1513,15 +1626,82 @@ body.theme-dark {
     font-size: 16px;
   }
 
+  .admin-topbar {
+    padding: 14px 16px 12px;
+  }
+
+  .admin-content {
+    padding: 12px 12px 16px;
+  }
+
   .admin-sidebar-item {
     font-size: 16px;
     min-height: 56px;
   }
 
+  .page-title-row {
+    align-items: stretch;
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .page-title-row > * {
+    width: 100%;
+  }
+
+  .admin-page-title {
+    font-size: clamp(24px, 9vw, 32px);
+    line-height: 1.02;
+  }
+
+  .page-actions-row {
+    width: 100%;
+  }
+
+  .page-actions-row .admin-secondary-btn,
+  .page-actions-row .admin-primary-btn,
   .inventory-filter-btn,
   .admin-primary-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .inventory-panel {
+    padding: 14px 12px 16px;
+  }
+
+  .inventory-panel-header {
+    gap: 12px;
+  }
+
+  .inventory-tabs {
+    gap: 14px;
+  }
+
+  .inventory-tab {
+    font-size: 16px;
+    padding-bottom: 6px;
+  }
+
+  .inventory-filter-btn {
+    height: 48px;
+    font-size: 16px;
+  }
+
+  .clients-footer,
+  .employees-footer,
+  .expenses-footer,
+  .inventory-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 14px;
+  }
+
+  .clients-pagination,
+  .employees-pagination,
+  .expenses-pagination,
+  .inventory-pagination {
+    flex-wrap: wrap;
   }
 
   .chart-grid {
@@ -1546,23 +1726,6 @@ body.theme-dark {
   .upload-main-box {
     height: 300px;
   }
-}
-
-.page-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.admin-secondary-btn {
-  height: 62px;
-  padding: 0 28px;
-  border: 1px solid var(--admin-border);
-  background: var(--admin-surface);
-  color: var(--admin-text);
-  font-size: 18px;
-  cursor: pointer;
 }
 
 /* =========================
@@ -1904,20 +2067,6 @@ body.theme-dark {
   gap: 28px;
 }
 
-@media (max-width: 900px) {
-  .sales-filters-grid,
-  .employee-grid-two {
-    grid-template-columns: 1fr;
-  }
-
-  .create-employee-header,
-  .create-employee-body,
-  .create-employee-footer {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-}
-
 /* =========================
    SALE DETAILS MODAL
 ========================= */
@@ -2069,19 +2218,6 @@ body.theme-dark {
   padding: 20px 32px;
   display: flex;
   justify-content: flex-end;
-}
-
-@media (max-width: 900px) {
-  .sale-details-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sale-details-header,
-  .sale-details-body,
-  .sale-details-footer {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
 }
 
 /* =========================
@@ -2609,37 +2745,6 @@ body.theme-dark {
   gap: 20px;
 }
 
-@media (max-width: 900px) {
-  .payroll-summary-grid,
-  .client-form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .payroll-receipt-header,
-  .payroll-receipt-body,
-  .payroll-receipt-footer,
-  .client-form-header,
-  .client-form-body,
-  .client-form-footer {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-
-  .payroll-total-box {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .payroll-total-box strong {
-    font-size: 42px;
-  }
-
-  .client-form-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
 /* =========================
    BRANCHES
 ========================= */
@@ -2915,6 +3020,7 @@ body.theme-dark {
   min-height: 380px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .promotion-card-expired {
@@ -2923,7 +3029,7 @@ body.theme-dark {
 
 .promotion-card-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
 }
@@ -2933,6 +3039,7 @@ body.theme-dark {
   color: var(--admin-text);
   font-size: 20px;
   font-weight: 700;
+  word-break: break-word;
 }
 
 .promotion-status-badge {
@@ -2941,10 +3048,11 @@ body.theme-dark {
   background: color-mix(in srgb, var(--admin-surface-2) 65%, transparent);
   color: var(--admin-text);
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .promotion-discount-text {
-  margin: 32px 0 22px;
+  margin: 24px 0 18px;
   color: var(--admin-text);
   font-size: 22px;
   line-height: 1.5;
@@ -2956,31 +3064,30 @@ body.theme-dark {
   gap: 10px;
   color: var(--admin-text);
   font-size: 16px;
+  flex-wrap: wrap;
 }
 
 .promotion-usage-block {
-  margin-top: 24px;
-}
-
-.promotion-usage-top {
+  margin-top: 22px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.promotion-description-label {
+  color: var(--admin-text-soft);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.promotion-description-text {
+  margin: 0;
   color: var(--admin-text);
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-
-.promotion-usage-bar {
-  width: 100%;
-  height: 3px;
-  background: color-mix(in srgb, var(--admin-border-soft) 100%, transparent);
-}
-
-.promotion-usage-fill {
-  width: 42%;
-  height: 100%;
-  background: var(--admin-text);
+  font-size: 15px;
+  line-height: 1.65;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .promotion-card-footer {
@@ -2988,17 +3095,26 @@ body.theme-dark {
   padding-top: 22px;
   border-top: 1px solid var(--admin-border-soft);
   display: flex;
-  gap: 18px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.promotion-card-footer button {
-  border: none;
+.promotion-action-btn {
+  border: 1px solid var(--admin-border);
   background: transparent;
   color: var(--admin-text);
-  font-size: 16px;
-  letter-spacing: 0.08em;
+  min-height: 42px;
+  padding: 0 14px;
+  font-size: 14px;
+  letter-spacing: 0.06em;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.promotion-action-btn span {
+  white-space: nowrap;
 }
 
 /* =========================
@@ -3098,48 +3214,6 @@ body.theme-dark {
   justify-content: flex-end;
   align-items: center;
   gap: 28px;
-}
-
-@media (max-width: 1200px) {
-  .branches-grid,
-  .promotions-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 900px) {
-  .branches-stats-grid,
-  .branch-form-row,
-  .promotion-form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .branch-line-group-half {
-    width: 100%;
-  }
-
-  .branch-form-header,
-  .branch-form-body,
-  .branch-form-footer,
-  .promotion-form-header,
-  .promotion-form-body,
-  .promotion-form-footer {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-}
-
-@media (max-width: 640px) {
-  .branches-grid,
-  .promotions-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .branch-card-footer,
-  .promotion-card-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 
 /* =========================
@@ -3382,40 +3456,108 @@ body.theme-dark {
   gap: 28px;
 }
 
+/* =========================
+   RESPONSIVE SECTIONAL
+========================= */
+
+@media (max-width: 1200px) {
+  .branches-grid,
+  .promotions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
+  .sales-filters-grid,
+  .employee-grid-two,
+  .sale-details-grid,
+  .payroll-summary-grid,
+  .client-form-row,
+  .branches-stats-grid,
+  .branch-form-row,
+  .promotion-form-row,
   .expenses-summary-grid,
   .expense-form-row,
   .expense-form-row-top {
     grid-template-columns: 1fr;
   }
 
+  .create-employee-header,
+  .create-employee-body,
+  .create-employee-footer,
+  .sale-details-header,
+  .sale-details-body,
+  .sale-details-footer,
+  .payroll-receipt-header,
+  .payroll-receipt-body,
+  .payroll-receipt-footer,
+  .client-form-header,
+  .client-form-body,
+  .client-form-footer,
+  .branch-form-header,
+  .branch-form-body,
+  .branch-form-footer,
+  .promotion-form-header,
+  .promotion-form-body,
+  .promotion-form-footer,
   .expense-form-header,
   .expense-form-body,
   .expense-form-footer {
     padding-left: 20px;
     padding-right: 20px;
   }
+
+  .payroll-total-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .payroll-total-box strong {
+    font-size: 42px;
+  }
+
+  .client-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .branch-line-group-half {
+    width: 100%;
+  }
+
+  .promotions-summary-block {
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+  }
+
+  .promotion-card {
+    min-height: unset;
+  }
 }
 
-@media (max-width: 1024px) {
-  .admin-shell {
-    height: auto;
-    overflow: visible;
+@media (max-width: 640px) {
+  .branches-grid,
+  .promotions-grid {
+    grid-template-columns: 1fr;
   }
 
-  .admin-main {
-    height: auto;
-    overflow: visible;
+  .branch-card-footer,
+  .promotion-card-footer {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .admin-content {
-    overflow-y: visible;
+  .promotion-action-btn {
+    width: 100%;
+    justify-content: center;
   }
 
-  .pos-panel {
-    position: static;
-    max-height: none;
-    overflow: visible;
-    border-left: none;
+  .promotion-card {
+    padding: 20px;
+  }
+
+  .promotion-card-top {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

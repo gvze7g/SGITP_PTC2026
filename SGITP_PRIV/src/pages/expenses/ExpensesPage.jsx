@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import ExpensesTable from '../../components/expenses/ExpensesTable';
@@ -27,24 +28,31 @@ function ExpensesPage({ theme, onToggleTheme }) {
 
   return (
     <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
-      <div className="page-title-row">
-        <h1 className="admin-page-title">Gastos operativos</h1>
+      <motion.div
+        className="expenses-page-shell"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: 'easeOut' }}
+      >
+        <div className="page-title-row">
+          <h1 className="admin-page-title">Gastos operativos</h1>
 
-        <div className="page-actions-row">
-          <button type="button" className="admin-secondary-btn">
-            Octubre 2023
-          </button>
+          <div className="page-actions-row">
+            <button type="button" className="admin-secondary-btn">
+              Octubre 2023
+            </button>
 
-          <button type="button" className="admin-primary-btn" onClick={handleCreateExpense}>
-            + Registrar Gasto
-          </button>
+            <button type="button" className="admin-primary-btn" onClick={handleCreateExpense}>
+              + Registrar Gasto
+            </button>
+          </div>
         </div>
-      </div>
 
-      <ExpensesTable
-        onEditExpense={handleEditExpense}
-        onDeleteExpense={() => setDeleteModalOpen(true)}
-      />
+        <ExpensesTable
+          onEditExpense={handleEditExpense}
+          onDeleteExpense={() => setDeleteModalOpen(true)}
+        />
+      </motion.div>
 
       <ExpenseFormModal
         open={expenseModalOpen}

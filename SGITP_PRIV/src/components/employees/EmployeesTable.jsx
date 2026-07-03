@@ -1,45 +1,29 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from "lucide-react";
 
-const EMPLOYEES = [
-  {
-    id: 1,
-    fullName: 'Paul Urquilla',
-    role: 'Administrador',
-    branch: 'Merliot',
-    status: 'Activo',
-    email: 'paul.urquilla@peques.com',
-    phone: '7654-1200',
-    hireDate: '15/02/2023',
-    birthDate: '10/08/1995',
-    temporaryPassword: 'Temp1234',
-  },
-  {
-    id: 2,
-    fullName: 'Leonel Adrian',
-    role: 'Cajero',
-    branch: 'Plaza mundo',
-    status: 'Activo',
-    email: 'leonel.adrian@peques.com',
-    phone: '7123-4590',
-    hireDate: '09/05/2023',
-    birthDate: '22/11/1999',
-    temporaryPassword: 'Caja2024',
-  },
-  {
-    id: 3,
-    fullName: 'Eduardo Galvez',
-    role: 'Bodeguero',
-    branch: 'La Gran vía',
-    status: 'Inactivo',
-    email: 'eduardo.galvez@peques.com',
-    phone: '7011-8822',
-    hireDate: '18/01/2022',
-    birthDate: '03/04/1993',
-    temporaryPassword: 'Bodega321',
-  },
-];
+function EmployeesTable({
+  employees = [],
+  loading,
+  onEditEmployee,
+  onDeleteEmployee,
+}) {
+  // mostrar el nombre de la sucursal si viene poblada
+  const getBranchName = (employee) => {
+    if (employee?.branch_id && typeof employee.branch_id === "object") {
+      return employee.branch_id.name || "Sucursal asignada";
+    }
 
-function EmployeesTable({ onOpenDeleteModal, onEditEmployee }) {
+    if (typeof employee?.branch_id === "string" && employee.branch_id.trim()) {
+      return employee.branch_id;
+    }
+
+    return "No asignada";
+  };
+
+  // mostrar estado simple
+  const getStatusLabel = (employee) => {
+    return employee?.isVerified ? "Activo" : "Pendiente";
+  };
+
   return (
     <section className="employees-panel">
       <div className="employees-table-wrap">
@@ -51,44 +35,50 @@ function EmployeesTable({ onOpenDeleteModal, onEditEmployee }) {
           <span>ACCIONES</span>
         </div>
 
-        {EMPLOYEES.map((employee) => (
-          <article key={employee.id} className="employees-row">
-            <div className="employees-name-cell">{employee.fullName}</div>
-            <div className="employees-role-cell">{employee.role}</div>
-            <div className="employees-branch-cell">{employee.branch}</div>
-            <div className="employees-status-cell">{employee.status}</div>
+        {loading ? (
+          <div style={{ padding: "20px" }}>Cargando empleados...</div>
+        ) : employees.length === 0 ? (
+          <div style={{ padding: "20px" }}>No hay empleados registrados.</div>
+        ) : (
+          employees.map((employee) => (
+            <article key={employee._id} className="employees-row">
+              <div className="employees-name-cell">{employee.full_name}</div>
+              <div className="employees-role-cell">{employee.role || "Sin rol"}</div>
+              <div className="employees-branch-cell">{getBranchName(employee)}</div>
+              <div className="employees-status-cell">{getStatusLabel(employee)}</div>
 
-            <div className="employees-actions-cell">
-              <button
-                type="button"
-                className="employees-action-icon"
-                onClick={() => onEditEmployee?.(employee)}
-                aria-label="Editar empleado"
-              >
-                <Pencil size={20} strokeWidth={2} />
-              </button>
+              <div className="employees-actions-cell">
+                <button
+                  type="button"
+                  className="employees-action-icon"
+                  onClick={() => onEditEmployee?.(employee)}
+                  aria-label="Editar empleado"
+                >
+                  <Pencil size={20} strokeWidth={2} />
+                </button>
 
-              <button
-                type="button"
-                className="employees-action-icon"
-                onClick={onOpenDeleteModal}
-                aria-label="Eliminar empleado"
-              >
-                <Trash2 size={20} strokeWidth={2} />
-              </button>
-            </div>
-          </article>
-        ))}
+                <button
+                  type="button"
+                  className="employees-action-icon"
+                  onClick={() => onDeleteEmployee?.(employee)}
+                  aria-label="Eliminar empleado"
+                >
+                  <Trash2 size={20} strokeWidth={2} />
+                </button>
+              </div>
+            </article>
+          ))
+        )}
       </div>
 
       <div className="employees-footer">
-        <p>Mostrando 1 a 10</p>
+        <p>Mostrando {employees.length} empleados</p>
 
         <div className="employees-pagination">
           <button type="button">‹</button>
-          <button type="button" className="employees-page-active">1</button>
-          <button type="button">2</button>
-          <button type="button">3</button>
+          <button type="button" className="employees-page-active">
+            1
+          </button>
           <button type="button">›</button>
         </div>
       </div>
