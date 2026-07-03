@@ -110,24 +110,26 @@ function InventoryPage({ theme, onToggleTheme }) {
 
   return (
     <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
-      <div className="page-title-row">
-        <h1 className="admin-page-title">Gestión de inventario</h1>
+      <div className="inventory-page-shell">
+        <div className="page-title-row">
+          <h1 className="admin-page-title">Gestión de inventario</h1>
 
-        <button
-          type="button"
-          className="admin-primary-btn"
-          onClick={handleOpenCreate}
-        >
-          + Crear producto
-        </button>
+          <button
+            type="button"
+            className="admin-primary-btn"
+            onClick={handleOpenCreate}
+          >
+            + Crear producto
+          </button>
+        </div>
+
+        <InventoryTable
+          products={products}
+          loading={loading}
+          onEditProduct={handleOpenEdit}
+          onDeleteProduct={handleOpenDeleteModal}
+        />
       </div>
-
-      <InventoryTable
-        products={products}
-        loading={loading}
-        onEditProduct={handleOpenEdit}
-        onDeleteProduct={handleOpenDeleteModal}
-      />
 
       <CreateProductModal
         open={createModalOpen}

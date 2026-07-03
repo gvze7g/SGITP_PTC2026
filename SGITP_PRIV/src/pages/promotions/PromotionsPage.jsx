@@ -119,7 +119,6 @@ function PromotionsPage({ theme, onToggleTheme }) {
       return;
     }
 
-    // desactivar = update con isActive false
     const payload = {
       coupon_code: selectedPromotion.coupon_code,
       descriptions: selectedPromotion.descriptions || "",
@@ -143,29 +142,31 @@ function PromotionsPage({ theme, onToggleTheme }) {
 
   return (
     <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
-      <div className="page-title-row">
-        <h1 className="admin-page-title promotions-title-break">
-          Campañas y
-          <br />
-          Promociones
-        </h1>
+      <div className="promotions-page-shell">
+        <div className="page-title-row">
+          <h1 className="admin-page-title promotions-title-break">
+            Campañas y
+            <br />
+            Promociones
+          </h1>
 
-        <button
-          type="button"
-          className="admin-primary-btn"
-          onClick={handleCreate}
-        >
-          + Nuevo Código
-        </button>
+          <button
+            type="button"
+            className="admin-primary-btn"
+            onClick={handleCreate}
+          >
+            + Nuevo Código
+          </button>
+        </div>
+
+        <PromotionsGrid
+          promotions={promotions}
+          loading={loading}
+          onEditPromotion={handleEdit}
+          onDeactivatePromotion={handleOpenDeactivate}
+          onDeletePromotion={handleOpenDelete}
+        />
       </div>
-
-      <PromotionsGrid
-        promotions={promotions}
-        loading={loading}
-        onEditPromotion={handleEdit}
-        onDeactivatePromotion={handleOpenDeactivate}
-        onDeletePromotion={handleOpenDelete}
-      />
 
       <PromotionFormModal
         open={promotionModalOpen}

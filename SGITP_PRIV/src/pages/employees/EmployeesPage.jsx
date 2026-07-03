@@ -4,7 +4,7 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import EmployeesTable from "../../components/employees/EmployeesTable";
 import CreateEmployeeModal from "../../components/employees/CreateEmployeeModal";
 import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
-import useEmployees from "../../hooks/employees/UseEmployees";
+import useEmployees from "../../hooks/employees/useEmployees";
 
 function EmployeesPage({ theme, onToggleTheme }) {
   // hook con la lógica del CRUD
@@ -110,24 +110,26 @@ function EmployeesPage({ theme, onToggleTheme }) {
 
   return (
     <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
-      <div className="page-title-row">
-        <h1 className="admin-page-title">Empleados</h1>
+      <div className="employees-page-shell">
+        <div className="page-title-row">
+          <h1 className="admin-page-title">Empleados</h1>
 
-        <button
-          type="button"
-          className="admin-primary-btn"
-          onClick={handleOpenCreate}
-        >
-          + Nuevo empleado
-        </button>
+          <button
+            type="button"
+            className="admin-primary-btn"
+            onClick={handleOpenCreate}
+          >
+            + Nuevo empleado
+          </button>
+        </div>
+
+        <EmployeesTable
+          employees={employees}
+          loading={loading}
+          onEditEmployee={handleOpenEdit}
+          onDeleteEmployee={handleOpenDeleteModal}
+        />
       </div>
-
-      <EmployeesTable
-        employees={employees}
-        loading={loading}
-        onEditEmployee={handleOpenEdit}
-        onDeleteEmployee={handleOpenDeleteModal}
-      />
 
       <CreateEmployeeModal
         open={employeeModalOpen}

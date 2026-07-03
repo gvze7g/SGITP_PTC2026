@@ -1,4 +1,4 @@
-import { CalendarDays, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, Pencil, Power, Trash2 } from "lucide-react";
 
 function PromotionsGrid({
   promotions = [],
@@ -30,6 +30,15 @@ function PromotionsGrid({
     return `${start} - ${end}`;
   };
 
+  // descripción visible
+  const getDescriptionLabel = (promotion) => {
+    if (!promotion?.descriptions?.trim()) {
+      return "Sin descripción";
+    }
+
+    return promotion.descriptions.trim();
+  };
+
   const activeCount = promotions.filter((promotion) => promotion.isActive).length;
 
   return (
@@ -53,7 +62,8 @@ function PromotionsGrid({
               }`}
             >
               <div className="promotion-card-top">
-                <h3>#{promotion.coupon_code}</h3>
+                <h3>{promotion.coupon_code}</h3>
+
                 <span className="promotion-status-badge">
                   {getStatusLabel(promotion)}
                 </span>
@@ -69,41 +79,41 @@ function PromotionsGrid({
               </div>
 
               <div className="promotion-usage-block">
-                <div className="promotion-usage-top">
-                  <span>DESCRIPCIÓN</span>
-                  <span>{promotion.descriptions || "Sin descripción"}</span>
-                </div>
+                <span className="promotion-description-label">DESCRIPCIÓN</span>
+
+                <p className="promotion-description-text">
+                  {getDescriptionLabel(promotion)}
+                </p>
               </div>
 
-              <div
-                className="promotion-card-footer"
-                style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}
-              >
+              <div className="promotion-card-footer">
                 <button
                   type="button"
+                  className="promotion-action-btn"
                   onClick={() => onEditPromotion?.(promotion)}
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
                   <Pencil size={14} />
-                  EDITAR
+                  <span>EDITAR</span>
                 </button>
 
                 {promotion.isActive && (
                   <button
                     type="button"
+                    className="promotion-action-btn"
                     onClick={() => onDeactivatePromotion?.(promotion)}
                   >
-                    DESACTIVAR
+                    <Power size={14} />
+                    <span>DESACTIVAR</span>
                   </button>
                 )}
 
                 <button
                   type="button"
+                  className="promotion-action-btn"
                   onClick={() => onDeletePromotion?.(promotion)}
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
                   <Trash2 size={14} />
-                  ELIMINAR
+                  <span>ELIMINAR</span>
                 </button>
               </div>
             </article>

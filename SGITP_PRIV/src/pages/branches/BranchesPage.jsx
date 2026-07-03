@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import BranchesGrid from '../../components/branches/BranchesGrid';
@@ -26,18 +27,25 @@ function BranchesPage({ theme, onToggleTheme }) {
 
   return (
     <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
-      <div className="page-title-row">
-        <h1 className="admin-page-title">Sucursales y bodegas</h1>
+      <motion.div
+        className="branches-page-shell"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, ease: 'easeOut' }}
+      >
+        <div className="page-title-row">
+          <h1 className="admin-page-title">Sucursales y bodegas</h1>
 
-        <button type="button" className="admin-primary-btn" onClick={handleCreate}>
-          + Nueva Sucursal
-        </button>
-      </div>
+          <button type="button" className="admin-primary-btn" onClick={handleCreate}>
+            + Nueva Sucursal
+          </button>
+        </div>
 
-      <BranchesGrid
-        onEditBranch={handleEdit}
-        onViewInventory={() => navigate('/inventory')}
-      />
+        <BranchesGrid
+          onEditBranch={handleEdit}
+          onViewInventory={() => navigate('/inventory')}
+        />
+      </motion.div>
 
       <BranchFormModal
         open={branchModalOpen}

@@ -1,5 +1,6 @@
 import { ChevronDown, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const EMPTY_FORM = {
   fullName: '',
@@ -82,147 +83,162 @@ function ClientFormModal({ open, onClose, clientData = null }) {
     }));
   };
 
-  if (!open) return null;
-
   return (
-    <div className="app-modal-overlay app-modal-overlay-dark">
-      <div className="client-form-modal">
-        <div className="client-form-header">
-          <h2>{isEditMode ? 'Editar Cliente' : 'Registrar Cliente'}</h2>
-        </div>
-
-        <div className="client-form-body">
-          <div className="client-form-group">
-            <label>Nombre Completo</label>
-            <input
-              type="text"
-              placeholder="Ej. Lucía Méndez"
-              value={formData.fullName}
-              onChange={(event) =>
-                setFormData((prev) => ({ ...prev, fullName: event.target.value }))
-              }
-            />
-          </div>
-
-          <div className="client-form-row">
-            <div className="client-form-group">
-              <label>Correo</label>
-              <input
-                type="email"
-                placeholder="correo@ejemplo.com"
-                value={formData.email}
-                onChange={(event) =>
-                  setFormData((prev) => ({ ...prev, email: event.target.value }))
-                }
-              />
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          className="app-modal-overlay app-modal-overlay-dark"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="client-form-modal"
+            initial={{ opacity: 0, scale: 0.96, y: 24 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 18 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <div className="client-form-header">
+              <h2>{isEditMode ? 'Editar Cliente' : 'Registrar Cliente'}</h2>
             </div>
 
-            <div className="client-form-group">
-              <label>Tipo de Cliente</label>
-              <button type="button" className="client-select-box">
-                <span>{formData.type}</span>
-                <ChevronDown size={22} strokeWidth={1.8} />
-              </button>
-            </div>
-          </div>
-
-          <div className="client-form-divider" />
-
-          <div className="client-section-title">TELÉFONOS</div>
-
-          <div className="client-phones-list">
-            {formData.phones.map((phone, index) => (
-              <div key={`phone-${index}`} className="client-phone-row">
+            <div className="client-form-body">
+              <div className="client-form-group">
+                <label>Nombre Completo</label>
                 <input
                   type="text"
-                  value={phone}
-                  onChange={(event) => updatePhone(index, event.target.value)}
+                  placeholder="Ej. Lucía Méndez"
+                  value={formData.fullName}
+                  onChange={(event) =>
+                    setFormData((prev) => ({ ...prev, fullName: event.target.value }))
+                  }
                 />
-
-                <button
-                  type="button"
-                  className="client-trash-btn"
-                  onClick={() => removePhone(index)}
-                >
-                  <Trash2 size={16} strokeWidth={1.8} />
-                </button>
               </div>
-            ))}
-          </div>
 
-          <button type="button" className="client-add-link" onClick={addPhone}>
-            + Agregar otro teléfono
-          </button>
-
-          <div className="client-form-divider" />
-
-          <div className="client-section-title">DIRECCIONES</div>
-
-          <div className="client-addresses-list">
-            {formData.addresses.map((address, index) => (
-              <div key={`address-${index}`} className="client-address-card">
-                <button
-                  type="button"
-                  className="client-address-remove"
-                  onClick={() => removeAddress(index)}
-                >
-                  <Trash2 size={16} strokeWidth={1.8} />
-                </button>
-
+              <div className="client-form-row">
                 <div className="client-form-group">
-                  <label>Etiqueta (Ej. Taller, Oficina)</label>
+                  <label>Correo</label>
                   <input
-                    type="text"
-                    value={address.label}
-                    onChange={(event) => updateAddress(index, 'label', event.target.value)}
+                    type="email"
+                    placeholder="correo@ejemplo.com"
+                    value={formData.email}
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, email: event.target.value }))
+                    }
                   />
                 </div>
 
                 <div className="client-form-group">
-                  <label>Calle y Número</label>
-                  <input
-                    type="text"
-                    value={address.street}
-                    onChange={(event) => updateAddress(index, 'street', event.target.value)}
-                  />
-                </div>
-
-                <div className="client-form-row">
-                  <div className="client-form-group">
-                    <label>Ciudad</label>
-                    <input
-                      type="text"
-                      value={address.city}
-                      onChange={(event) => updateAddress(index, 'city', event.target.value)}
-                    />
-                  </div>
-
-                  <div className="client-form-group">
-                    <label>Referencia</label>
-                    <input
-                      type="text"
-                      value={address.reference}
-                      onChange={(event) => updateAddress(index, 'reference', event.target.value)}
-                    />
-                  </div>
+                  <label>Tipo de Cliente</label>
+                  <button type="button" className="client-select-box">
+                    <span>{formData.type}</span>
+                    <ChevronDown size={22} strokeWidth={1.8} />
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="client-form-footer">
-          <button type="button" className="modal-cancel-text-btn" onClick={onClose}>
-            CANCELAR
-          </button>
+              <div className="client-form-divider" />
 
-          <button type="button" className="modal-save-btn" onClick={onClose}>
-            {isEditMode ? 'Guardar cambios' : 'Guardar cliente'}
-            <span className="modal-save-arrow">›</span>
-          </button>
-        </div>
-      </div>
-    </div>
+              <div className="client-section-title">TELÉFONOS</div>
+
+              <div className="client-phones-list">
+                {formData.phones.map((phone, index) => (
+                  <div key={`phone-${index}`} className="client-phone-row">
+                    <input
+                      type="text"
+                      value={phone}
+                      onChange={(event) => updatePhone(index, event.target.value)}
+                    />
+
+                    <button
+                      type="button"
+                      className="client-trash-btn"
+                      onClick={() => removePhone(index)}
+                    >
+                      <Trash2 size={16} strokeWidth={1.8} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button type="button" className="client-add-link" onClick={addPhone}>
+                + Agregar otro teléfono
+              </button>
+
+              <div className="client-form-divider" />
+
+              <div className="client-section-title">DIRECCIONES</div>
+
+              <div className="client-addresses-list">
+                {formData.addresses.map((address, index) => (
+                  <div key={`address-${index}`} className="client-address-card">
+                    <button
+                      type="button"
+                      className="client-address-remove"
+                      onClick={() => removeAddress(index)}
+                    >
+                      <Trash2 size={16} strokeWidth={1.8} />
+                    </button>
+
+                    <div className="client-form-group">
+                      <label>Etiqueta (Ej. Taller, Oficina)</label>
+                      <input
+                        type="text"
+                        value={address.label}
+                        onChange={(event) => updateAddress(index, 'label', event.target.value)}
+                      />
+                    </div>
+
+                    <div className="client-form-group">
+                      <label>Calle y Número</label>
+                      <input
+                        type="text"
+                        value={address.street}
+                        onChange={(event) => updateAddress(index, 'street', event.target.value)}
+                      />
+                    </div>
+
+                    <div className="client-form-row">
+                      <div className="client-form-group">
+                        <label>Ciudad</label>
+                        <input
+                          type="text"
+                          value={address.city}
+                          onChange={(event) => updateAddress(index, 'city', event.target.value)}
+                        />
+                      </div>
+
+                      <div className="client-form-group">
+                        <label>Referencia</label>
+                        <input
+                          type="text"
+                          value={address.reference}
+                          onChange={(event) =>
+                            updateAddress(index, 'reference', event.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="client-form-footer">
+              <button type="button" className="modal-cancel-text-btn" onClick={onClose}>
+                CANCELAR
+              </button>
+
+              <button type="button" className="modal-save-btn" onClick={onClose}>
+                {isEditMode ? 'Guardar cambios' : 'Guardar cliente'}
+                <span className="modal-save-arrow">›</span>
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }
 
