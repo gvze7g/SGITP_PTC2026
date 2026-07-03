@@ -1,14 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import BranchesGrid from '../../components/branches/BranchesGrid';
 import BranchFormModal from '../../components/branches/BranchesFormModal';
+import useBranches from '../../hooks/branches/UseBranches';
 
 function BranchesPage({ theme, onToggleTheme }) {
   const [branchModalOpen, setBranchModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const navigate = useNavigate();
+  const {
+    branches,
+    loading,
+    error,
+    getBranches,
+    createBranch,
+    updateBranch,
+    deleteBranch,
+  } = useBranches();
+
+  useEffect(() => {
+    getBranches();
+  }, [getBranches]);
 
   const handleCreate = () => {
     setSelectedBranch(null);
@@ -23,6 +38,41 @@ function BranchesPage({ theme, onToggleTheme }) {
   const handleClose = () => {
     setBranchModalOpen(false);
     setSelectedBranch(null);
+  };
+
+  const handleSave = async (payload) => {
+    if (!payload.name) {
+      toast.error('El nombre de la sucursal es obligatorio.');
+      return;
+    }
+
+    const result = selectedBranch
+      ? await updateBranch(selectedBranch._id, payload)
+      : await createBranch(payload);
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success(selectedBranch ? 'Sucursal actualizada.' : 'Sucursal creada.');
+    handleClose();
+    getBranches();
+  };
+
+  const handleDelete = async (branch) => {
+    const confirmed = window.confirm(`Eliminar ${branch.name}?`);
+    if (!confirmed) return;
+
+    const result = await deleteBranch(branch._id);
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success('Sucursal eliminada.');
+    getBranches();
   };
 
   return (
@@ -42,7 +92,11 @@ function BranchesPage({ theme, onToggleTheme }) {
         </div>
 
         <BranchesGrid
+          branches={branches}
+          loading={loading}
+          error={error}
           onEditBranch={handleEdit}
+          onDeleteBranch={handleDelete}
           onViewInventory={() => navigate('/inventory')}
         />
       </motion.div>
@@ -50,7 +104,9 @@ function BranchesPage({ theme, onToggleTheme }) {
       <BranchFormModal
         open={branchModalOpen}
         onClose={handleClose}
+        onSubmit={handleSave}
         branchData={selectedBranch}
+        isSaving={loading}
       />
     </DashboardLayout>
   );

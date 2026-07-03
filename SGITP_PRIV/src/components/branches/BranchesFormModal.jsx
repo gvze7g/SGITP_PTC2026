@@ -12,12 +12,18 @@ const EMPTY_FORM = {
   name: "",
   address: "",
   phone: "",
-  manager: "",
+  email: "",
   openingDate: null,
   status: "Active",
 };
 
-function BranchFormModal({ open, onClose, branchData = null }) {
+function BranchFormModal({
+  open,
+  onClose,
+  onSubmit,
+  branchData = null,
+  isSaving = false,
+}) {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const isEditMode = Boolean(branchData);
 
@@ -29,9 +35,9 @@ function BranchFormModal({ open, onClose, branchData = null }) {
         name: branchData.name ?? "",
         address: branchData.address ?? "",
         phone: branchData.phone ?? "",
-        manager: branchData.manager ?? "",
+        email: branchData.email ?? "",
         openingDate: branchData.opening_date ? new Date(branchData.opening_date) : null,
-        status: branchData.status ?? "Active",
+        status: branchData.isActive === false ? "Inactive" : "Active",
       });
     } else {
       setFormData(EMPTY_FORM);
@@ -56,19 +62,17 @@ function BranchFormModal({ open, onClose, branchData = null }) {
       name: formData.name.trim(),
       address: formData.address.trim(),
       phone: formData.phone.trim(),
-      manager: formData.manager.trim(),
+      email: formData.email.trim(),
       opening_date: formData.openingDate
         ? formData.openingDate.toISOString().split("T")[0]
         : null,
-      status: formData.status,
+      isActive: formData.status === "Active",
     };
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const payload = buildPayload();
-    console.log("Branch payload:", payload);
-    onClose?.();
+    onSubmit?.(buildPayload());
   };
 
   return (
@@ -105,7 +109,7 @@ function BranchFormModal({ open, onClose, branchData = null }) {
                 </div>
 
                 <div className="branch-form-group">
-                  <label>Dirección</label>
+                  <label>Direccion</label>
                   <input
                     type="text"
                     className="form-editable-input"
@@ -117,7 +121,7 @@ function BranchFormModal({ open, onClose, branchData = null }) {
 
                 <div className="branch-form-row">
                   <div className="branch-form-group">
-                    <label>Teléfono</label>
+                    <label>Telefono</label>
                     <input
                       type="text"
                       className="form-editable-input"
@@ -128,13 +132,13 @@ function BranchFormModal({ open, onClose, branchData = null }) {
                   </div>
 
                   <div className="branch-form-group">
-                    <label>Encargado</label>
+                    <label>Email</label>
                     <input
-                      type="text"
+                      type="email"
                       className="form-editable-input"
-                      placeholder="Ej. María López"
-                      value={formData.manager}
-                      onChange={(event) => handleChange("manager", event.target.value)}
+                      placeholder="sucursal@peques.com"
+                      value={formData.email}
+                      onChange={(event) => handleChange("email", event.target.value)}
                     />
                   </div>
                 </div>
@@ -166,9 +170,13 @@ function BranchFormModal({ open, onClose, branchData = null }) {
                   CANCELAR
                 </button>
 
-                <button type="submit" className="modal-save-btn">
-                  {isEditMode ? "Guardar cambios" : "Guardar sucursal"}
-                  <span className="modal-save-arrow">›</span>
+                <button type="submit" className="modal-save-btn" disabled={isSaving}>
+                  {isSaving
+                    ? "Guardando..."
+                    : isEditMode
+                    ? "Guardar cambios"
+                    : "Guardar sucursal"}
+                  <span className="modal-save-arrow">{">"}</span>
                 </button>
               </div>
             </form>

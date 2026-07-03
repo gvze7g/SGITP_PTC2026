@@ -1,68 +1,34 @@
 import { Pencil, Trash2 } from "lucide-react";
 
-const CLIENTS = [
-  {
-    id: 1,
-    fullName: "Paul Urquilla",
-    type: "Wholesale",
-    phone: "+503 4343-4343",
-    email: "sofia.v@editorial.com",
-    addressLabel: "Casa",
-    phones: ["+503 4343-4343"],
-    addresses: [
-      {
-        label: "Casa",
-        street: "Colonia Escalón #12",
-        city: "San Salvador",
-        reference: "Frente al parque",
-      },
-    ],
-  },
-  {
-    id: 2,
-    fullName: "Leonel Adrian",
-    type: "Wholesale",
-    phone: "+503 4343-4343",
-    email: "sofia.v@editorial.com",
-    addressLabel: "Oficina",
-    phones: ["+503 4343-4343"],
-    addresses: [
-      {
-        label: "Oficina",
-        street: "Avenida Olímpica 45",
-        city: "San Salvador",
-        reference: "Edificio azul",
-      },
-    ],
-  },
-  {
-    id: 3,
-    fullName: "Eduardo Galvez",
-    type: "Wholesale",
-    phone: "+503 4343-4343",
-    email: "sofia.v@editorial.com",
-    addressLabel: "Casa",
-    phones: ["+503 4343-4343"],
-    addresses: [
-      {
-        label: "Casa",
-        street: "Residencial Las Flores",
-        city: "Santa Tecla",
-        reference: "Portón negro",
-      },
-    ],
-  },
-];
-
-function ClientsTable({ onEditClient, onDeleteClient }) {
+function ClientsTable({
+  clients = [],
+  loading = false,
+  error = "",
+  onEditClient,
+  onDeleteClient,
+}) {
   const getClientTypeLabel = (type) => {
     if (type === "Client") return "Cliente";
     if (type === "Wholesale") return "Mayorista";
     return type || "Cliente";
   };
 
+  const getPrimaryPhone = (client) => {
+    if (client.main_phone) return client.main_phone;
+    const primaryPhone = client.phone_numbers?.find((phone) => phone.isPrimary);
+    return primaryPhone?.number || client.phone_numbers?.[0]?.number || "-";
+  };
+
+  const getAddressLabel = (client) => {
+    const primaryAddress = client.addresses?.find((address) => address.isPrimary);
+    return primaryAddress?.label || client.addresses?.[0]?.label || "-";
+  };
+
   return (
     <section className="clients-panel">
+      {error ? <p className="admin-error-text">{error}</p> : null}
+      {loading ? <p className="admin-muted-text">Cargando clientes...</p> : null}
+
       <div className="clients-table-wrap">
         <div className="clients-head-row">
           <span>NOMBRE</span>
@@ -72,20 +38,28 @@ function ClientsTable({ onEditClient, onDeleteClient }) {
           <span>ACCIONES</span>
         </div>
 
-        {CLIENTS.map((client) => (
-          <article key={client.id} className="clients-row">
-            <div className="clients-name-cell">{client.fullName}</div>
+        {!loading && clients.length === 0 ? (
+          <div className="clients-row">
+            <div className="clients-name-cell">No hay clientes registrados.</div>
+          </div>
+        ) : null}
+
+        {clients.map((client) => (
+          <article key={client._id} className="clients-row">
+            <div className="clients-name-cell">{client.full_name || "-"}</div>
 
             <div className="clients-type-cell">
-              <span className="clients-type-badge">{getClientTypeLabel(client.type)}</span>
+              <span className="clients-type-badge">
+                {getClientTypeLabel(client.customer_type)}
+              </span>
             </div>
 
             <div className="clients-contact-cell">
-              <p>{client.phone}</p>
-              <p>{client.email}</p>
+              <p>{getPrimaryPhone(client)}</p>
+              <p>{client.email || "-"}</p>
             </div>
 
-            <div className="clients-address-cell">{client.addressLabel}</div>
+            <div className="clients-address-cell">{getAddressLabel(client)}</div>
 
             <div className="clients-actions-cell">
               <button
@@ -100,7 +74,7 @@ function ClientsTable({ onEditClient, onDeleteClient }) {
               <button
                 type="button"
                 className="clients-action-icon"
-                onClick={onDeleteClient}
+                onClick={() => onDeleteClient?.(client)}
                 aria-label="Eliminar cliente"
               >
                 <Trash2 size={20} strokeWidth={2} />
@@ -111,17 +85,7 @@ function ClientsTable({ onEditClient, onDeleteClient }) {
       </div>
 
       <div className="clients-footer">
-        <p>Mostrando 1 a 10</p>
-
-        <div className="clients-pagination">
-          <button type="button">‹</button>
-          <button type="button" className="clients-page-active">
-            1
-          </button>
-          <button type="button">2</button>
-          <button type="button">3</button>
-          <button type="button">›</button>
-        </div>
+        <p>Mostrando {clients.length} clientes</p>
       </div>
     </section>
   );

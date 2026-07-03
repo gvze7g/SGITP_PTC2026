@@ -24,6 +24,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   font-family: var(--font-body);
 }
 
@@ -693,7 +694,9 @@ button {
 
 /* PUBLIC HOME */
 .public-home-page {
+  width: 100%;
   min-height: 100vh;
+  overflow-x: hidden;
   color: #312c29;
   background: #fff8f4;
 }
@@ -701,16 +704,19 @@ button {
 .public-navbar {
   position: sticky;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
   align-items: center;
-  column-gap: 34px;
+  column-gap: clamp(22px, 3.2vw, 34px);
   height: 56px;
-  padding: 0 38px;
+  padding: 0 clamp(24px, 3.8vw, 38px);
   border-bottom: 1px solid #eee4de;
   background: rgba(255, 248, 244, 0.94);
   backdrop-filter: blur(14px);
+  width: 100%;
 }
 
 .public-nav-top {
@@ -719,7 +725,8 @@ button {
 
 .public-menu-toggle,
 .public-nav-overlay,
-.public-drawer-heading {
+.public-drawer-heading,
+.public-drawer-close {
   display: none;
 }
 
@@ -736,23 +743,30 @@ button {
 }
 
 .public-nav-links {
-  grid-column: 2;
+  position: fixed;
+  top: 0;
+  left: clamp(170px, 13vw, 260px);
+  right: clamp(120px, 9vw, 180px);
+  z-index: 22;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: clamp(52px, 7vw, 96px);
+  justify-content: space-evenly;
+  gap: clamp(28px, 5vw, 92px);
+  height: 56px;
+  min-width: 0;
 }
 
 .public-nav-links button {
   border: 0;
   color: #8f837c;
   background: transparent;
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
+  font-size: 0.74rem;
+  letter-spacing: 0.13em;
   line-height: 1.15;
   text-align: center;
   text-decoration: none;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .public-nav-links .public-nav-link-active {
@@ -764,7 +778,7 @@ button {
   grid-column: 3;
   display: flex;
   justify-content: flex-end;
-  gap: 20px;
+  gap: clamp(12px, 2vw, 20px);
 }
 
 .public-nav-actions button {
@@ -1135,8 +1149,8 @@ button {
     height: 34px;
     border: 1px solid #dfd4cd;
     border-radius: 999px;
-    color: #5f554f;
-    background: transparent;
+    color: #4f4540;
+    background: #fffaf7;
   }
 
   .public-logo {
@@ -1146,16 +1160,17 @@ button {
 
   .public-nav-actions {
     grid-column: 3;
+    align-items: center;
   }
 
   .public-nav-overlay {
     position: fixed;
     inset: 0;
-    z-index: 28;
+    z-index: 80;
     display: block;
     border: 0;
     padding: 0;
-    background: rgba(42, 37, 33, 0.24);
+    background: rgba(42, 37, 33, 0.36);
     opacity: 0;
     pointer-events: none;
     transition: opacity 220ms ease;
@@ -1170,28 +1185,45 @@ button {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 30;
+    z-index: 90;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     gap: 0;
-    width: min(82vw, 320px);
+    width: min(84vw, 340px);
     height: 100vh;
-    padding: 26px 28px;
+    min-height: 100dvh;
+    padding: 24px 26px;
     background: #fff8f4;
     box-shadow: 24px 0 50px rgba(54, 47, 42, 0.16);
-    transform: translateX(-104%);
-    transition: transform 260ms ease;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-110%);
+    visibility: hidden;
+    transition:
+      transform 260ms ease,
+      opacity 180ms ease,
+      visibility 0s linear 260ms;
   }
 
   .public-nav-links-open {
+    opacity: 1;
+    pointer-events: auto;
     transform: translateX(0);
+    visibility: visible;
+    transition:
+      transform 260ms ease,
+      opacity 180ms ease;
   }
 
   .public-drawer-heading {
-    display: grid;
-    gap: 8px;
-    margin-bottom: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 44px;
+    position: relative;
+    margin-bottom: 38px;
   }
 
   .public-drawer-heading strong {
@@ -1202,10 +1234,29 @@ button {
     letter-spacing: 0.32em;
   }
 
-  .public-nav-links button {
+  .public-drawer-close {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    flex: 0 0 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #dfd4cd;
+    border-radius: 999px;
+    padding: 0;
+    color: #4f4540;
+    background: #fffaf7;
+    pointer-events: auto;
+  }
+
+  .public-nav-links > button {
     width: 100%;
     border-bottom: 1px solid #eee4de;
-    padding: 18px 0;
+    padding: 17px 0;
     color: #5b514b;
     font-size: 0.78rem;
     letter-spacing: 0.14em;
@@ -1213,7 +1264,7 @@ button {
     text-align: left;
   }
 
-  .public-nav-links .public-nav-link-active {
+  .public-nav-links > .public-nav-link-active {
     border-bottom: 1px solid #cfc3bc;
     color: #2f2b28;
   }
@@ -1240,20 +1291,33 @@ button {
 
 @media (max-width: 640px) {
   .public-navbar {
-    padding: 0 14px;
+    padding: 0 12px;
   }
 
   .public-logo {
-    font-size: 1.18rem;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
   }
 
   .public-nav-actions {
-    gap: 12px;
+    gap: 6px;
+  }
+
+  .public-menu-toggle,
+  .public-nav-actions button {
+    width: 32px;
+    height: 32px;
   }
 
   .public-nav-links {
-    width: min(86vw, 304px);
-    padding: 24px;
+    width: min(calc(100vw - 28px), 340px);
+    padding: 24px 22px;
+  }
+
+  .stores-main {
+    width: calc(100% - 28px);
+    margin-left: 14px;
+    margin-right: 14px;
   }
 
   .public-hero {

@@ -46,6 +46,21 @@ select {
   font-family: 'Manrope', sans-serif;
 }
 
+.admin-error-text {
+  border: 1px solid #efc8c2;
+  margin: 0;
+  padding: 12px 14px;
+  color: #8a3f36;
+  background: #fff0ee;
+  font-size: 0.84rem;
+}
+
+.admin-muted-text {
+  margin: 0;
+  color: #8f837c;
+  font-size: 0.88rem;
+}
+
 /* =========================
    AUTH
 ========================= */
