@@ -1248,7 +1248,7 @@ body.theme-dark {
 }
 
 .variant-table {
-  overflow-x: auto;
+  overflow: visible;
 }
 
 .variant-table-head,

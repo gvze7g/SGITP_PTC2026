@@ -1,118 +1,115 @@
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 
-const PROMOTIONS = [
-  {
-    id: 1,
-    code: '#MAMAPRIMERIZA',
-    status: 'Activo',
-    discount: '-20% de descuento',
-    dateRange: '1 Oct - 31 Oct',
-    usage: '45 / 100 usados',
-    type: 'Porcentaje',
-    value: '20',
-    startDate: '10/01/2023',
-    endDate: '10/31/2023',
-    minimumPurchase: '0.00',
-    usageLimit: '100',
-  },
-  {
-    id: 2,
-    code: '#BIENVENIDA',
-    status: 'Activo',
-    discount: 'Envío Gratis',
-    dateRange: 'Permanente',
-    usage: '812 / 10000 usados',
-    type: 'Envío Gratis',
-    value: '0',
-    startDate: '01/01/2023',
-    endDate: '',
-    minimumPurchase: '0.00',
-    usageLimit: '10000',
-  },
-  {
-    id: 3,
-    code: '#LUXURYBABY',
-    status: 'Activo',
-    discount: '-$50 Fijos (Min $200)',
-    dateRange: '15 Oct - 15 Nov',
-    usage: '12 / 50 usados',
-    type: 'Monto fijo',
-    value: '50',
-    startDate: '10/15/2023',
-    endDate: '11/15/2023',
-    minimumPurchase: '200.00',
-    usageLimit: '50',
-  },
-  {
-    id: 4,
-    code: '#FLASH15',
-    status: 'Expirado',
-    discount: '-15% de descuento',
-    dateRange: '1 Sep - 2 Sep',
-    usage: '100 / 100 usados',
-    type: 'Porcentaje',
-    value: '15',
-    startDate: '09/01/2023',
-    endDate: '09/02/2023',
-    minimumPurchase: '0.00',
-    usageLimit: '100',
-  },
-];
+function PromotionsGrid({
+  promotions = [],
+  loading,
+  onEditPromotion,
+  onDeactivatePromotion,
+  onDeletePromotion,
+}) {
+  // convertir estado a texto visible
+  const getStatusLabel = (promotion) => {
+    return promotion?.isActive ? "Activo" : "Inactivo";
+  };
 
-function PromotionsGrid({ onEditPromotion, onDeactivatePromotion }) {
+  // texto del descuento
+  const getDiscountLabel = (promotion) => {
+    return `${Number(promotion?.discount_percentage || 0)}% de descuento`;
+  };
+
+  // rango de fechas
+  const getDateRange = (promotion) => {
+    const start = promotion?.start_date
+      ? new Date(promotion.start_date).toLocaleDateString()
+      : "Sin inicio";
+
+    const end = promotion?.end_date
+      ? new Date(promotion.end_date).toLocaleDateString()
+      : "Sin fin";
+
+    return `${start} - ${end}`;
+  };
+
+  const activeCount = promotions.filter((promotion) => promotion.isActive).length;
+
   return (
     <section className="promotions-page">
       <div className="promotions-summary-block">
         <span>CÓDIGOS ACTIVOS</span>
-        <strong>{PROMOTIONS.filter((p) => p.status !== 'Expirado').length}</strong>
+        <strong>{activeCount}</strong>
       </div>
 
-      <div className="promotions-grid">
-        {PROMOTIONS.map((promotion) => (
-          <article
-            key={promotion.id}
-            className={`promotion-card ${promotion.status === 'Expirado' ? 'promotion-card-expired' : ''}`}
-          >
-            <div className="promotion-card-top">
-              <h3>{promotion.code}</h3>
-              <span className="promotion-status-badge">{promotion.status}</span>
-            </div>
-
-            <p className="promotion-discount-text">{promotion.discount}</p>
-
-            <div className="promotion-date-row">
-              <CalendarDays size={18} strokeWidth={1.8} />
-              <span>{promotion.dateRange}</span>
-            </div>
-
-            <div className="promotion-usage-block">
-              <div className="promotion-usage-top">
-                <span>USOS</span>
-                <span>{promotion.usage}</span>
+      {loading ? (
+        <div style={{ padding: "20px" }}>Cargando promociones...</div>
+      ) : promotions.length === 0 ? (
+        <div style={{ padding: "20px" }}>No hay promociones registradas.</div>
+      ) : (
+        <div className="promotions-grid">
+          {promotions.map((promotion) => (
+            <article
+              key={promotion._id}
+              className={`promotion-card ${
+                !promotion.isActive ? "promotion-card-expired" : ""
+              }`}
+            >
+              <div className="promotion-card-top">
+                <h3>#{promotion.coupon_code}</h3>
+                <span className="promotion-status-badge">
+                  {getStatusLabel(promotion)}
+                </span>
               </div>
-              <div className="promotion-usage-bar">
-                <div className="promotion-usage-fill" />
+
+              <p className="promotion-discount-text">
+                {getDiscountLabel(promotion)}
+              </p>
+
+              <div className="promotion-date-row">
+                <CalendarDays size={18} strokeWidth={1.8} />
+                <span>{getDateRange(promotion)}</span>
               </div>
-            </div>
 
-            <div className="promotion-card-footer">
-              {promotion.status !== 'Expirado' ? (
-                <>
-                  <button type="button" onClick={() => onEditPromotion?.(promotion)}>
-                    EDITAR
-                  </button>
+              <div className="promotion-usage-block">
+                <div className="promotion-usage-top">
+                  <span>DESCRIPCIÓN</span>
+                  <span>{promotion.descriptions || "Sin descripción"}</span>
+                </div>
+              </div>
 
-                  <button type="button" onClick={() => onDeactivatePromotion?.(promotion)}>
+              <div
+                className="promotion-card-footer"
+                style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => onEditPromotion?.(promotion)}
+                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                >
+                  <Pencil size={14} />
+                  EDITAR
+                </button>
+
+                {promotion.isActive && (
+                  <button
+                    type="button"
+                    onClick={() => onDeactivatePromotion?.(promotion)}
+                  >
                     DESACTIVAR
                   </button>
-                </>
-              ) : (
-                <button type="button">VER DETALLES</button>
-              )}
-            </div>
-          </article>
-        ))}
-      </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => onDeletePromotion?.(promotion)}
+                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                >
+                  <Trash2 size={14} />
+                  ELIMINAR
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

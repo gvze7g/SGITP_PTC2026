@@ -7,15 +7,14 @@ export const config = {
     URI: process.env.DB_URI,
   },
   server: {
-    port: process.env.SERVER_PORT,
+    port: process.env.PORT,
   },
   JWT: {
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    secret: process.env.JWT_SECRET_KEY,
   },
   email: {
-    user_email: process.env.EMAIL_USER,
-    user_password: process.env.EMAIL_PASSWORD,
+    user_email: process.env.USER_EMAIL,
+    user_password: process.env.USER_PASSWORD,
   },
   cloudinary: {
     cloudinary_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -29,3 +28,4 @@ export const config = {
     client_secret: process.env.CLIENT_SECRET,
   },
 };
+
