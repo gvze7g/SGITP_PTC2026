@@ -47,18 +47,27 @@ customerController.updateCustomer = async (req, res) => {
       timeOut,
     } = req.body;
 
+    // Limpia espacios al inicio y final en los campos de texto
     full_name = full_name?.trim();
     email = email?.trim();
+
+    // Si no viene customer_type, asigna "Client" por defecto
     customer_type = customer_type?.trim() || "Client";
 
-    if (!full_name || full_name.length < 3 || full_name.length > 50) {
-      return res.status(400).json({ message: "Invalid name" });
-    }
+  // Valida nombre:
+  // - obligatorio
+  // - mínimo 3 caracteres
+  // - máximo 50 caracteres
+  if (!full_name || full_name.length < 3 || full_name.length > 50) {
+  return res.status(400).json({ message: "Invalid name" });
+  }
 
+  // Valida que el tipo de cliente esté dentro de los permitidos
     if (!ALLOWED_CUSTOMER_TYPES.includes(customer_type)) {
-      return res.status(400).json({ message: "Invalid customer type" });
-    }
+    return res.status(400).json({ message: "Invalid customer type" });
+  }
 
+    //Update actualiza el cliente
     const updatedCustomer = await customerModel.findByIdAndUpdate(
       req.params.id,
       {
