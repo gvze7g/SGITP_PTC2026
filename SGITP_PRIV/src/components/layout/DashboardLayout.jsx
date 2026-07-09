@@ -6,6 +6,10 @@ function DashboardLayout({
   children,
   theme,
   onToggleTheme,
+  searchValue,
+  onSearchChange,
+  onSearchSubmit,
+  searchPlaceholder,
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -21,6 +25,10 @@ function DashboardLayout({
           theme={theme}
           onToggleTheme={onToggleTheme}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          searchValue={searchValue}
+          onSearchChange={onSearchChange}
+          onSearchSubmit={onSearchSubmit}
+          searchPlaceholder={searchPlaceholder}
         />
         <main className="admin-content">{children}</main>
       </div>

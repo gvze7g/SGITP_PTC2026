@@ -9,6 +9,7 @@ import { config } from "../config.js";
 
 const recoveryPasswordController = {};
 
+// Plantilla HTML simple para el correo con el código
 const HTMLRecoveryEmail = (code) => {
   return `
     <div style="font-family: Arial, sans-serif; padding: 20px;">
@@ -26,6 +27,7 @@ recoveryPasswordController.sendRecoveryCode = async (req, res) => {
 
     let userFound = null;
 
+    // Buscar usuario según su tipo (empleado o cliente)
     if (userType === "Employee") {
       userFound = await employeeModel.findOne({ email });
     } else if (userType === "Customer") {
@@ -38,8 +40,10 @@ recoveryPasswordController.sendRecoveryCode = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Generar código aleatorio de recuperación
     const randomCode = crypto.randomBytes(3).toString("hex");
 
+    // Guardar código y datos en token temporal (15 min)
     const token = jsonwebtoken.sign(
       { email, randomCode, userType, verified: false },
       config.JWT.secret,
@@ -53,6 +57,7 @@ recoveryPasswordController.sendRecoveryCode = async (req, res) => {
       maxAge: 15 * 60 * 1000,
     });
 
+    // Configuración del correo
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -69,6 +74,7 @@ recoveryPasswordController.sendRecoveryCode = async (req, res) => {
       html: HTMLRecoveryEmail(randomCode),
     };
 
+    // Enviar correo con el código
     transporter.sendMail(mailOptions, (error) => {
       if (error) {
         console.log("Error nodemailer:", error);
@@ -88,16 +94,19 @@ recoveryPasswordController.verifyCode = async (req, res) => {
     const { code } = req.body;
     const token = req.cookies.recoveryCookie;
 
+    // Verifica que exista token de recuperación
     if (!token) {
       return res.status(401).json({ message: "Token missing or expired" });
     }
 
     const decoded = jsonwebtoken.verify(token, config.JWT.secret);
 
+    // Compara código recibido con el guardado
     if (code !== decoded.randomCode) {
       return res.status(400).json({ message: "Invalid code" });
     }
 
+    // Si es correcto, crea nuevo token marcado como "verified"
     const newToken = jsonwebtoken.sign(
       { email: decoded.email, userType: decoded.userType, verified: true },
       config.JWT.secret,
@@ -122,6 +131,7 @@ recoveryPasswordController.newPassword = async (req, res) => {
   try {
     const { newPassword, confirmNewPassword } = req.body;
 
+    // Validar que ambas contraseñas coincidan
     if (newPassword !== confirmNewPassword) {
       return res.status(400).json({ message: "Passwords don't match" });
     }
@@ -134,12 +144,14 @@ recoveryPasswordController.newPassword = async (req, res) => {
 
     const decoded = jsonwebtoken.verify(token, config.JWT.secret);
 
+    // Solo permite cambiar contraseña si ya verificó el código
     if (!decoded.verified) {
       return res.status(400).json({ message: "Code not verified" });
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
+    // Actualiza contraseña según el tipo de usuario
     if (decoded.userType === "Employee") {
       await employeeModel.findOneAndUpdate(
         { email: decoded.email },
@@ -162,6 +174,7 @@ recoveryPasswordController.newPassword = async (req, res) => {
       return res.status(400).json({ message: "Invalid user type" });
     }
 
+    // Limpia cookie de recuperación al finalizar
     res.clearCookie("recoveryCookie");
 
     return res.status(200).json({ message: "Password updated successfully" });

@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 
+//URL de la API
 const API_URL = "http://localhost:4000";
 
 function useEmployees() {
@@ -51,6 +52,44 @@ function useEmployees() {
       setLoading(false);
     }
   }, []);
+
+  //Obtener empleados por ID
+  const getEmployeeById = async (id) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_URL}/api/employee/${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "No se pudo encontrar el empleado.");
+        return {
+          success: false,
+          message: data.message || "No se pudo encontrar el empleado.",
+        };
+      }
+
+      return {
+        success: true,
+        data,
+      };
+    } catch (error) {
+      console.log("getEmployeeById error:", error);
+      setError("Error de conexiÃ³n con el servidor.");
+
+      return {
+        success: false,
+        message: "Error de conexiÃ³n con el servidor.",
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // crear empleado
   const createEmployee = async (payload) => {
@@ -179,6 +218,7 @@ function useEmployees() {
     loading,
     error,
     getEmployees,
+    getEmployeeById,
     createEmployee,
     updateEmployee,
     deleteEmployee,

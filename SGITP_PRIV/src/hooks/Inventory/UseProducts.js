@@ -1,15 +1,19 @@
 import { useCallback, useState } from "react";
 
+//URL de la API
 const API_URL = "http://localhost:4000";
 
+//Hook personalizado de Productos
 function useProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  //Procesa la respuesta de la API y devuelve el contenido en formato JSON
   const handleJsonResponse = async (response, fallbackMessage) => {
     const data = await response.json();
 
+    //Validación de la respuesta
     if (!response.ok) {
       const message = data.message || fallbackMessage;
       setError(message);
@@ -26,6 +30,7 @@ function useProducts() {
     };
   };
 
+  //Obtener Productos
   const getProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -58,6 +63,40 @@ function useProducts() {
     }
   }, []);
 
+  //Obtener productos por ID
+  const getProductById = useCallback(async (id) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_URL}/api/products/${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const result = await handleJsonResponse(
+        response,
+        "No se pudo encontrar el producto."
+      );
+
+      if (!result.success) return result;
+
+      setProducts(result.data ? [result.data] : []);
+      return result;
+    } catch (err) {
+      console.log("getProductById error:", err);
+      setError("Error de conexiÃ³n con el servidor.");
+
+      return {
+        success: false,
+        message: "Error de conexiÃ³n con el servidor.",
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  //Obtener los productos con stock bajo
   const getLowStockProducts = useCallback(async (threshold = 5) => {
     try {
       setLoading(true);
@@ -93,6 +132,7 @@ function useProducts() {
     }
   }, []);
 
+  //Buscar los productos por nombre
   const searchProductsByName = useCallback(async (name = "") => {
     try {
       setLoading(true);
@@ -129,6 +169,7 @@ function useProducts() {
     }
   }, []);
 
+  //Obtener productos por Precio
   const getProductsByPriceRange = useCallback(async (minPrice = "", maxPrice = "") => {
     try {
       setLoading(true);
@@ -165,6 +206,7 @@ function useProducts() {
     }
   }, []);
 
+  //Obtener conteo de productos
   const getProductsCount = useCallback(async () => {
     try {
       setError("");
@@ -189,6 +231,8 @@ function useProducts() {
     }
   }, []);
 
+
+  //Crear productos
   const createProduct = async (formData) => {
     try {
       setLoading(true);
@@ -214,6 +258,8 @@ function useProducts() {
     }
   };
 
+
+  //Actualizar productos
   const updateProduct = async (id, formData) => {
     try {
       setLoading(true);
@@ -242,6 +288,7 @@ function useProducts() {
     }
   };
 
+  //Eliminar productos
   const deleteProduct = async (id) => {
     try {
       setLoading(true);
@@ -274,6 +321,7 @@ function useProducts() {
     loading,
     error,
     getProducts,
+    getProductById,
     getLowStockProducts,
     searchProductsByName,
     getProductsByPriceRange,

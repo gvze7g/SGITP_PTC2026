@@ -13,11 +13,14 @@ const DEFAULT_FILTERS = {
   lowStockThreshold: 5,
 };
 
+const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
+
 function InventoryPage({ theme, onToggleTheme }) {
   const {
     products,
     loading,
     getProducts,
+    getProductById,
     getLowStockProducts,
     searchProductsByName,
     getProductsByPriceRange,
@@ -59,6 +62,8 @@ function InventoryPage({ theme, onToggleTheme }) {
 
     if (activeTab === "low-stock") {
       result = await getLowStockProducts(filters.lowStockThreshold || 5);
+    } else if (trimmedSearch && OBJECT_ID_PATTERN.test(trimmedSearch)) {
+      result = await getProductById(trimmedSearch);
     } else if (trimmedSearch) {
       result = await searchProductsByName(trimmedSearch);
     } else if (hasPriceFilter) {
@@ -73,6 +78,7 @@ function InventoryPage({ theme, onToggleTheme }) {
   }, [
     activeTab,
     filters,
+    getProductById,
     getLowStockProducts,
     searchProductsByName,
     getProductsByPriceRange,
@@ -193,7 +199,14 @@ function InventoryPage({ theme, onToggleTheme }) {
   };
 
   return (
-    <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
+    <DashboardLayout
+      theme={theme}
+      onToggleTheme={onToggleTheme}
+      searchValue={filters.search}
+      onSearchChange={(value) => handleChangeFilter("search", value)}
+      onSearchSubmit={handleSearchSubmit}
+      searchPlaceholder="Buscar producto por ID o nombre"
+    >
       <div className="inventory-page-shell">
         <div className="page-title-row">
           <div>

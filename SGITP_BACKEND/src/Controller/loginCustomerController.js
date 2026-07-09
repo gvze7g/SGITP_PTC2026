@@ -9,12 +9,14 @@ loginCustomerController.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Buscar cliente por correo
     const userFound = await customerModel.findOne({ email });
 
     if (!userFound) {
       return res.status(404).json({ message: "Customer not found" });
     }
 
+    // Si la cuenta está bloqueada por intentos fallidos, no deja entrar
     if (userFound.timeOut && userFound.timeOut > Date.now()) {
       return res.status(403).json({ message: "Cuenta bloqueada temporalmente" });
     }
@@ -22,8 +24,10 @@ loginCustomerController.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, userFound.password);
 
     if (!isMatch) {
+      // Sumar intentos fallidos
       userFound.loginAttempts = (userFound.loginAttempts || 0) + 1;
 
+      // Al llegar a 5 intentos, bloquea 15 minutos
       if (userFound.loginAttempts >= 5) {
         userFound.timeOut = Date.now() + 15 * 60 * 1000;
         userFound.loginAttempts = 0;
@@ -36,10 +40,12 @@ loginCustomerController.login = async (req, res) => {
       return res.status(403).json({ message: "Contraseña incorrecta" });
     }
 
+    // Si la contraseña es correcta, limpia intentos y desbloquea
     userFound.loginAttempts = 0;
     userFound.timeOut = null;
     await userFound.save();
 
+    // Crear token con datos básicos del cliente
     const token = jsonwebtoken.sign(
       {
         id: userFound._id,
@@ -50,6 +56,7 @@ loginCustomerController.login = async (req, res) => {
       { expiresIn: "30d" }
     );
 
+    // Guardar token en cookie segura para sesión
     res.cookie("authCookie", token, {
       httpOnly: true,
       sameSite: "lax",

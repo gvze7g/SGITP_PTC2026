@@ -5,6 +5,7 @@ import AuthButton from '../../components/auth/AuthButton';
 import AuthCard from '../../components/auth/AuthCard';
 import AuthInput from '../../components/auth/AuthInput';
 import PequesBrandPanel from '../../components/auth/PequesBrandPanel';
+import { registerCustomer } from '../../services/customerAuthService';
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ function RegisterPage() {
     email: '',
     password: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -50,12 +52,28 @@ function RegisterPage() {
     return true;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm() || isSubmitting) return;
 
-    toast.success('Cuenta creada correctamente.');
-    navigate('/login');
+    setIsSubmitting(true);
+
+    try {
+      const email = formData.email.trim();
+
+      await registerCustomer({
+        full_name: formData.fullName.trim(),
+        email,
+        password: formData.password,
+      });
+
+      toast.success('Cuenta creada correctamente.');
+      navigate('/login', { replace: true });
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo crear la cuenta.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -102,7 +120,9 @@ function RegisterPage() {
               autoComplete="new-password"
             />
 
-            <AuthButton type="submit">Crear cuenta</AuthButton>
+            <AuthButton type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creando...' : 'Crear cuenta'}
+            </AuthButton>
           </form>
 
           <div className="auth-divider">

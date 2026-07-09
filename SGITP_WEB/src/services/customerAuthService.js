@@ -1,5 +1,36 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
 
+export async function registerCustomer(customer) {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/registerCustomer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(customer),
+    });
+  } catch (error) {
+    throw new Error('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    if (response.status === 500 && data.message === 'error') {
+      return data;
+    }
+
+    if (response.status === 503) {
+      throw new Error('La base de datos no esta conectada. Revisa DB_URI en el backend.');
+    }
+
+    throw new Error(data.message ?? 'No se pudo crear la cuenta.');
+  }
+
+  return data;
+}
+
 export async function loginCustomer(credentials) {
   let response;
 

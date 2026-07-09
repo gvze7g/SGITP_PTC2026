@@ -23,10 +23,17 @@ const EMPTY_FORM = {
   expenseType: "Services",
   paymentMethod: "Cash",
   expenseDate: null,
-  notes: "",
+  branchId: "",
 };
 
-function ExpenseFormModal({ open, onClose, expenseData = null }) {
+function ExpenseFormModal({
+  open,
+  onClose,
+  onSubmit,
+  expenseData = null,
+  branches = [],
+  isSaving = false,
+}) {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const isEditMode = Boolean(expenseData);
 
@@ -35,7 +42,7 @@ function ExpenseFormModal({ open, onClose, expenseData = null }) {
 
     if (expenseData) {
       setFormData({
-        description: expenseData.description ?? "",
+        description: expenseData.descriptions ?? expenseData.description ?? "",
         amount:
           expenseData.amount !== undefined && expenseData.amount !== null
             ? String(expenseData.amount)
@@ -43,7 +50,7 @@ function ExpenseFormModal({ open, onClose, expenseData = null }) {
         expenseType: expenseData.expense_type ?? "Services",
         paymentMethod: expenseData.payment_method ?? "Cash",
         expenseDate: expenseData.expense_date ? new Date(expenseData.expense_date) : null,
-        notes: expenseData.notes ?? "",
+        branchId: expenseData.branch_id?._id ?? expenseData.branch_id ?? "",
       });
     } else {
       setFormData(EMPTY_FORM);
@@ -62,22 +69,22 @@ function ExpenseFormModal({ open, onClose, expenseData = null }) {
     handleChange("amount", sanitized);
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
-    const payload = {
-      description: formData.description.trim(),
+  const buildPayload = () => {
+    return {
+      descriptions: formData.description.trim(),
       amount: formData.amount ? Number(formData.amount) : 0,
       expense_type: formData.expenseType,
       payment_method: formData.paymentMethod,
       expense_date: formData.expenseDate
         ? formData.expenseDate.toISOString().split("T")[0]
         : null,
-      notes: formData.notes.trim(),
+      branch_id: formData.branchId || null,
     };
+  };
 
-    console.log("Expense payload:", payload);
-    onClose?.();
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSubmit?.(buildPayload());
   };
 
   return (
@@ -104,7 +111,7 @@ function ExpenseFormModal({ open, onClose, expenseData = null }) {
               <div className="expense-form-body">
                 <div className="expense-form-row">
                   <div className="expense-line-group-full">
-                    <label>Descripción</label>
+                    <label>Descripcion</label>
                     <input
                       type="text"
                       className="form-editable-input"
@@ -137,7 +144,7 @@ function ExpenseFormModal({ open, onClose, expenseData = null }) {
 
                 <div className="expense-form-row">
                   <CustomDropdown
-                    label="Método de pago"
+                    label="Metodo de pago"
                     value={formData.paymentMethod}
                     options={PAYMENT_METHOD_OPTIONS}
                     onChange={(value) => handleChange("paymentMethod", value)}
@@ -154,15 +161,19 @@ function ExpenseFormModal({ open, onClose, expenseData = null }) {
 
                 <div className="expense-form-row">
                   <div className="expense-line-group-full">
-                    <label>Notas</label>
-                    <textarea
+                    <label>Sucursal</label>
+                    <select
                       className="form-editable-input"
-                      placeholder="Detalle adicional"
-                      value={formData.notes}
-                      onChange={(event) => handleChange("notes", event.target.value)}
-                      rows={4}
-                      style={{ resize: "none" }}
-                    />
+                      value={formData.branchId}
+                      onChange={(event) => handleChange("branchId", event.target.value)}
+                    >
+                      <option value="">Sin sucursal</option>
+                      {branches.map((branch) => (
+                        <option key={branch._id} value={branch._id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
@@ -176,9 +187,13 @@ function ExpenseFormModal({ open, onClose, expenseData = null }) {
                   CANCELAR
                 </button>
 
-                <button type="submit" className="modal-save-btn">
-                  {isEditMode ? "Guardar cambios" : "Guardar gasto"}
-                  <span className="modal-save-arrow">›</span>
+                <button type="submit" className="modal-save-btn" disabled={isSaving}>
+                  {isSaving
+                    ? "Guardando..."
+                    : isEditMode
+                    ? "Guardar cambios"
+                    : "Guardar gasto"}
+                  <span className="modal-save-arrow">{">"}</span>
                 </button>
               </div>
             </form>
