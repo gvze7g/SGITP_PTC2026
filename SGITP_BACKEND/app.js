@@ -18,7 +18,11 @@ import posRoutes from "./src/Routes/pos.js";
 import loginCustomerRoutes from "./src/Routes/loginCustomer.js";
 import loginEmployeeRoutes from "./src/Routes/loginEmployee.js";
 import logoutRoutes from "./src/Routes/logout.js";
+import wompiRoutes from "./src/Routes/wompi.js"
 import recoveryPasswordRoutes from "./src/Routes/recoveryPassword.js";
+import limiter from "./src/Middlewares/rateLimiter.js";
+
+import { validateAuthCookie } from "./src/Middlewares/authMiddleware.js";
 
 const app = express();
 
@@ -31,6 +35,7 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json());
+app.use(limiter);
 
 app.get("/", (req, res) => {
   res.json({ message: "SGITP_BACKEND running" });
@@ -53,6 +58,7 @@ app.use("/api/pos", posRoutes);
 app.use("/api/loginCustomer", loginCustomerRoutes);
 app.use("/api/loginEmployee", loginEmployeeRoutes);
 app.use("/api/logout", logoutRoutes);
+app.use("/api/wompi", wompiRoutes);
 app.use("/api/recoveryPassword", recoveryPasswordRoutes);
 
 export default app;
