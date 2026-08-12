@@ -1,4 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+
+const ITEMS_PER_PAGE = 6;
 
 function ClientsTable({
   clients = [],
@@ -7,6 +10,17 @@ function ClientsTable({
   onEditClient,
   onDeleteClient,
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(clients.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedClients = useMemo(
+    () => clients.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [clients, startIndex]
+  );
+  const showingFrom = clients.length === 0 ? 0 : startIndex + 1;
+  const showingTo = Math.min(startIndex + paginatedClients.length, clients.length);
+
   const getClientTypeLabel = (type) => {
     if (type === "Client") return "Cliente";
     if (type === "Wholesale") return "Mayorista";
@@ -44,7 +58,7 @@ function ClientsTable({
           </div>
         ) : null}
 
-        {clients.map((client) => (
+        {paginatedClients.map((client) => (
           <article key={client._id} className="clients-row">
             <div className="clients-name-cell">{client.full_name || "-"}</div>
 
@@ -85,7 +99,38 @@ function ClientsTable({
       </div>
 
       <div className="clients-footer">
-        <p>Mostrando {clients.length} clientes</p>
+        <p>
+          Mostrando {showingFrom} a {showingTo} de {clients.length} clientes
+        </p>
+
+        <div className="clients-pagination">
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={safePage === 1}
+            aria-label="Pagina anterior"
+          >
+            {"<"}
+          </button>
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index + 1}
+              type="button"
+              className={safePage === index + 1 ? "clients-page-active" : ""}
+              onClick={() => setCurrentPage(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={safePage === totalPages}
+            aria-label="Pagina siguiente"
+          >
+            {">"}
+          </button>
+        </div>
       </div>
     </section>
   );

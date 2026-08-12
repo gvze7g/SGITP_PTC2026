@@ -6,6 +6,7 @@ import ClientsTable from '../../components/clients/ClientsTable';
 import ClientFormModal from '../../components/clients/ClientFormModal';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import useClients from '../../hooks/clients/UseClients';
+import { validateClientPayload } from '../../utils/adminValidation';
 
 function ClientsPage({ theme, onToggleTheme }) {
   const [clientModalOpen, setClientModalOpen] = useState(false);
@@ -13,7 +14,15 @@ function ClientsPage({ theme, onToggleTheme }) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const { clients, loading, error, getClients, updateClient, deleteClient } = useClients();
+  const {
+    clients,
+    loading,
+    error,
+    getClients,
+    createClient,
+    updateClient,
+    deleteClient,
+  } = useClients();
 
   useEffect(() => {
     getClients();
@@ -21,6 +30,11 @@ function ClientsPage({ theme, onToggleTheme }) {
 
   const handleEdit = (client) => {
     setSelectedClient(client);
+    setClientModalOpen(true);
+  };
+
+  const handleCreate = () => {
+    setSelectedClient(null);
     setClientModalOpen(true);
   };
 
@@ -35,19 +49,27 @@ function ClientsPage({ theme, onToggleTheme }) {
   };
 
   const handleSave = async (payload) => {
-    if (!payload.full_name || payload.full_name.length < 3) {
-      toast.error('El nombre debe tener al menos 3 caracteres.');
+    const validationMessage = validateClientPayload(payload);
+
+    if (validationMessage) {
+      toast.error(validationMessage);
       return;
     }
 
-    const result = await updateClient(selectedClient._id, payload);
+    const result = selectedClient?._id
+      ? await updateClient(selectedClient._id, payload)
+      : await createClient(payload);
 
     if (!result.success) {
       toast.error(result.message);
       return;
     }
 
-    toast.success('Cliente actualizado correctamente.');
+    toast.success(
+      selectedClient?._id
+        ? 'Cliente actualizado correctamente.'
+        : 'Cliente creado correctamente.'
+    );
     handleCloseModal();
     getClients();
   };
@@ -102,6 +124,10 @@ function ClientsPage({ theme, onToggleTheme }) {
       >
         <div className="page-title-row">
           <h1 className="admin-page-title">Clientes</h1>
+
+          <button type="button" className="admin-primary-btn" onClick={handleCreate}>
+            + Nuevo cliente
+          </button>
         </div>
 
         <ClientsTable

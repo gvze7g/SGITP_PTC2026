@@ -60,15 +60,19 @@ function ClientFormModal({
   const lastPhoneWarningRef = useRef(0);
 
   useEffect(() => {
-    if (!open || !clientData) return;
+    if (!open) return;
 
-    setFormData({
-      fullName: clientData.full_name ?? "",
-      email: clientData.email ?? "",
-      type: clientData.customer_type ?? "Client",
-      phones: mapPhoneNumbers(clientData),
-      addresses: mapAddresses(clientData),
-    });
+    if (clientData) {
+      setFormData({
+        fullName: clientData.full_name ?? "",
+        email: clientData.email ?? "",
+        type: clientData.customer_type ?? "Client",
+        phones: mapPhoneNumbers(clientData),
+        addresses: mapAddresses(clientData),
+      });
+    } else {
+      setFormData(EMPTY_FORM);
+    }
 
     lastNameWarningRef.current = 0;
     lastPhoneWarningRef.current = 0;
@@ -181,14 +185,45 @@ function ClientFormModal({
     };
   };
 
+  const validateForm = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const hasPhone = formData.phones.some((phone) => phone.trim());
+
+    if (!formData.fullName.trim()) {
+      toast.error("El nombre completo es obligatorio.");
+      return false;
+    }
+
+    if (formData.fullName.trim().length < 3) {
+      toast.error("El nombre debe tener al menos 3 caracteres.");
+      return false;
+    }
+
+    if (formData.email.trim() && !emailRegex.test(formData.email.trim())) {
+      toast.error("Ingresa un correo valido.");
+      return false;
+    }
+
+    if (!hasPhone) {
+      toast.error("Agrega al menos un telefono.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    // Este modal edita datos relacionados: cliente, telefonos y direcciones.
+    if (!validateForm()) return;
+
     onSubmit?.(buildPayload());
   };
 
   return (
     <AnimatePresence>
-      {open && clientData ? (
+      {open ? (
         <motion.div
           className="app-modal-overlay app-modal-overlay-dark"
           initial={{ opacity: 0 }}
@@ -203,7 +238,7 @@ function ClientFormModal({
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
             <div className="client-form-header">
-              <h2>Editar Cliente</h2>
+              <h2>{clientData ? "Editar Cliente" : "Registrar Cliente"}</h2>
             </div>
 
             <form onSubmit={handleSubmit}>

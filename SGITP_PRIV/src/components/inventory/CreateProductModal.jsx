@@ -200,6 +200,18 @@ function CreateProductModal({
       return false;
     }
 
+    const invalidVariant = formData.variants.some((variant) => {
+      return ["stock", "retail", "wholesale"].some((field) => {
+        const value = variant[field];
+        return value !== "" && (Number.isNaN(Number(value)) || Number(value) < 0);
+      });
+    });
+
+    if (invalidVariant) {
+      toast.error("Las variantes solo aceptan numeros positivos en stock y precios.");
+      return false;
+    }
+
     const hasAtLeastOneImage = imageSlots.some((slot) => slot !== null);
 
     if (!hasAtLeastOneImage && !isEditMode) {
@@ -217,6 +229,7 @@ function CreateProductModal({
 
     const payload = new FormData();
 
+    // FormData permite enviar campos del producto junto con las imagenes nuevas.
     payload.append("name", formData.name);
     payload.append("description", formData.description);
     payload.append("category", formData.category);

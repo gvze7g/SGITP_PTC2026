@@ -15,6 +15,8 @@ function DashboardLayout({
 
   return (
     <div className="admin-shell">
+      {/* El layout concentra sidebar, topbar, busqueda y tema para todas las
+          paginas privadas; cada modulo solo renderiza su contenido CRUD. */}
       <AdminSidebar
         isMobileOpen={isMobileMenuOpen}
         onCloseMobileMenu={() => setIsMobileMenuOpen(false)}

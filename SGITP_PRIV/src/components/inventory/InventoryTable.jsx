@@ -1,4 +1,7 @@
 import { Filter, Pencil, Search, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+
+const ITEMS_PER_PAGE = 6;
 
 function InventoryTable({
   products = [],
@@ -15,6 +18,17 @@ function InventoryTable({
   onEditProduct,
   onDeleteProduct,
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedProducts = useMemo(
+    () => products.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [products, startIndex]
+  );
+  const showingFrom = products.length === 0 ? 0 : startIndex + 1;
+  const showingTo = Math.min(startIndex + paginatedProducts.length, products.length);
+
   const getTotalStock = (variants = []) => {
     if (!Array.isArray(variants)) return 0;
 
@@ -114,7 +128,7 @@ function InventoryTable({
           </div>
 
           <div className="client-form-group">
-            <label>Precio mínimo</label>
+            <label>Precio minimo</label>
             <input
               type="text"
               className="form-editable-input"
@@ -127,7 +141,7 @@ function InventoryTable({
           </div>
 
           <div className="client-form-group">
-            <label>Precio máximo</label>
+            <label>Precio maximo</label>
             <input
               type="text"
               className="form-editable-input"
@@ -176,7 +190,7 @@ function InventoryTable({
               : "No hay productos registrados."}
           </div>
         ) : (
-          products.map((product) => {
+          paginatedProducts.map((product) => {
             const firstVariant = product.variants?.[0] || {};
             const totalStock = getTotalStock(product.variants);
 
@@ -188,9 +202,9 @@ function InventoryTable({
 
                 <div className="inventory-details-cell">
                   <h4>{product.name}</h4>
-                  <p>{product.description || "Sin descripción"}</p>
-                  <p>Categoría: {product.category || "Sin categoría"}</p>
-                  <p>Tamaño: {firstVariant.size || "No definido"}</p>
+                  <p>{product.description || "Sin descripcion"}</p>
+                  <p>Categoria: {product.category || "Sin categoria"}</p>
+                  <p>Tamano: {firstVariant.size || "No definido"}</p>
                   <p>Color: {firstVariant.color || "No definido"}</p>
                 </div>
 
@@ -236,14 +250,37 @@ function InventoryTable({
       </div>
 
       <div className="inventory-footer">
-        <p>Mostrando {products.length} productos</p>
+        <p>
+          Mostrando {showingFrom} a {showingTo} de {products.length} productos
+        </p>
 
         <div className="inventory-pagination">
-          <button type="button">‹</button>
-          <button type="button" className="inventory-page-active">
-            1
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={safePage === 1}
+            aria-label="Pagina anterior"
+          >
+            {"<"}
           </button>
-          <button type="button">›</button>
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index + 1}
+              type="button"
+              className={safePage === index + 1 ? "inventory-page-active" : ""}
+              onClick={() => setCurrentPage(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={safePage === totalPages}
+            aria-label="Pagina siguiente"
+          >
+            {">"}
+          </button>
         </div>
       </div>
     </section>
