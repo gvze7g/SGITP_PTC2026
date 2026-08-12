@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
 import DateField from "../ui/DateField";
 
@@ -70,8 +71,43 @@ function BranchFormModal({
     };
   };
 
+  const validateForm = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!formData.name.trim()) {
+      toast.error("El nombre de la sucursal es obligatorio.");
+      return false;
+    }
+
+    if (formData.name.trim().length < 3) {
+      toast.error("El nombre debe tener al menos 3 caracteres.");
+      return false;
+    }
+
+    if (!formData.address.trim()) {
+      toast.error("La direccion de la sucursal es obligatoria.");
+      return false;
+    }
+
+    if (!formData.phone.trim()) {
+      toast.error("El telefono de la sucursal es obligatorio.");
+      return false;
+    }
+
+    if (formData.email.trim() && !emailRegex.test(formData.email.trim())) {
+      toast.error("Ingresa un correo valido para la sucursal.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    // Las validaciones del modal evitan enviar datos incompletos al CRUD.
+    if (!validateForm()) return;
+
     onSubmit?.(buildPayload());
   };
 

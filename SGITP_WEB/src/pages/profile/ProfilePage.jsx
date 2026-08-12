@@ -2,37 +2,69 @@ import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { logoutCustomer } from '../../services/customerAuthService';
+import { useEffect, useState } from 'react';
+import { getCurrentCustomer, logoutCustomer } from '../../services/customerAuthService';
 
-const ORDERS = [
-  {
-    name: 'Capsula de Lana Merino - Otono',
-    date: '12.09.2023',
-    price: '$1,240.00',
-    status: 'Entregado',
-    image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=340&q=90',
-  },
-  {
-    name: "Coleccion de Calzado L'Artisan",
-    date: '01.09.2023',
-    price: '$420.00',
-    status: 'En transito',
-    image: 'https://images.unsplash.com/photo-1616406432452-07bc5938759d?auto=format&fit=crop&w=340&q=90',
-  },
-];
+const ORDERS = [];
+
+function formatMemberSince(date) {
+  if (!date) return 'No disponible';
+
+  return new Intl.DateTimeFormat('es-SV', {
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(date));
+}
+
+function getPrimaryAddress(customer) {
+  const addresses = customer?.addresses || [];
+  return addresses.find((address) => address.isPrimary) || addresses[0];
+}
 
 function ProfilePage() {
   const navigate = useNavigate();
+  const [customer, setCustomer] = useState(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCustomerSession() {
+      try {
+        const currentCustomer = await getCurrentCustomer();
+
+        if (isMounted) {
+          setCustomer(currentCustomer);
+        }
+      } catch (error) {
+        toast.error(error.message ?? 'No se pudo verificar la sesion.');
+      } finally {
+        if (isMounted) {
+          setLoadingSession(false);
+        }
+      }
+    }
+
+    loadCustomerSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
       await logoutCustomer();
-      toast.success('Sesion cerrada correctamente.');
+      setCustomer(null);
+      toast.success('Sesión cerrada correctamente.');
       navigate('/login', { replace: true });
     } catch (error) {
-      toast.error(error.message ?? 'No se pudo cerrar sesion.');
+      toast.error(error.message ?? 'No se pudo cerrar sesión.');
     }
   };
+
+  const customerName = customer?.full_name || customer?.name || 'usuario';
+  const primaryAddress = getPrimaryAddress(customer);
 
   return (
     <div className="profile-page">
@@ -40,29 +72,45 @@ function ProfilePage() {
 
       <main className="profile-main">
         <header className="profile-hero">
-          <h1>Bienvenida, Elena</h1>
+          <h1>{customer ? `Bienvenido, ${customerName}` : 'Tu cuenta Peques'}</h1>
           <p>
-            Bienvenido de nuevo a tu atelier privado. Tu vestidor curado y tus pedidos a medida se
-            gestionan con total dedicacion.
+            {customer
+              ? 'Bienvenido de nuevo a tu atelier privado. Tu vestidor curado y tus pedidos a medida se gestionan con total dedicación.'
+              : 'Inicia sesión para ver tus datos personales, pedidos guardados y direcciones de entrega.'}
           </p>
         </header>
 
+        {loadingSession ? (
+          <section className="profile-guest-card">
+            <span>Verificando sesión</span>
+            <p>Estamos revisando si tienes una cuenta activa en este navegador.</p>
+          </section>
+        ) : !customer ? (
+          <section className="profile-guest-card">
+            <span>Modo invitado</span>
+            <h2>No hay una sesión iniciada</h2>
+            <p>Por seguridad no mostramos datos personales cuando entras como invitado.</p>
+            <button type="button" onClick={() => navigate('/login')}>
+              Iniciar sesión
+            </button>
+          </section>
+        ) : (
         <div className="profile-layout">
           <aside className="profile-sidebar">
-            <h2>Gestion de cuenta</h2>
+            <h2>Gestión de cuenta</h2>
             <button type="button">Detalles Personales</button>
             <button type="button">Historial de Pedidos</button>
             <button type="button">Direcciones Guardadas</button>
 
             <h2>Soporte</h2>
             <button type="button" onClick={() => navigate('/concierge')}>
-              Servicio de Conserjeria
+              Servicio de Consejería
             </button>
             <button type="button" onClick={() => navigate('/returns')}>
               Devoluciones y Cambios
             </button>
             <button type="button" className="profile-logout" onClick={handleLogout}>
-              Cerrar sesion
+              Cerrar sesión
             </button>
           </aside>
 
@@ -76,19 +124,19 @@ function ProfilePage() {
               <div className="personal-grid">
                 <p>
                   <span>Nombre legal</span>
-                  Elena Vance-Dubois
+                  {customerName}
                 </p>
                 <p>
-                  <span>Correo electronico</span>
-                  elena.vance@atelier.com
+                  <span>Correo electrónico</span>
+                  {customer.email || 'No disponible'}
                 </p>
                 <p>
-                  <span>Fecha de nacimiento</span>
-                  14 de Noviembre, 1992
+                  <span>Teléfono principal</span>
+                  {customer.main_phone || 'No disponible'}
                 </p>
                 <p>
                   <span>Miembro desde</span>
-                  Octubre 2021
+                  {formatMemberSince(customer.createdAt)}
                 </p>
               </div>
             </section>
@@ -100,24 +148,30 @@ function ProfilePage() {
               </div>
 
               <div className="order-list">
-                {ORDERS.map((order) => (
-                  <article key={order.name} className="profile-order">
-                    <img src={order.image} alt={order.name} />
-                    <div>
-                      <span>Pedido no. # EB-8219</span>
-                      <h3>{order.name}</h3>
-                      <p>
-                        Pedido el {order.date} <strong>{order.price}</strong>
-                      </p>
-                    </div>
-                    <em>{order.status}</em>
-                  </article>
-                ))}
+                {ORDERS.length > 0 ? (
+                  ORDERS.map((order) => (
+                    <article key={order.name} className="profile-order">
+                      <img src={order.image} alt={order.name} />
+                      <div>
+                        <span>Pedido no. {order.id}</span>
+                        <h3>{order.name}</h3>
+                        <p>
+                          Pedido el {order.date} <strong>{order.price}</strong>
+                        </p>
+                      </div>
+                      <em>{order.status}</em>
+                    </article>
+                  ))
+                ) : (
+                  <p className="profile-empty-text">No hay pedidos registrados todavía.</p>
+                )}
               </div>
 
-              <button type="button" className="profile-archive">
-                Ver archivo completo
-              </button>
+              {ORDERS.length > 0 ? (
+                <button type="button" className="profile-archive">
+                  Ver archivo completo
+                </button>
+              ) : null}
             </section>
 
             <section className="profile-section">
@@ -127,26 +181,26 @@ function ProfilePage() {
               </div>
 
               <div className="address-grid">
-                <article>
-                  <span>Residencia principal</span>
-                  <h3>Elena Vance-Dubois</h3>
-                  <p>Apopa</p>
-                  <p>75008 Paris, Francia</p>
-                  <button type="button">Editar</button>
-                  <button type="button">Eliminar</button>
-                </article>
-                <article>
-                  <span>La casa de campo</span>
-                  <h3>Elena Vance-Dubois</h3>
-                  <p>Apopa City</p>
-                  <p>49320 Brissac-Quince, Francia</p>
-                  <button type="button">Editar</button>
-                  <button type="button">Eliminar</button>
-                </article>
+                {primaryAddress ? (
+                  <article>
+                    <span>{primaryAddress.label || 'Dirección principal'}</span>
+                    <h3>{customerName}</h3>
+                    <p>{primaryAddress.street_and_number || 'Sin calle registrada'}</p>
+                    <p>{primaryAddress.city || 'Sin ciudad registrada'}</p>
+                    {primaryAddress.reference ? <p>{primaryAddress.reference}</p> : null}
+                  </article>
+                ) : (
+                  <article>
+                    <span>Sin direcciones</span>
+                    <h3>{customerName}</h3>
+                    <p>Aún no tienes direcciones guardadas.</p>
+                  </article>
+                )}
               </div>
             </section>
           </section>
         </div>
+        )}
       </main>
 
       <PublicFooter />

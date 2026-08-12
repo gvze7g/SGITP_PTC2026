@@ -1,4 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+
+const ITEMS_PER_PAGE = 6;
 
 function EmployeesTable({
   employees = [],
@@ -6,6 +9,17 @@ function EmployeesTable({
   onEditEmployee,
   onDeleteEmployee,
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(employees.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedEmployees = useMemo(
+    () => employees.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [employees, startIndex]
+  );
+  const showingFrom = employees.length === 0 ? 0 : startIndex + 1;
+  const showingTo = Math.min(startIndex + paginatedEmployees.length, employees.length);
+
   const getBranchName = (employee) => {
     if (employee?.branch_id && typeof employee.branch_id === "object") {
       return employee.branch_id.name || "Sucursal asignada";
@@ -44,7 +58,7 @@ function EmployeesTable({
         ) : employees.length === 0 ? (
           <div style={{ padding: "20px" }}>No hay empleados registrados.</div>
         ) : (
-          employees.map((employee) => (
+          paginatedEmployees.map((employee) => (
             <article key={employee._id} className="employees-row">
               <div className="employees-name-cell">{employee.full_name}</div>
               <div className="employees-role-cell">{getRoleLabel(employee.role)}</div>
@@ -76,14 +90,37 @@ function EmployeesTable({
       </div>
 
       <div className="employees-footer">
-        <p>Mostrando {employees.length} empleados</p>
+        <p>
+          Mostrando {showingFrom} a {showingTo} de {employees.length} empleados
+        </p>
 
         <div className="employees-pagination">
-          <button type="button">‹</button>
-          <button type="button" className="employees-page-active">
-            1
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={safePage === 1}
+            aria-label="Pagina anterior"
+          >
+            {"<"}
           </button>
-          <button type="button">›</button>
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index + 1}
+              type="button"
+              className={safePage === index + 1 ? "employees-page-active" : ""}
+              onClick={() => setCurrentPage(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={safePage === totalPages}
+            aria-label="Pagina siguiente"
+          >
+            {">"}
+          </button>
         </div>
       </div>
     </section>

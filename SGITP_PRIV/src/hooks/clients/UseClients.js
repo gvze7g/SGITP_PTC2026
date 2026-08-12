@@ -48,6 +48,27 @@ function useClients() {
     }
   }, []);
 
+  // Crear Cliente
+  const createClient = async (payload) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await request("", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      return { success: true, data };
+    } catch (requestError) {
+      const message = requestError.message || "No se pudo crear el cliente.";
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   //Actualizar clientes
   const updateClient = async (id, payload) => {
     try {
@@ -94,6 +115,7 @@ function useClients() {
     loading,
     error,
     getClients,
+    createClient,
     updateClient,
     deleteClient,
   };

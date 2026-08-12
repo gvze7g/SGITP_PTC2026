@@ -11,6 +11,8 @@ function ProtectedRoute({ children }) {
 
     const validateSession = async () => {
       try {
+        // La ruta privada se habilita solo si el backend confirma una sesion
+        // activa de empleado administrador.
         const response = await fetch(`${API_URL}/api/auth/me`, {
           method: "GET",
           credentials: "include",
@@ -30,7 +32,7 @@ function ProtectedRoute({ children }) {
         if (!ignore) {
           setStatus(isAdministrator ? "authenticated" : "unauthorized");
         }
-      } catch (error) {
+      } catch {
         if (!ignore) {
           setStatus("unauthenticated");
         }

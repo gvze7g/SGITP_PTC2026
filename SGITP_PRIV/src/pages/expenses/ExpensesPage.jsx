@@ -7,6 +7,7 @@ import ExpenseFormModal from '../../components/expenses/ExpensesFormModal';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import useSpent from '../../hooks/spent/UseSpent';
 import useBranches from '../../hooks/branches/UseBranches';
+import { isObjectId, validateExpensePayload } from '../../utils/adminValidation';
 
 const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
 
@@ -51,7 +52,7 @@ function ExpensesPage({ theme, onToggleTheme }) {
       return;
     }
 
-    if (!OBJECT_ID_PATTERN.test(query)) {
+    if (!isObjectId(query)) {
       setSearchResult(null);
       return;
     }
@@ -88,13 +89,10 @@ function ExpensesPage({ theme, onToggleTheme }) {
   };
 
   const handleSaveExpense = async (payload) => {
-    if (!payload.descriptions) {
-      toast.error('La descripcion es obligatoria.');
-      return;
-    }
+    const validationMessage = validateExpensePayload(payload);
 
-    if (!payload.amount || payload.amount <= 0) {
-      toast.error('El monto debe ser mayor a cero.');
+    if (validationMessage) {
+      toast.error(validationMessage);
       return;
     }
 

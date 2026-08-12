@@ -1,30 +1,62 @@
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ShieldCheck, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import PublicNavbar from '../../components/home/PublicNavbar';
-
-const CART_ITEMS = [
-  {
-    name: 'Peleles Lino',
-    color: 'Ambar natural',
-    size: '06-12M',
-    price: 185,
-    image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=620&q=90',
-  },
-  {
-    name: 'Cardigan de Lana',
-    color: 'Carbon',
-    size: '12-18M',
-    price: 240,
-    image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=620&q=90',
-  },
-];
+import { getMyCart, removeCartItem, updateCartItem } from '../../services/cartService';
+import { getProductImage } from '../../services/catalogService';
 
 const formatPrice = (value) => `$${value.toFixed(2)}`;
 
 function CartPage() {
   const navigate = useNavigate();
-  const subtotal = CART_ITEMS.reduce((total, item) => total + item.price, 0);
+  const [cart, setCart] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const cartItems = useMemo(() => cart?.products || [], [cart]);
+  const subtotal = Number(cart?.total || 0);
+
+  const loadCart = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const data = await getMyCart();
+      setCart(data);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+  const handleUpdateQuantity = async (item, nextQuantity) => {
+    const productId = item.productId?._id;
+    if (!productId) return;
+
+    try {
+      const data = await updateCartItem(productId, nextQuantity);
+      setCart(data);
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  const handleRemove = async (item) => {
+    const productId = item.productId?._id;
+    if (!productId) return;
+
+    try {
+      const data = await removeCartItem(productId);
+      setCart(data);
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
 
   return (
     <div className="commerce-page">
@@ -39,36 +71,57 @@ function CartPage() {
 
           <header className="commerce-heading">
             <h1>Tu Carrito de Compras</h1>
-            <p>{CART_ITEMS.length} articulos seleccionados</p>
+            <p>{cartItems.length} articulos seleccionados</p>
           </header>
 
+          {loading ? <p className="catalog-status-text">Cargando carrito...</p> : null}
+          {error ? <p className="catalog-status-text">{error}</p> : null}
+
           <div className="cart-items">
-            {CART_ITEMS.map((item) => (
-              <article key={item.name} className="cart-item">
-                <img src={item.image} alt={item.name} />
+            {!loading && cartItems.length === 0 ? (
+              <p className="catalog-status-text">Tu carrito esta vacio.</p>
+            ) : null}
+
+            {cartItems.map((item) => {
+              const product = item.productId || {};
+              const variant = product.variants?.[0] || {};
+              const quantity = Number(item.quantity || 1);
+
+              return (
+              <article key={product._id} className="cart-item">
+                <img src={getProductImage(product, 620)} alt={product.name} />
 
                 <div className="cart-item-copy">
-                  <h2>{item.name}</h2>
-                  <p>Color: {item.color}</p>
-                  <p>Talla: {item.size}</p>
+                  <h2>{product.name || 'Producto'}</h2>
+                  <p>Color: {variant.color || 'No definido'}</p>
+                  <p>Talla: {variant.size || 'No definida'}</p>
 
-                  <div className="quantity-control" aria-label={`Cantidad de ${item.name}`}>
-                    <button type="button" aria-label="Reducir cantidad">
+                  <div className="quantity-control" aria-label={`Cantidad de ${product.name}`}>
+                    <button
+                      type="button"
+                      aria-label="Reducir cantidad"
+                      onClick={() => handleUpdateQuantity(item, quantity - 1)}
+                    >
                       -
                     </button>
-                    <span>01</span>
-                    <button type="button" aria-label="Aumentar cantidad">
+                    <span>{String(quantity).padStart(2, '0')}</span>
+                    <button
+                      type="button"
+                      aria-label="Aumentar cantidad"
+                      onClick={() => handleUpdateQuantity(item, quantity + 1)}
+                    >
                       +
                     </button>
                   </div>
                 </div>
 
                 <div className="cart-item-side">
-                  <span>{formatPrice(item.price)}</span>
-                  <button type="button">Eliminar</button>
+                  <span>{formatPrice(Number(item.subtotal || 0))}</span>
+                  <button type="button" onClick={() => handleRemove(item)}>Eliminar</button>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         </section>
 

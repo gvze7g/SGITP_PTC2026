@@ -13,6 +13,20 @@ branchesController.getBranches = async (req, res) => {
   }
 };
 
+branchesController.getPublicBranches = async (req, res) => {
+  try {
+    const branches = await branchesModel
+      .find({ isActive: { $ne: false } })
+      .select("name address phone email opening_date isActive")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json(branches);
+  } catch (error) {
+    console.log("getPublicBranches error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 //GET by ID obtiene una sucursal por su ID
 branchesController.getBranchById = async (req, res) => {
   try {

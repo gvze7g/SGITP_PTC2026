@@ -5,7 +5,7 @@ import AuthButton from '../../components/auth/AuthButton';
 import AuthCard from '../../components/auth/AuthCard';
 import AuthInput from '../../components/auth/AuthInput';
 import PequesBrandPanel from '../../components/auth/PequesBrandPanel';
-import { loginCustomer } from '../../services/customerAuthService';
+import { loginWebUser } from '../../services/customerAuthService';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await loginCustomer({
+      await loginWebUser({
         email: formData.email.trim(),
         password: formData.password,
       });

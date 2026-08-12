@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import BranchesGrid from '../../components/branches/BranchesGrid';
 import BranchFormModal from '../../components/branches/BranchesFormModal';
 import useBranches from '../../hooks/branches/UseBranches';
+import { isObjectId, validateBranchPayload } from '../../utils/adminValidation';
 
 const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
 
@@ -47,7 +48,7 @@ function BranchesPage({ theme, onToggleTheme }) {
       return;
     }
 
-    if (!OBJECT_ID_PATTERN.test(query)) {
+    if (!isObjectId(query)) {
       setSearchResult(null);
       return;
     }
@@ -79,8 +80,10 @@ function BranchesPage({ theme, onToggleTheme }) {
   };
 
   const handleSave = async (payload) => {
-    if (!payload.name) {
-      toast.error('El nombre de la sucursal es obligatorio.');
+    const validationMessage = validateBranchPayload(payload);
+
+    if (validationMessage) {
+      toast.error(validationMessage);
       return;
     }
 

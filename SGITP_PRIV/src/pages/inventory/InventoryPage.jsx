@@ -5,6 +5,7 @@ import InventoryTable from "../../components/inventory/InventoryTable";
 import CreateProductModal from "../../components/inventory/CreateProductModal";
 import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
 import useProducts from "../../hooks/inventory/UseProducts";
+import { isObjectId, validateProductPayload } from "../../utils/adminValidation";
 
 const DEFAULT_FILTERS = {
   search: "",
@@ -12,8 +13,6 @@ const DEFAULT_FILTERS = {
   maxPrice: "",
   lowStockThreshold: 5,
 };
-
-const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
 
 function InventoryPage({ theme, onToggleTheme }) {
   const {
@@ -62,7 +61,7 @@ function InventoryPage({ theme, onToggleTheme }) {
 
     if (activeTab === "low-stock") {
       result = await getLowStockProducts(filters.lowStockThreshold || 5);
-    } else if (trimmedSearch && OBJECT_ID_PATTERN.test(trimmedSearch)) {
+    } else if (trimmedSearch && isObjectId(trimmedSearch)) {
       result = await getProductById(trimmedSearch);
     } else if (trimmedSearch) {
       result = await searchProductsByName(trimmedSearch);
@@ -119,6 +118,13 @@ function InventoryPage({ theme, onToggleTheme }) {
   };
 
   const handleSaveProduct = async (payload, isEditMode) => {
+    const validationMessage = validateProductPayload(payload);
+
+    if (validationMessage) {
+      toast.error(validationMessage);
+      return;
+    }
+
     let result;
 
     if (isEditMode && selectedProduct?._id) {

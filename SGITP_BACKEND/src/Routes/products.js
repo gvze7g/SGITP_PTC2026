@@ -39,13 +39,11 @@ router.get(
 // confunda con un id de producto.
 router.get(
   "/catalog",
-  validateAuthCookie(["Customer", "Employee"]),
   productController.getProducts
 );
 
 router.get(
   "/catalog/:id",
-  validateAuthCookie(["Customer", "Employee"]),
   productController.getProductById
 );
 

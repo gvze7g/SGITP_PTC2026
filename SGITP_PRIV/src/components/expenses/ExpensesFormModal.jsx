@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
 import DateField from "../ui/DateField";
 
@@ -82,8 +83,47 @@ function ExpenseFormModal({
     };
   };
 
+  const validateForm = () => {
+    const amount = Number(formData.amount);
+
+    if (!formData.description.trim()) {
+      toast.error("La descripcion del gasto es obligatoria.");
+      return false;
+    }
+
+    if (!formData.amount || Number.isNaN(amount) || amount <= 0) {
+      toast.error("El monto debe ser mayor que 0.");
+      return false;
+    }
+
+    if (!formData.expenseDate) {
+      toast.error("Selecciona la fecha del gasto.");
+      return false;
+    }
+
+    if (!EXPENSE_TYPE_OPTIONS.some((option) => option.value === formData.expenseType)) {
+      toast.error("Tipo de gasto invalido.");
+      return false;
+    }
+
+    if (
+      !PAYMENT_METHOD_OPTIONS.some(
+        (option) => option.value === formData.paymentMethod
+      )
+    ) {
+      toast.error("Metodo de pago invalido.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    // Valida campos obligatorios y catalogos antes de llamar al hook CRUD.
+    if (!validateForm()) return;
+
     onSubmit?.(buildPayload());
   };
 

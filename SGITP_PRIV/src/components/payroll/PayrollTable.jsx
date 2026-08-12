@@ -1,62 +1,26 @@
-import { Pencil } from 'lucide-react';
+import { Pencil } from "lucide-react";
+import { useMemo, useState } from "react";
+import { PAYROLL_DATA } from "../../data/payrollData";
 
-export const PAYROLL_DATA = [
-  {
-    id: 1,
-    employeeName: 'Carmen Vega',
-    role: 'Cajera',
-    branch: 'Tienda Principal',
-    baseSalary: '$1,200.00',
-    baseSalaryValue: '1200.00',
-    deductions: '-$20.00',
-    deductionsValue: '20.00',
-    netSalary: '$1,180.00',
-    netSalaryValue: '1180.00',
-    paymentDate: '15 Oct, 2023',
-    paymentDateLong: '15 de Noviembre, 2023',
-    status: 'PAGADO',
-    bonusesValue: '0.00',
-  },
-  {
-    id: 2,
-    employeeName: 'Jorge Ruiz',
-    role: 'Atención',
-    branch: 'Remoto',
-    baseSalary: '$1,100.00',
-    baseSalaryValue: '1100.00',
-    deductions: '$0.00',
-    deductionsValue: '0.00',
-    netSalary: '$1,100.00',
-    netSalaryValue: '1100.00',
-    paymentDate: '--',
-    paymentDateLong: '15 de Noviembre, 2023',
-    status: 'PENDIENTE',
-    bonusesValue: '0.00',
-  },
-  {
-    id: 3,
-    employeeName: 'Elena Silva',
-    role: 'Gerente',
-    branch: 'Tienda Sur',
-    baseSalary: '$2,500.00',
-    baseSalaryValue: '2500.00',
-    deductions: '-$100.00',
-    deductionsValue: '100.00',
-    netSalary: '$2,400.00',
-    netSalaryValue: '2400.00',
-    paymentDate: '15 Oct, 2023',
-    paymentDateLong: '15 de Noviembre, 2023',
-    status: 'PAGADO',
-    bonusesValue: '0.00',
-  },
-];
+const ITEMS_PER_PAGE = 6;
 
 function PayrollTable({ onEditPayroll }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(PAYROLL_DATA.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedPayroll = useMemo(
+    () => PAYROLL_DATA.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [startIndex]
+  );
+  const showingFrom = PAYROLL_DATA.length === 0 ? 0 : startIndex + 1;
+  const showingTo = Math.min(startIndex + paginatedPayroll.length, PAYROLL_DATA.length);
+
   return (
     <section className="payroll-panel">
       <div className="payroll-summary-grid">
         <div className="metric-card">
-          <span className="metric-card-label">TOTAL NÓMINA BASE</span>
+          <span className="metric-card-label">TOTAL NOMINA BASE</span>
           <h3 className="metric-card-value">$14,500.00</h3>
         </div>
 
@@ -78,7 +42,7 @@ function PayrollTable({ onEditPayroll }) {
           <span>Acciones</span>
         </div>
 
-        {PAYROLL_DATA.map((item) => (
+        {paginatedPayroll.map((item) => (
           <article key={item.id} className="payroll-row">
             <div className="payroll-employee-cell">
               <strong>{item.employeeName}</strong>
@@ -87,8 +51,12 @@ function PayrollTable({ onEditPayroll }) {
 
             <div className="payroll-branch-cell">{item.branch}</div>
             <div className="payroll-money-cell">{item.baseSalary}</div>
-            <div className="payroll-money-cell payroll-money-negative">{item.deductions}</div>
-            <div className="payroll-money-cell payroll-money-bold">{item.netSalary}</div>
+            <div className="payroll-money-cell payroll-money-negative">
+              {item.deductions}
+            </div>
+            <div className="payroll-money-cell payroll-money-bold">
+              {item.netSalary}
+            </div>
             <div className="payroll-date-cell">{item.paymentDate}</div>
 
             <div className="payroll-status-cell">
@@ -100,7 +68,7 @@ function PayrollTable({ onEditPayroll }) {
                 type="button"
                 className="payroll-action-icon"
                 onClick={() => onEditPayroll?.(item)}
-                aria-label="Editar nómina"
+                aria-label="Editar nomina"
               >
                 <Pencil size={20} strokeWidth={2} />
               </button>
@@ -110,14 +78,37 @@ function PayrollTable({ onEditPayroll }) {
       </div>
 
       <div className="payroll-footer">
-        <p>Mostrando 1 a 10</p>
+        <p>
+          Mostrando {showingFrom} a {showingTo} de {PAYROLL_DATA.length}
+        </p>
 
         <div className="payroll-pagination">
-          <button type="button">‹</button>
-          <button type="button" className="payroll-page-active">1</button>
-          <button type="button">2</button>
-          <button type="button">3</button>
-          <button type="button">›</button>
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={safePage === 1}
+            aria-label="Pagina anterior"
+          >
+            {"<"}
+          </button>
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index + 1}
+              type="button"
+              className={safePage === index + 1 ? "payroll-page-active" : ""}
+              onClick={() => setCurrentPage(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={safePage === totalPages}
+            aria-label="Pagina siguiente"
+          >
+            {">"}
+          </button>
         </div>
       </div>
     </section>

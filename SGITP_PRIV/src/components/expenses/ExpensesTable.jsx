@@ -1,4 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+
+const ITEMS_PER_PAGE = 6;
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-US", {
@@ -35,8 +38,18 @@ function ExpensesTable({
   onEditExpense,
   onDeleteExpense,
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
   const total = expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
   const topCategory = getTopCategory(expenses);
+  const totalPages = Math.max(1, Math.ceil(expenses.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedExpenses = useMemo(
+    () => expenses.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [expenses, startIndex]
+  );
+  const showingFrom = expenses.length === 0 ? 0 : startIndex + 1;
+  const showingTo = Math.min(startIndex + paginatedExpenses.length, expenses.length);
 
   return (
     <section className="expenses-page">
@@ -75,7 +88,7 @@ function ExpensesTable({
           </article>
         ) : null}
 
-        {expenses.map((expense) => (
+        {paginatedExpenses.map((expense) => (
           <article key={expense._id} className="expenses-row">
             <div className="expenses-date-cell">{formatDate(expense.expense_date)}</div>
 
@@ -118,7 +131,38 @@ function ExpensesTable({
       </div>
 
       <div className="expenses-footer">
-        <p>Mostrando {expenses.length} gastos</p>
+        <p>
+          Mostrando {showingFrom} a {showingTo} de {expenses.length} gastos
+        </p>
+
+        <div className="expenses-pagination">
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={safePage === 1}
+            aria-label="Pagina anterior"
+          >
+            {"<"}
+          </button>
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index + 1}
+              type="button"
+              className={safePage === index + 1 ? "expenses-page-active" : ""}
+              onClick={() => setCurrentPage(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={safePage === totalPages}
+            aria-label="Pagina siguiente"
+          >
+            {">"}
+          </button>
+        </div>
       </div>
     </section>
   );

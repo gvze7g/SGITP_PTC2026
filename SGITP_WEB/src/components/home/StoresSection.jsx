@@ -1,71 +1,89 @@
-const STORES = [
-  {
-    number: '01',
-    name: 'Atelier Ebano - Valle del Lili',
-    address: ['Calle 25 # 102 - 120', 'Cali, Valle del Cauca'],
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Calle%2025%20102-120%20Cali%20Valle%20del%20Cauca',
-    schedule: [
-      ['Lunes - Sabado', '10:00 - 19:00'],
-      ['Domingo', '11:00 - 17:00'],
-    ],
-    image: 'https://images.unsplash.com/photo-1604014237800-1c9102c219da?auto=format&fit=crop&w=1200&q=85',
-  },
-  {
-    number: '02',
-    name: 'Atelier Ebano - La Flora',
-    address: ['Avenida 6N # 47 - 10', 'Cali, Valle del Cauca'],
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Avenida%206N%2047-10%20Cali%20Valle%20del%20Cauca',
-    schedule: [
-      ['Lunes - Sabado', '09:30 - 20:00'],
-      ['Domingo', 'Cerrado'],
-    ],
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=85',
-  },
+import { useEffect, useState } from 'react';
+import { getPublicBranches } from '../../services/catalogService';
+
+const STORE_IMAGES = [
+  'https://images.unsplash.com/photo-1604014237800-1c9102c219da?auto=format&fit=crop&w=1200&q=85',
+  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=85',
+  'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?auto=format&fit=crop&w=1200&q=85',
 ];
 
 function StoresSection() {
+  const [stores, setStores] = useState([]);
+  const [status, setStatus] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getPublicBranches()
+      .then((data) => {
+        if (isMounted) setStores(Array.isArray(data) ? data : []);
+      })
+      .catch((error) => {
+        if (isMounted) setStatus(error.message);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section className="public-section stores-section" id="tiendas">
-      <h2 className="public-section-title">Tiendas Fisicas</h2>
+      <h2 className="public-section-title">Tiendas físicas</h2>
+
+      {status ? <p className="catalog-status-text">{status}</p> : null}
+      {!status && stores.length === 0 ? (
+        <p className="catalog-status-text">No hay tiendas disponibles.</p>
+      ) : null}
 
       <div className="stores-grid">
-        {STORES.map((store) => (
-          <article key={store.name} className="store-card">
-            <img src={store.image} alt={store.name} />
+        {stores.map((store, index) => {
+          const encodedAddress = encodeURIComponent(store.address || store.name);
+          const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
 
-            <div className="store-title-row">
-              <h3>{store.name}</h3>
-              <span>{store.number}</span>
-            </div>
+          return (
+            <article key={store._id || store.name} className="store-card">
+              <img src={STORE_IMAGES[index % STORE_IMAGES.length]} alt={store.name} />
 
-            <div className="store-meta-grid">
-              <div>
-                <h4>Direccion</h4>
-                {store.address.map((line) => (
-                  <p key={line}>{line}</p>
-                ))}
+              <div className="store-title-row">
+                <h3>{store.name}</h3>
+                <span>{String(index + 1).padStart(2, '0')}</span>
               </div>
 
-              <div>
-                <h4>Horario</h4>
-                {store.schedule.map(([day, hour]) => (
-                  <p key={day}>
-                    <span>{day}</span>
-                    <strong>{hour}</strong>
+              <div className="store-meta-grid">
+                <div>
+                  <h4>Dirección</h4>
+                  <p>{store.address || 'Dirección por confirmar'}</p>
+                  <p>El Salvador</p>
+                </div>
+
+                <div>
+                  <h4>Contacto</h4>
+                  <p>
+                    <span>Teléfono</span>
+                    <strong>{store.phone || 'Por confirmar'}</strong>
                   </p>
-                ))}
+                  <p>
+                    <span>Apertura</span>
+                    <strong>
+                      {store.opening_date
+                        ? new Date(store.opening_date).toLocaleDateString('es-SV')
+                        : 'Por confirmar'}
+                    </strong>
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <button
-              type="button"
-              className="store-map-link"
-              onClick={() => window.open(store.mapUrl, '_blank', 'noopener,noreferrer')}
-            >
-              Ver en mapa <span>↗</span>
-            </button>
-          </article>
-        ))}
+              <button
+                type="button"
+                className="store-map-link"
+                onClick={() => window.open(mapUrl, '_blank', 'noopener,noreferrer')}
+              >
+                Ver en mapa <span>↗</span>
+              </button>
+            </article>
+          );
+        })}
       </div>
     </section>
   );

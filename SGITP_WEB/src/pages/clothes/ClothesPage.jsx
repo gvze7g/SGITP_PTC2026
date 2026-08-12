@@ -1,50 +1,39 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
-
-const CLOTHES = [
-  {
-    name: 'Camisa de lino',
-    material: 'Arena calida / fibra organica',
-    price: '$85.00',
-    badge: 'Temporada',
-    image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=760&q=90',
-  },
-  {
-    name: 'Prendas de punto de merino',
-    material: 'Cafe ebano / lana extrafina',
-    price: '$120.00',
-    image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=760&q=90',
-  },
-  {
-    name: 'Mameluco de algodon organico',
-    material: 'Blanco lino / algodon organico',
-    price: '$65.00',
-    image: 'https://images.unsplash.com/photo-1600369672770-985fd30004eb?auto=format&fit=crop&w=760&q=90',
-  },
-  {
-    name: 'Camisa de lino',
-    material: 'Arena calida / fibra organica',
-    price: '$85.00',
-    image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=760&q=90',
-  },
-  {
-    name: 'Prendas de punto de merino',
-    material: 'Cafe ebano / lana extrafina',
-    price: '$120.00',
-    image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=760&q=90',
-  },
-  {
-    name: 'Mameluco de algodon organico',
-    material: 'Blanco lino / algodon organico',
-    price: '$65.00',
-    image: 'https://images.unsplash.com/photo-1600369672770-985fd30004eb?auto=format&fit=crop&w=760&q=90',
-  },
-];
+import {
+  formatProductPrice,
+  getCatalogProducts,
+  getProductImage,
+  getProductMaterial,
+} from '../../services/catalogService';
 
 function ClothesPage() {
   const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getCatalogProducts()
+      .then((data) => {
+        if (isMounted) setProducts(Array.isArray(data) ? data : []);
+      })
+      .catch((requestError) => {
+        if (isMounted) setError(requestError.message);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="clothes-page">
@@ -53,20 +42,27 @@ function ClothesPage() {
       <main className="clothes-catalog">
         <h1>Ropa</h1>
 
+        {loading ? <p className="catalog-status-text">Cargando productos...</p> : null}
+        {error ? <p className="catalog-status-text">{error}</p> : null}
+
         <section className="clothes-grid" aria-label="Catalogo de ropa">
-          {CLOTHES.map((product, index) => (
-            <article key={`${product.name}-${index}`} className="clothes-card">
-              <button type="button" onClick={() => navigate('/product-detail')}>
+          {!loading && products.length === 0 ? (
+            <p className="catalog-status-text">No hay productos disponibles.</p>
+          ) : null}
+
+          {products.map((product) => (
+            <article key={product._id} className="clothes-card">
+              <button type="button" onClick={() => navigate(`/product-detail/${product._id}`)}>
                 {product.badge ? <span>{product.badge}</span> : null}
-                <img src={product.image} alt={product.name} />
+                <img src={getProductImage(product)} alt={product.name} />
               </button>
 
               <div className="clothes-card-info">
                 <div>
                   <h2>{product.name}</h2>
-                  <p>{product.material}</p>
+                  <p>{getProductMaterial(product)}</p>
                 </div>
-                <strong>{product.price}</strong>
+                <strong>{formatProductPrice(product.price)}</strong>
               </div>
             </article>
           ))}

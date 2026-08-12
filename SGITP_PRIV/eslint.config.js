@@ -17,5 +17,12 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Los modales del panel copian el registro seleccionado a estado editable
+      // cuando se abren; es un caso controlado de sincronizacion UI -> formulario.
+      'react-hooks/set-state-in-effect': 'off',
+      // Algunos helpers de eventos usan tiempo actual para limitar notificaciones.
+      'react-hooks/purity': 'off',
+    },
   },
 ])

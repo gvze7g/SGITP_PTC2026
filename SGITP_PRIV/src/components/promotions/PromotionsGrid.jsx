@@ -1,4 +1,7 @@
 import { CalendarDays, Pencil, Power, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+
+const ITEMS_PER_PAGE = 6;
 
 function PromotionsGrid({
   promotions = [],
@@ -7,6 +10,17 @@ function PromotionsGrid({
   onDeactivatePromotion,
   onDeletePromotion,
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(promotions.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedPromotions = useMemo(
+    () => promotions.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [promotions, startIndex]
+  );
+  const showingFrom = promotions.length === 0 ? 0 : startIndex + 1;
+  const showingTo = Math.min(startIndex + paginatedPromotions.length, promotions.length);
+
   // convertir estado a texto visible
   const getStatusLabel = (promotion) => {
     return promotion?.isActive ? "Activo" : "Inactivo";
@@ -54,7 +68,7 @@ function PromotionsGrid({
         <div style={{ padding: "20px" }}>No hay promociones registradas.</div>
       ) : (
         <div className="promotions-grid">
-          {promotions.map((promotion) => (
+          {paginatedPromotions.map((promotion) => (
             <article
               key={promotion._id}
               className={`promotion-card ${
@@ -120,6 +134,41 @@ function PromotionsGrid({
           ))}
         </div>
       )}
+
+      <div className="promotions-footer">
+        <p>
+          Mostrando {showingFrom} a {showingTo} de {promotions.length} promociones
+        </p>
+
+        <div className="promotions-pagination">
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={safePage === 1}
+            aria-label="Pagina anterior"
+          >
+            {"<"}
+          </button>
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index + 1}
+              type="button"
+              className={safePage === index + 1 ? "promotions-page-active" : ""}
+              onClick={() => setCurrentPage(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={safePage === totalPages}
+            aria-label="Pagina siguiente"
+          >
+            {">"}
+          </button>
+        </div>
+      </div>
     </section>
   );
 }
