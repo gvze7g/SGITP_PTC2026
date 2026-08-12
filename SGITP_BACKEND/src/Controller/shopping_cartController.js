@@ -1,8 +1,225 @@
 import cartModel from "../Model/shopping_cart.js";
 import productsModel from "../Model/products.js";
+import salesModel from "../Model/sales.js";
 
 //Array de funciones
 const cartController = {};
+
+const CART_STATUS = "Active";
+
+const populateCart = (query) => {
+  return query.populate(
+    "products.productId",
+    "name description category images variants price cost"
+  );
+};
+
+const recalculateCart = async (cart) => {
+  let total = 0;
+  const products = [];
+
+  for (const item of cart.products || []) {
+    const productFound = await productsModel.findById(item.productId);
+
+    if (!productFound) continue;
+
+    const quantity = Math.max(1, Number(item.quantity || 1));
+    const subtotal = Number(productFound.price || 0) * quantity;
+    total += subtotal;
+
+    products.push({
+      productId: productFound._id,
+      quantity,
+      subtotal,
+    });
+  }
+
+  cart.products = products;
+  cart.total = total;
+  return cart;
+};
+
+cartController.getMyCart = async (req, res) => {
+  try {
+    let cart = await populateCart(
+      cartModel.findOne({ customerId: req.user.id, status: CART_STATUS })
+    );
+
+    if (!cart) {
+      cart = await cartModel.create({
+        customerId: req.user.id,
+        products: [],
+        total: 0,
+        status: CART_STATUS,
+      });
+
+      cart = await populateCart(cartModel.findById(cart._id));
+    }
+
+    return res.status(200).json(cart);
+  } catch (error) {
+    console.log("getMyCart error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+cartController.addItemToMyCart = async (req, res) => {
+  try {
+    const { productId, quantity = 1 } = req.body;
+    const productFound = await productsModel.findById(productId);
+
+    if (!productFound) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    let cart = await cartModel.findOne({
+      customerId: req.user.id,
+      status: CART_STATUS,
+    });
+
+    if (!cart) {
+      cart = new cartModel({
+        customerId: req.user.id,
+        products: [],
+        total: 0,
+        status: CART_STATUS,
+      });
+    }
+
+    const existingItem = cart.products.find(
+      (item) => item.productId?.toString() === productId
+    );
+
+    if (existingItem) {
+      existingItem.quantity = Number(existingItem.quantity || 0) + Number(quantity || 1);
+    } else {
+      cart.products.push({ productId, quantity: Number(quantity || 1), subtotal: 0 });
+    }
+
+    await recalculateCart(cart);
+    await cart.save();
+
+    const populatedCart = await populateCart(cartModel.findById(cart._id));
+    return res.status(200).json(populatedCart);
+  } catch (error) {
+    console.log("addItemToMyCart error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+cartController.updateMyCartItem = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+    const cart = await cartModel.findOne({
+      customerId: req.user.id,
+      status: CART_STATUS,
+    });
+
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    cart.products = cart.products.filter((item) => {
+      if (item.productId?.toString() !== productId) return true;
+
+      item.quantity = Number(quantity || 0);
+      return item.quantity > 0;
+    });
+
+    await recalculateCart(cart);
+    await cart.save();
+
+    const populatedCart = await populateCart(cartModel.findById(cart._id));
+    return res.status(200).json(populatedCart);
+  } catch (error) {
+    console.log("updateMyCartItem error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+cartController.removeMyCartItem = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const cart = await cartModel.findOne({
+      customerId: req.user.id,
+      status: CART_STATUS,
+    });
+
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    cart.products = cart.products.filter(
+      (item) => item.productId?.toString() !== productId
+    );
+
+    await recalculateCart(cart);
+    await cart.save();
+
+    const populatedCart = await populateCart(cartModel.findById(cart._id));
+    return res.status(200).json(populatedCart);
+  } catch (error) {
+    console.log("removeMyCartItem error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+cartController.checkoutMyCart = async (req, res) => {
+  try {
+    const {
+      shipping_address,
+      shipping_phone,
+      payment_method = "Card",
+      payment_status = "Pending",
+    } = req.body;
+
+    const cart = await populateCart(
+      cartModel.findOne({ customerId: req.user.id, status: CART_STATUS })
+    );
+
+    if (!cart || !cart.products?.length) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    const itemDetails = cart.products.map((item) => {
+      const product = item.productId || {};
+      const variant = product.variants?.[0] || {};
+
+      return {
+        product_id: product._id,
+        name: product.name,
+        selected_variant: [variant.size, variant.color].filter(Boolean).join(" / "),
+        quantity: item.quantity,
+        unit_price: Number(product.price || 0),
+      };
+    });
+
+    const sale = await salesModel.create({
+      sales_date: new Date(),
+      employee_id: req.user.userType === "Employee" ? req.user.id : undefined,
+      cart_id: cart._id,
+      origin: "Web",
+      applied_price_type: "Retail",
+      payment_method,
+      payment_status,
+      shipping_address,
+      shipping_phone,
+      item_details: itemDetails,
+    });
+
+    cart.status = "Completed";
+    await cart.save();
+
+    return res.status(201).json({
+      message: "Order created",
+      sale,
+    });
+  } catch (error) {
+    console.log("checkoutMyCart error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 //SELECT
 cartController.getAllCarts = async (req, res) => {
@@ -10,7 +227,7 @@ cartController.getAllCarts = async (req, res) => {
     const carts = await cartModel
       .find()
       .populate("customerId", "name email")
-      .populate("products.productId", "name price");
+      .populate("products.productId", "name price images variants description");
 
     return res.status(200).json(carts);
   } catch (error) {
@@ -22,10 +239,10 @@ cartController.getAllCarts = async (req, res) => {
 //SELECT by id
 cartController.getCartById = async (req, res) => {
   try {
-    const cart = cartModel
+    const cart = await cartModel
       .findById(req.params.id)
       .populate("customerId", "name email")
-      .populate("products.productId", "name price");
+      .populate("products.productId", "name price images variants description");
 
     return res.status(200).json(cart);
   } catch (error) {

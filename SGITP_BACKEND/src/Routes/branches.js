@@ -5,6 +5,11 @@ import { validateAuthCookie, validateEmployeeRole } from "../Middlewares/authMid
 const router = Router();
 
 router.get(
+  "/public",
+  branchesController.getPublicBranches
+);
+
+router.get(
   "/",
   validateAuthCookie(["Employee"]),
   validateEmployeeRole("Administrator"),

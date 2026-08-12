@@ -26,9 +26,25 @@ import { validateAuthCookie } from "./src/Middlewares/authMiddleware.js";
 
 const app = express();
 
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+]);
+
+const isLocalViteOrigin = (origin = "") =>
+  /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin) || isLocalViteOrigin(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
