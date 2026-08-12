@@ -1,31 +1,156 @@
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
+import { getCurrentCustomer } from '../../services/customerAuthService';
+import { getMyCart, placeCartOrder } from '../../services/cartService';
+import { getProductImage } from '../../services/catalogService';
 
-const CHECKOUT_ITEMS = [
-  {
-    name: 'Mono de Lino',
-    material: 'Lino',
-    size: '6-12M',
-    price: 145,
-    image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=420&q=90',
-  },
-  {
-    name: 'Gorro de Cachemira',
-    material: 'Lino',
-    size: 'S',
-    price: 85,
-    image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=420&q=90',
-  },
+const CITY_OPTIONS = [
+  { city: 'San Salvador', postal: '1101' },
+  { city: 'Santa Ana', postal: '2201' },
+  { city: 'San Miguel', postal: '3301' },
+  { city: 'Soyapango', postal: '1116' },
+  { city: 'Apopa', postal: '1123' },
+  { city: 'Mejicanos', postal: '1120' },
+  { city: 'Santa Tecla', postal: '1501' },
+  { city: 'Antiguo Cuscatlan', postal: '1502' },
+  { city: 'Sonsonate', postal: '2301' },
+  { city: 'Usulutan', postal: '3401' },
 ];
 
 const formatPrice = (value) => `$${value.toFixed(2)}`;
 
+const splitFullName = (fullName = '') => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] || '',
+    secondName: parts.slice(1).join(' '),
+  };
+};
+
+const getPrimaryAddress = (user) => {
+  const addresses = user?.addresses || [];
+  return addresses.find((address) => address.isPrimary) || addresses[0] || {};
+};
+
 function CheckoutPage() {
   const navigate = useNavigate();
-  const subtotal = CHECKOUT_ITEMS.reduce((total, item) => total + item.price, 0);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    secondName: '',
+    email: '',
+    address: '',
+    city: CITY_OPTIONS[0].city,
+    postalCode: CITY_OPTIONS[0].postal,
+    country: 'El Salvador',
+  });
+  const [cart, setCart] = useState(null);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [orderMessage, setOrderMessage] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCheckoutData() {
+      try {
+        const [user, currentCart] = await Promise.all([
+          getCurrentCustomer(),
+          getMyCart(),
+        ]);
+
+        if (!isMounted) return;
+
+        setCart(currentCart);
+
+        if (user) {
+          const names = splitFullName(user.full_name || user.name);
+          const address = getPrimaryAddress(user);
+          const cityMatch = CITY_OPTIONS.find((option) => option.city === address.city);
+          const defaultCity = cityMatch || CITY_OPTIONS[0];
+
+          setFormData({
+            firstName: names.firstName,
+            secondName: names.secondName,
+            email: user.email || '',
+            address: address.street_and_number || address.address_line || '',
+            city: defaultCity.city,
+            postalCode: defaultCity.postal,
+            country: 'El Salvador',
+          });
+        }
+      } catch (error) {
+        if (isMounted) {
+          setStatusMessage(error.message ?? 'No se pudo cargar la informacion del checkout.');
+        }
+      }
+    }
+
+    loadCheckoutData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const checkoutItems = useMemo(() => cart?.products || [], [cart]);
+  const subtotal = Number(cart?.total || 0);
+
+  const handleFieldChange = (event) => {
+    const { name, value } = event.target;
+
+    if (name === 'city' || name === 'postalCode') {
+      const selectedCity =
+        CITY_OPTIONS.find((option) => option.city === value || option.postal === value) ||
+        CITY_OPTIONS[0];
+      setFormData((prev) => ({
+        ...prev,
+        city: selectedCity.city,
+        postalCode: selectedCity.postal,
+      }));
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePlaceOrder = async () => {
+    if (isPlacingOrder) return;
+
+    if (checkoutItems.length === 0) {
+      toast.error('Tu carrito esta vacio.');
+      return;
+    }
+
+    if (!formData.firstName.trim() || !formData.email.trim() || !formData.address.trim()) {
+      toast.error('Completa nombre, correo y direccion antes de realizar el pedido.');
+      return;
+    }
+
+    setIsPlacingOrder(true);
+    setOrderMessage('');
+
+    try {
+      await placeCartOrder({
+        shipping_address: `${formData.address}, ${formData.city}, ${formData.postalCode}, ${formData.country}`,
+        shipping_phone: '',
+        payment_method: 'Card',
+        payment_status: 'Pending',
+      });
+
+      setCart((prev) => ({ ...prev, products: [], total: 0 }));
+      setOrderMessage('Pedido realizado correctamente. Tu carrito quedo cerrado.');
+      toast.success('Pedido realizado correctamente.');
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo realizar el pedido.');
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
 
   return (
     <div className="commerce-page checkout-shell">
@@ -40,38 +165,70 @@ function CheckoutPage() {
 
           <section className="checkout-section">
             <h1>Informacion de envio</h1>
+            {statusMessage ? <p className="catalog-status-text">{statusMessage}</p> : null}
 
             <div className="checkout-form-grid">
               <label>
                 <span>Primer nombre</span>
-                <input type="text" defaultValue="Jean" />
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleFieldChange}
+                />
               </label>
               <label>
                 <span>Segundo nombre</span>
-                <input type="text" defaultValue="Dupont" />
+                <input
+                  type="text"
+                  name="secondName"
+                  value={formData.secondName}
+                  onChange={handleFieldChange}
+                />
               </label>
               <label className="checkout-field-full">
                 <span>Email</span>
-                <input type="email" defaultValue="jean.dupont@atelier.com" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleFieldChange}
+                />
               </label>
               <label className="checkout-field-full">
                 <span>Direccion</span>
-                <input type="text" defaultValue="24 Rue de la Paix" />
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleFieldChange}
+                />
               </label>
               <label>
                 <span>Ciudad</span>
-                <input type="text" defaultValue="Paris" />
+                <select name="city" value={formData.city} onChange={handleFieldChange}>
+                  {CITY_OPTIONS.map((option) => (
+                    <option key={option.city} value={option.city}>
+                      {option.city}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label>
                 <span>Codigo postal</span>
-                <input type="text" defaultValue="75002" />
+                <select name="postalCode" value={formData.postalCode} onChange={handleFieldChange}>
+                  {CITY_OPTIONS.map((option) => (
+                    <option key={option.postal} value={option.postal}>
+                      {option.postal}
+                    </option>
+                  ))}
+                </select>
               </label>
-              <label className="checkout-select-field">
+              <label>
                 <span>Pais</span>
-                <button type="button">
-                  France
-                  <ChevronDown size={16} strokeWidth={1.6} />
-                </button>
+                <select name="country" value={formData.country} onChange={handleFieldChange}>
+                  <option value="El Salvador">El Salvador</option>
+                </select>
               </label>
             </div>
           </section>
@@ -123,18 +280,27 @@ function CheckoutPage() {
           <h2>Resumen del Pedido</h2>
 
           <div className="checkout-summary-items">
-            {CHECKOUT_ITEMS.map((item) => (
-              <article key={item.name}>
-                <img src={item.image} alt={item.name} />
+            {checkoutItems.length === 0 ? (
+              <p className="catalog-status-text">Tu carrito esta vacio.</p>
+            ) : null}
+
+            {checkoutItems.map((item) => {
+              const product = item.productId || {};
+              const variant = product.variants?.[0] || {};
+
+              return (
+              <article key={product._id}>
+                <img src={getProductImage(product, 420)} alt={product.name || 'Producto'} />
                 <div>
-                  <h3>{item.name}</h3>
+                  <h3>{product.name || 'Producto'}</h3>
                   <p>
-                    {item.material} / {item.size}
+                    {variant.fabric || product.category || 'Producto'} / {variant.size || 'Sin talla'}
                   </p>
-                  <strong>{formatPrice(item.price)}</strong>
+                  <strong>{formatPrice(Number(item.subtotal || 0))}</strong>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
 
           <div className="summary-lines checkout-lines">
@@ -153,9 +319,16 @@ function CheckoutPage() {
             <strong>{formatPrice(subtotal)}</strong>
           </div>
 
-          <button type="button" className="commerce-primary-btn">
-            Realizar pedido
+          <button
+            type="button"
+            className="commerce-primary-btn"
+            disabled={isPlacingOrder || checkoutItems.length === 0}
+            onClick={handlePlaceOrder}
+          >
+            {isPlacingOrder ? 'Procesando...' : 'Realizar pedido'}
           </button>
+
+          {orderMessage ? <p className="checkout-success-text">{orderMessage}</p> : null}
 
           <p className="terms-copy">Al realizar tu pedido, aceptas nuestros Terminos de Servicio.</p>
         </aside>

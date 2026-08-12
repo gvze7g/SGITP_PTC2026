@@ -1,8 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
 
-const SIZES = ['0-3M', '3-6M', '6-12M', '12-18M'];
-
 function ProductDetailView({ product, selectedSize, onSelectSize, onAddToCart, onBack, onOpenStoreSearch }) {
+  const sizes = product.sizes?.length ? product.sizes : ['0-3M', '3-6M', '6-12M', '12-18M'];
+
   return (
     <main className="product-detail-page">
       <section className="product-detail-media">
@@ -33,7 +33,7 @@ function ProductDetailView({ product, selectedSize, onSelectSize, onAddToCart, o
         </div>
 
         <div className="product-size-grid">
-          {SIZES.map((size) => (
+          {sizes.map((size) => (
             <button
               key={size}
               type="button"
