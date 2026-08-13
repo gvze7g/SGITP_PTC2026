@@ -5,6 +5,9 @@ dotenv.config();
 export const config = {
   db: {
     URI: process.env.DB_URI,
+    dnsServers: process.env.DNS_SERVERS?.split(",")
+      .map((server) => server.trim())
+      .filter(Boolean),
   },
   server: {
     port: process.env.PORT,

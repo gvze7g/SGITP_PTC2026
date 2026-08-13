@@ -52,7 +52,7 @@ function ProductDetailPage() {
       image: getProductImage(rawProduct, 1400),
       description: rawProduct.description || 'Producto seleccionado del catalogo Peques.',
       notes: [
-        rawProduct.category ? `Categoria: ${rawProduct.category}` : 'Coleccion Peques',
+        rawProduct.category ? `Categoria: ${rawProduct.category}` : 'Categoria Peques',
         getProductMaterial(rawProduct),
         `${rawProduct.variants?.length || 0} variantes disponibles`,
       ],

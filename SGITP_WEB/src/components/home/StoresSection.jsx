@@ -1,12 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getPublicBranches } from '../../services/catalogService';
 
-const STORE_IMAGES = [
-  'https://images.unsplash.com/photo-1604014237800-1c9102c219da?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?auto=format&fit=crop&w=1200&q=85',
-];
-
 function StoresSection() {
   const [stores, setStores] = useState([]);
   const [status, setStatus] = useState('');
@@ -43,8 +37,6 @@ function StoresSection() {
 
           return (
             <article key={store._id || store.name} className="store-card">
-              <img src={STORE_IMAGES[index % STORE_IMAGES.length]} alt={store.name} />
-
               <div className="store-title-row">
                 <h3>{store.name}</h3>
                 <span>{String(index + 1).padStart(2, '0')}</span>

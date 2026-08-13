@@ -1,6 +1,6 @@
 function HeroSection() {
   return (
-    <section className="public-hero" id="colecciones">
+    <section className="public-hero" id="categorias">
       <img
         src="https://images.unsplash.com/photo-1522771930-78848d9293e8?auto=format&fit=crop&w=2200&q=85"
         alt="Bebe usando ropa Peques"

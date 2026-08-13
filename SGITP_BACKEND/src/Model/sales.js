@@ -18,6 +18,8 @@ const salesSchema = new Schema({
     payment_status: {type: String},
     shipping_address: {type: String},
     shipping_phone: {type: String},
+    shipping_method: {type: String},
+    shipping_cost: {type: Number},
     item_details: [{
         product_id: {
                 type: mongoose.Types.ObjectId,

@@ -50,6 +50,20 @@ export async function getCatalogProducts() {
   return parseResponse(response, 'No se pudieron obtener los productos.');
 }
 
+export async function getBestSellingProducts(limit = 5) {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/sales/best-sellers?limit=${limit}`, {
+      credentials: 'include',
+    });
+  } catch (error) {
+    throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
+  }
+
+  return parseResponse(response, 'No se pudieron obtener los productos mas vendidos.');
+}
+
 export async function getCatalogProductById(productId) {
   let response;
 

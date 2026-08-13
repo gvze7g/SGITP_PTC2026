@@ -85,7 +85,7 @@ function RegisterPage() {
           <h1 className="auth-title">Crear cuenta</h1>
 
           <p className="auth-subtitle">
-            Crea una cuenta para acceder a colecciones exclusivas y lanzamientos
+            Crea una cuenta para acceder a categorias exclusivas y lanzamientos
             de temporada cuidadosamente seleccionados.
           </p>
 

@@ -3,9 +3,44 @@ import PublicNavbar from '../../components/home/PublicNavbar';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
-import { getCurrentCustomer, logoutCustomer } from '../../services/customerAuthService';
+import {
+  addCustomerAddress,
+  deleteCustomerAddress,
+  getCurrentCustomer,
+  logoutCustomer,
+  updateCustomerAddress,
+} from '../../services/customerAuthService';
+import { getMyOrders } from '../../services/cartService';
+import { formatProductPrice, getProductImage } from '../../services/catalogService';
 
-const ORDERS = [];
+const CITY_OPTIONS = [
+  'San Salvador',
+  'Santa Ana',
+  'San Miguel',
+  'Soyapango',
+  'Apopa',
+  'Mejicanos',
+  'Santa Tecla',
+  'Antiguo Cuscatlan',
+  'Sonsonate',
+  'Usulutan',
+];
+
+const ADDRESS_LIMITS = {
+  label: 30,
+  street_and_number: 80,
+  reference: 80,
+};
+
+const EMPTY_ADDRESS_FORM = {
+  label: '',
+  street_and_number: '',
+  city: CITY_OPTIONS[0],
+  reference: '',
+  isPrimary: false,
+};
+
+const cleanAddressText = (value) => value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]/g, '');
 
 function formatMemberSince(date) {
   if (!date) return 'No disponible';
@@ -16,15 +51,33 @@ function formatMemberSince(date) {
   }).format(new Date(date));
 }
 
-function getPrimaryAddress(customer) {
-  const addresses = customer?.addresses || [];
-  return addresses.find((address) => address.isPrimary) || addresses[0];
+function formatOrderDate(date) {
+  if (!date) return 'fecha no disponible';
+
+  return new Intl.DateTimeFormat('es-SV', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(date));
+}
+
+function getOrderTotal(order) {
+  const productsTotal = (order.item_details || []).reduce((total, item) => {
+    return total + Number(item.quantity || 0) * Number(item.unit_price || 0);
+  }, 0);
+
+  return productsTotal + Number(order.shipping_cost || 0);
 }
 
 function ProfilePage() {
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState('');
+  const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM);
+  const [orders, setOrders] = useState([]);
+  const [ordersError, setOrdersError] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -35,6 +88,20 @@ function ProfilePage() {
 
         if (isMounted) {
           setCustomer(currentCustomer);
+        }
+
+        if (currentCustomer?.userType === 'Customer') {
+          try {
+            const customerOrders = await getMyOrders();
+
+            if (isMounted) {
+              setOrders(Array.isArray(customerOrders) ? customerOrders : []);
+            }
+          } catch (ordersRequestError) {
+            if (isMounted) {
+              setOrdersError(ordersRequestError.message);
+            }
+          }
         }
       } catch (error) {
         toast.error(error.message ?? 'No se pudo verificar la sesion.');
@@ -56,15 +123,114 @@ function ProfilePage() {
     try {
       await logoutCustomer();
       setCustomer(null);
-      toast.success('Sesión cerrada correctamente.');
+      toast.success('Sesion cerrada correctamente.');
       navigate('/login', { replace: true });
     } catch (error) {
-      toast.error(error.message ?? 'No se pudo cerrar sesión.');
+      toast.error(error.message ?? 'No se pudo cerrar sesion.');
+    }
+  };
+
+  const updateCustomerAddresses = (addresses) => {
+    setCustomer((currentCustomer) => ({
+      ...currentCustomer,
+      addresses,
+    }));
+  };
+
+  const handleAddressInputChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    const maxLength = ADDRESS_LIMITS[name];
+    const nextValue = type === 'checkbox'
+      ? checked
+      : maxLength
+        ? cleanAddressText(value).slice(0, maxLength)
+        : value;
+
+    setAddressForm((currentForm) => ({
+      ...currentForm,
+      [name]: nextValue,
+    }));
+  };
+
+  const handleNewAddress = () => {
+    setEditingAddressId('');
+    setAddressForm({
+      ...EMPTY_ADDRESS_FORM,
+      isPrimary: !customer?.addresses?.length,
+    });
+    setShowAddressForm(true);
+  };
+
+  const handleEditAddress = (address) => {
+    setEditingAddressId(address._id);
+    setAddressForm({
+      label: address.label || '',
+      street_and_number: address.street_and_number || '',
+      city: CITY_OPTIONS.includes(address.city) ? address.city : CITY_OPTIONS[0],
+      reference: address.reference || '',
+      isPrimary: Boolean(address.isPrimary),
+    });
+    setShowAddressForm(true);
+  };
+
+  const handleCancelAddress = () => {
+    setShowAddressForm(false);
+    setEditingAddressId('');
+    setAddressForm(EMPTY_ADDRESS_FORM);
+  };
+
+  const handleSaveAddress = async (event) => {
+    event.preventDefault();
+
+    if (!addressForm.street_and_number.trim() || !addressForm.city.trim()) {
+      toast.error('Completa direccion y ciudad.');
+      return;
+    }
+
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]+$/.test(addressForm.street_and_number.trim())) {
+      toast.error('La direccion solo puede tener letras y numeros.');
+      return;
+    }
+
+    if (addressForm.label.trim() && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]+$/.test(addressForm.label.trim())) {
+      toast.error('La etiqueta solo puede tener letras y numeros.');
+      return;
+    }
+
+    if (addressForm.reference.trim() && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]+$/.test(addressForm.reference.trim())) {
+      toast.error('La referencia solo puede tener letras y numeros.');
+      return;
+    }
+
+    if (!CITY_OPTIONS.includes(addressForm.city)) {
+      toast.error('Selecciona una ciudad valida.');
+      return;
+    }
+
+    try {
+      const response = editingAddressId
+        ? await updateCustomerAddress(editingAddressId, addressForm)
+        : await addCustomerAddress(addressForm);
+
+      updateCustomerAddresses(response.addresses || []);
+      toast.success(editingAddressId ? 'Direccion actualizada.' : 'Direccion guardada.');
+      handleCancelAddress();
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo guardar la direccion.');
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    try {
+      const response = await deleteCustomerAddress(addressId);
+      updateCustomerAddresses(response.addresses || []);
+      toast.success('Direccion eliminada.');
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo eliminar la direccion.');
     }
   };
 
   const customerName = customer?.full_name || customer?.name || 'usuario';
-  const primaryAddress = getPrimaryAddress(customer);
 
   return (
     <div className="profile-page">
@@ -75,42 +241,35 @@ function ProfilePage() {
           <h1>{customer ? `Bienvenido, ${customerName}` : 'Tu cuenta Peques'}</h1>
           <p>
             {customer
-              ? 'Bienvenido de nuevo a tu atelier privado. Tu vestidor curado y tus pedidos a medida se gestionan con total dedicación.'
-              : 'Inicia sesión para ver tus datos personales, pedidos guardados y direcciones de entrega.'}
+              ? 'Bienvenido de nuevo a tu atelier privado. Tu vestidor curado y tus pedidos a medida se gestionan con total dedicacion.'
+              : 'Inicia sesion para ver tus datos personales, pedidos guardados y direcciones de entrega.'}
           </p>
         </header>
 
         {loadingSession ? (
           <section className="profile-guest-card">
-            <span>Verificando sesión</span>
+            <span>Verificando sesion</span>
             <p>Estamos revisando si tienes una cuenta activa en este navegador.</p>
           </section>
         ) : !customer ? (
           <section className="profile-guest-card">
             <span>Modo invitado</span>
-            <h2>No hay una sesión iniciada</h2>
+            <h2>No hay una sesion iniciada</h2>
             <p>Por seguridad no mostramos datos personales cuando entras como invitado.</p>
             <button type="button" onClick={() => navigate('/login')}>
-              Iniciar sesión
+              Iniciar sesion
             </button>
           </section>
         ) : (
         <div className="profile-layout">
           <aside className="profile-sidebar">
-            <h2>Gestión de cuenta</h2>
+            <h2>Gestion de cuenta</h2>
             <button type="button">Detalles Personales</button>
             <button type="button">Historial de Pedidos</button>
             <button type="button">Direcciones Guardadas</button>
 
-            <h2>Soporte</h2>
-            <button type="button" onClick={() => navigate('/concierge')}>
-              Servicio de Consejería
-            </button>
-            <button type="button" onClick={() => navigate('/returns')}>
-              Devoluciones y Cambios
-            </button>
             <button type="button" className="profile-logout" onClick={handleLogout}>
-              Cerrar sesión
+              Cerrar sesion
             </button>
           </aside>
 
@@ -127,11 +286,11 @@ function ProfilePage() {
                   {customerName}
                 </p>
                 <p>
-                  <span>Correo electrónico</span>
+                  <span>Correo electronico</span>
                   {customer.email || 'No disponible'}
                 </p>
                 <p>
-                  <span>Teléfono principal</span>
+                  <span>Telefono principal</span>
                   {customer.main_phone || 'No disponible'}
                 </p>
                 <p>
@@ -148,26 +307,38 @@ function ProfilePage() {
               </div>
 
               <div className="order-list">
-                {ORDERS.length > 0 ? (
-                  ORDERS.map((order) => (
-                    <article key={order.name} className="profile-order">
-                      <img src={order.image} alt={order.name} />
+                {ordersError ? <p className="profile-empty-text">{ordersError}</p> : null}
+
+                {orders.length > 0 ? (
+                  orders.map((order) => {
+                    const firstItem = order.item_details?.[0] || {};
+                    const product = firstItem.product_id || {};
+                    const extraItems = Math.max((order.item_details?.length || 0) - 1, 0);
+
+                    return (
+                    <article key={order._id} className="profile-order">
+                      <img src={getProductImage(product, 320)} alt={firstItem.name || 'Producto'} />
                       <div>
-                        <span>Pedido no. {order.id}</span>
-                        <h3>{order.name}</h3>
+                        <span>Pedido no. {order._id.slice(-6).toUpperCase()}</span>
+                        <h3>
+                          {firstItem.name || product.name || 'Pedido Peques'}
+                          {extraItems ? ` + ${extraItems} mas` : ''}
+                        </h3>
                         <p>
-                          Pedido el {order.date} <strong>{order.price}</strong>
+                          Pedido el {formatOrderDate(order.sales_date || order.createdAt)}
+                          <strong>{formatProductPrice(getOrderTotal(order))}</strong>
                         </p>
                       </div>
-                      <em>{order.status}</em>
+                      <em>{order.payment_status || 'Pendiente'}</em>
                     </article>
-                  ))
+                    );
+                  })
                 ) : (
-                  <p className="profile-empty-text">No hay pedidos registrados todavía.</p>
+                  !ordersError ? <p className="profile-empty-text">No hay pedidos registrados todavia.</p> : null
                 )}
               </div>
 
-              {ORDERS.length > 0 ? (
+              {orders.length > 0 ? (
                 <button type="button" className="profile-archive">
                   Ver archivo completo
                 </button>
@@ -177,23 +348,100 @@ function ProfilePage() {
             <section className="profile-section">
               <div className="profile-section-heading">
                 <h2>Direcciones Guardadas</h2>
-                <button type="button">Anadir nueva</button>
+                <button type="button" onClick={handleNewAddress}>Anadir nueva</button>
               </div>
 
+              {showAddressForm ? (
+                <form className="address-form" onSubmit={handleSaveAddress}>
+                  <label>
+                    <span>Etiqueta</span>
+                    <input
+                      type="text"
+                      name="label"
+                      value={addressForm.label}
+                      onChange={handleAddressInputChange}
+                      maxLength={ADDRESS_LIMITS.label}
+                      placeholder="Casa, trabajo, oficina"
+                    />
+                  </label>
+                  <label>
+                    <span>Direccion</span>
+                    <input
+                      type="text"
+                      name="street_and_number"
+                      value={addressForm.street_and_number}
+                      onChange={handleAddressInputChange}
+                      maxLength={ADDRESS_LIMITS.street_and_number}
+                      placeholder="Calle, avenida, numero"
+                    />
+                  </label>
+                  <label>
+                    <span>Ciudad</span>
+                    <select
+                      name="city"
+                      value={addressForm.city}
+                      onChange={handleAddressInputChange}
+                    >
+                      {CITY_OPTIONS.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Referencia</span>
+                    <input
+                      type="text"
+                      name="reference"
+                      value={addressForm.reference}
+                      onChange={handleAddressInputChange}
+                      maxLength={ADDRESS_LIMITS.reference}
+                      placeholder="Punto de referencia"
+                    />
+                  </label>
+                  <label className="address-primary-check">
+                    <input
+                      type="checkbox"
+                      name="isPrimary"
+                      checked={addressForm.isPrimary}
+                      onChange={handleAddressInputChange}
+                    />
+                    <span>Usar como direccion principal</span>
+                  </label>
+                  <div className="address-form-actions">
+                    <button type="submit">
+                      {editingAddressId ? 'Guardar cambios' : 'Guardar direccion'}
+                    </button>
+                    <button type="button" onClick={handleCancelAddress}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
               <div className="address-grid">
-                {primaryAddress ? (
-                  <article>
-                    <span>{primaryAddress.label || 'Dirección principal'}</span>
-                    <h3>{customerName}</h3>
-                    <p>{primaryAddress.street_and_number || 'Sin calle registrada'}</p>
-                    <p>{primaryAddress.city || 'Sin ciudad registrada'}</p>
-                    {primaryAddress.reference ? <p>{primaryAddress.reference}</p> : null}
-                  </article>
+                {customer.addresses?.length > 0 ? (
+                  customer.addresses.map((address) => (
+                    <article key={address._id}>
+                      <span>{address.isPrimary ? 'Direccion principal' : address.label || 'Direccion'}</span>
+                      <h3>{customerName}</h3>
+                      <p>{address.street_and_number || 'Sin calle registrada'}</p>
+                      <p>{address.city || 'Sin ciudad registrada'}</p>
+                      {address.reference ? <p>{address.reference}</p> : null}
+                      <button type="button" onClick={() => handleEditAddress(address)}>
+                        Editar
+                      </button>
+                      <button type="button" onClick={() => handleDeleteAddress(address._id)}>
+                        Eliminar
+                      </button>
+                    </article>
+                  ))
                 ) : (
                   <article>
                     <span>Sin direcciones</span>
                     <h3>{customerName}</h3>
-                    <p>Aún no tienes direcciones guardadas.</p>
+                    <p>Aun no tienes direcciones guardadas.</p>
                   </article>
                 )}
               </div>
