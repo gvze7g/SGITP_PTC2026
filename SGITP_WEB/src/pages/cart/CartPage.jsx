@@ -93,7 +93,15 @@ function CartPage() {
 
                 <div className="cart-item-copy">
                   <h2>{product.name || 'Producto'}</h2>
-                  <p>Color: {variant.color || 'No definido'}</p>
+                  <p className="cart-item-color">
+                    Color: {variant.color || 'No definido'}
+                    {variant.colorHex ? (
+                      <span
+                        className="cart-item-color-swatch"
+                        style={{ backgroundColor: variant.colorHex }}
+                      />
+                    ) : null}
+                  </p>
                   <p>Talla: {variant.size || 'No definida'}</p>
 
                   <div className="quantity-control" aria-label={`Cantidad de ${product.name}`}>

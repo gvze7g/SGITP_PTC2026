@@ -13,7 +13,10 @@ const ALLOWED_EMPLOYEE_ROLES = ["Administrator", "Employee"];
 employeeController.getEmployees = async (req, res) => {
   try {
     // Busca todos los empleados, pero oculta el campo password
-    const employees = await employeeModel.find().select("-password");
+    const employees = await employeeModel
+      .find()
+      .select("-password")
+      .populate("branch_id", "name");
     return res.status(200).json(employees);
   } catch (error) {
     console.log("getEmployees error:", error);
@@ -28,7 +31,10 @@ employeeController.getEmployees = async (req, res) => {
 employeeController.getEmployeeById = async (req, res) => {
   try {
     // Busca un empleado por su ID y también oculta password
-    const employee = await employeeModel.findById(req.params.id).select("-password");
+    const employee = await employeeModel
+      .findById(req.params.id)
+      .select("-password")
+      .populate("branch_id", "name");
 
     // Si no existe, avisa
     if (!employee) {
@@ -63,6 +69,8 @@ employeeController.insertEmployee = async (req, res) => {
       isVerified,
       loginAttempts,
       timeOut,
+      position,
+      base_salary,
     } = req.body;
 
     // Revisa si ya existe alguien con ese correo
@@ -86,7 +94,7 @@ employeeController.insertEmployee = async (req, res) => {
       }
 
       // Encripta la contraseña para guardarla segura
-      hashedPassword = await bcrypt.hash(String(password), 10);
+      hashedPassword = await bcryptjs.hash(String(password), 10);
     }
 
     // Crea el nuevo empleado con los datos recibidos
@@ -104,6 +112,8 @@ employeeController.insertEmployee = async (req, res) => {
       isVerified: isVerified ?? true,
       loginAttempts: loginAttempts ?? 0,
       timeOut: timeOut ?? null,
+      position: position || "",
+      base_salary: Number(base_salary || 0),
     });
 
     // Guarda en base de datos
@@ -141,6 +151,8 @@ employeeController.updateEmployee = async (req, res) => {
       isVerified,
       loginAttempts,
       timeOut,
+      position,
+      base_salary,
     } = req.body;
 
     // Limpieza básica de texto
@@ -190,6 +202,8 @@ employeeController.updateEmployee = async (req, res) => {
         isVerified,
         loginAttempts,
         timeOut,
+        position,
+        base_salary: base_salary !== undefined ? Number(base_salary || 0) : undefined,
       },
       { new: true }
     ).select("-password");

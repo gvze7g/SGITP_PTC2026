@@ -205,7 +205,22 @@ function InventoryTable({
                   <p>{product.description || "Sin descripcion"}</p>
                   <p>Categoria: {product.category || "Sin categoria"}</p>
                   <p>Tamano: {firstVariant.size || "No definido"}</p>
-                  <p>Color: {firstVariant.color || "No definido"}</p>
+                  <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    Color: {firstVariant.color || "No definido"}
+                    {firstVariant.colorHex ? (
+                      <span
+                        title={firstVariant.color}
+                        style={{
+                          display: "inline-block",
+                          width: "14px",
+                          height: "14px",
+                          borderRadius: "999px",
+                          border: "1px solid rgba(0,0,0,0.2)",
+                          backgroundColor: firstVariant.colorHex,
+                        }}
+                      />
+                    ) : null}
+                  </p>
                 </div>
 
                 <div className="inventory-price-cell">

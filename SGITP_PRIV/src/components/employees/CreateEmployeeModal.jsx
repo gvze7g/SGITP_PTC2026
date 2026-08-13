@@ -4,6 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
 import DateField from "../ui/DateField";
+import useBranches from "../../hooks/branches/UseBranches";
 
 const EMPLOYEE_ROLE_OPTIONS = [
   { value: "Administrator", label: "Administrador" },
@@ -16,6 +17,8 @@ const EMPTY_FORM = {
   phone: "",
   role: "Administrator",
   branch: "",
+  position: "",
+  baseSalary: "",
   hireDate: null,
   birthDate: null,
   temporaryPassword: "",
@@ -30,12 +33,18 @@ function CreateEmployeeModal({
 }) {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [showPassword, setShowPassword] = useState(false);
+  const { branches, getBranches } = useBranches();
 
   const isEditMode = useMemo(() => Boolean(employeeData), [employeeData]);
   const isAdministratorRole = formData.role === "Administrator";
 
   const lastNameWarningRef = useRef(0);
   const lastPhoneWarningRef = useRef(0);
+
+  useEffect(() => {
+    if (!open) return;
+    getBranches();
+  }, [open, getBranches]);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +60,15 @@ function CreateEmployeeModal({
             : employeeData.role === "Empleado"
             ? "Employee"
             : employeeData.role || "Administrator",
-        branch: "",
+        branch:
+          employeeData.branch_id && typeof employeeData.branch_id === "object"
+            ? employeeData.branch_id._id || ""
+            : employeeData.branch_id || "",
+        position: employeeData.position || "",
+        baseSalary:
+          employeeData.base_salary !== undefined && employeeData.base_salary !== null
+            ? String(employeeData.base_salary)
+            : "",
         hireDate: employeeData.hire_date ? new Date(employeeData.hire_date) : null,
         birthDate: employeeData.birth_date ? new Date(employeeData.birth_date) : null,
         temporaryPassword: "",
@@ -115,6 +132,19 @@ function CreateEmployeeModal({
     }
 
     handleChange("phone", value);
+  };
+
+  const handleBaseSalaryChange = (value) => {
+    if (value === "") {
+      handleChange("baseSalary", "");
+      return;
+    }
+
+    const decimalRegex = /^\d*\.?\d*$/;
+    if (!decimalRegex.test(value)) return;
+    if (Number(value) < 0) return;
+
+    handleChange("baseSalary", value);
   };
 
   const validateForm = () => {
@@ -188,7 +218,6 @@ function CreateEmployeeModal({
       full_name: formData.fullName.trim(),
       main_phone: formData.phone.trim(),
       email: formData.email.trim(),
-      branch_id: null,
       addresses: [],
       phone_numbers: formData.phone.trim()
         ? [
@@ -206,6 +235,9 @@ function CreateEmployeeModal({
         ? formData.hireDate.toISOString().split("T")[0]
         : null,
       role: formData.role,
+      branch_id: formData.branch || null,
+      position: formData.position.trim(),
+      base_salary: formData.baseSalary === "" ? 0 : Number(formData.baseSalary),
       isVerified: true,
       loginAttempts: 0,
       timeOut: null,
@@ -342,14 +374,37 @@ function CreateEmployeeModal({
                       onChange={(value) => handleChange("role", value)}
                     />
 
+                    <CustomDropdown
+                      label="Sucursal asignada"
+                      value={formData.branch}
+                      options={branches.map((branch) => ({
+                        value: branch._id,
+                        label: branch.name,
+                      }))}
+                      onChange={(value) => handleChange("branch", value)}
+                      placeholder="Selecciona una sucursal"
+                    />
+                  </div>
+
+                  <div className="employee-grid-two" style={{ gap: "14px" }}>
                     <div className="employee-line-field">
-                      <label>Sucursal asignada</label>
+                      <label>Puesto</label>
                       <input
                         type="text"
-                        value={formData.branch}
-                        onChange={(event) => handleChange("branch", event.target.value)}
-                        placeholder="Pendiente conectar con sucursales reales"
-                        disabled
+                        value={formData.position}
+                        onChange={(event) => handleChange("position", event.target.value)}
+                        placeholder="Ej: Cajera, Gerente, Atención al cliente"
+                      />
+                    </div>
+
+                    <div className="employee-line-field">
+                      <label>Salario base</label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={formData.baseSalary}
+                        onChange={(event) => handleBaseSalaryChange(event.target.value)}
+                        placeholder="0.00"
                       />
                     </div>
                   </div>

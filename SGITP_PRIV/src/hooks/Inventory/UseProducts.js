@@ -85,11 +85,11 @@ function useProducts() {
       return result;
     } catch (err) {
       console.log("getProductById error:", err);
-      setError("Error de conexiÃ³n con el servidor.");
+      setError("Error de conexión con el servidor.");
 
       return {
         success: false,
-        message: "Error de conexiÃ³n con el servidor.",
+        message: "Error de conexión con el servidor.",
       };
     } finally {
       setLoading(false);

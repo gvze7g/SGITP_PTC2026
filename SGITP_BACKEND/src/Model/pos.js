@@ -5,7 +5,7 @@ import mongoose, {Schema, model} from "mongoose"
 const PosSchema = new Schema({
     customerId:{
         type: mongoose.Types.ObjectId,
-        ref: "Customers"
+        ref: "Customer"
     },
     employee_id: {
         type: mongoose.Types.ObjectId,

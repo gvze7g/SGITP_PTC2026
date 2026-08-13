@@ -1,7 +1,6 @@
 import { ChevronDown, Eye } from "lucide-react";
-import { SALES } from "../../data/salesData";
 
-function SalesHistoryTable({ onViewSale }) {
+function SalesHistoryTable({ sales = [], loading, onViewSale }) {
   return (
     <section className="sales-history-panel">
       <div className="sales-filters-card">
@@ -43,33 +42,39 @@ function SalesHistoryTable({ onViewSale }) {
           <span>ACCIONES</span>
         </div>
 
-        {SALES.map((sale) => (
-          <article key={sale.id} className="sales-row">
-            <div className="sales-id-cell">{sale.id}</div>
-            <div className="sales-date-cell">{sale.date}</div>
-            <div className="sales-client-cell">{sale.client}</div>
-            <div className="sales-origin-cell">
-              <span className="sales-origin-badge">{sale.origin}</span>
-            </div>
-            <div className="sales-price-type-cell">{sale.priceType}</div>
-            <div className="sales-total-cell">{sale.total}</div>
-            <div className="sales-actions-cell">
-              <button
-                type="button"
-                className="sales-action-icon"
-                onClick={() => onViewSale?.(sale)}
-                aria-label="Ver venta"
-              >
-                <Eye size={22} strokeWidth={2} />
-              </button>
-            </div>
-          </article>
-        ))}
+        {loading ? (
+          <div style={{ padding: "20px" }}>Cargando ventas...</div>
+        ) : sales.length === 0 ? (
+          <div style={{ padding: "20px" }}>No hay ventas registradas.</div>
+        ) : (
+          sales.map((sale) => (
+            <article key={sale._id} className="sales-row">
+              <div className="sales-id-cell">{sale.id}</div>
+              <div className="sales-date-cell">{sale.date}</div>
+              <div className="sales-client-cell">{sale.client}</div>
+              <div className="sales-origin-cell">
+                <span className="sales-origin-badge">{sale.origin}</span>
+              </div>
+              <div className="sales-price-type-cell">{sale.priceType}</div>
+              <div className="sales-total-cell">{sale.total}</div>
+              <div className="sales-actions-cell">
+                <button
+                  type="button"
+                  className="sales-action-icon"
+                  onClick={() => onViewSale?.(sale)}
+                  aria-label="Ver venta"
+                >
+                  <Eye size={22} strokeWidth={2} />
+                </button>
+              </div>
+            </article>
+          ))
+        )}
       </div>
 
       <div className="sales-footer">
         <p>
-          Mostrando 1 a {SALES.length} de {SALES.length} ventas
+          Mostrando {sales.length === 0 ? 0 : 1} a {sales.length} de {sales.length} ventas
         </p>
 
         <div className="sales-pagination">

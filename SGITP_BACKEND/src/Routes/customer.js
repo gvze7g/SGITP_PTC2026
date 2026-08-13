@@ -13,11 +13,11 @@ router.route("/me/addresses/:addressId")
     .delete(validateAuthCookie(["Customer"]), customerController.deleteMyAddress);
 
 router.route("/")
-    .get(customerController.getCustomers)
-    .post(customerController.insertCustomer);
+    .get(validateAuthCookie(["Employee"]), customerController.getCustomers)
+    .post(validateAuthCookie(["Employee"]), customerController.insertCustomer);
 
 router.route("/:id")
-    .put(customerController.updateCustomer)
-    .delete(customerController.deleteCustomer);
+    .put(validateAuthCookie(["Employee"]), customerController.updateCustomer)
+    .delete(validateAuthCookie(["Employee"]), customerController.deleteCustomer);
 
 export default router;

@@ -36,6 +36,8 @@ const EmployeeSchema = new Schema(
       enum: EMPLOYEE_ROLES,
       default: "Employee",
     },
+    position: { type: String },
+    base_salary: { type: Number, default: 0 },
     isVerified: { type: Boolean, default: false },
     loginAttempts: { type: Number, default: 0 },
     timeOut: { type: Date, default: null },

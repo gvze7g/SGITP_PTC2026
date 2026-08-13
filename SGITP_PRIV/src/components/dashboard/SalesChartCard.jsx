@@ -10,41 +10,14 @@ import {
   Tooltip,
 } from 'recharts';
 
-const WEEK_DATA = [
-  { label: 'Lun', ingresos: 420 },
-  { label: 'Mar', ingresos: 520 },
-  { label: 'Mié', ingresos: 610 },
-  { label: 'Jue', ingresos: 590 },
-  { label: 'Vie', ingresos: 760 },
-  { label: 'Sáb', ingresos: 820 },
-  { label: 'Dom', ingresos: 690 },
-];
-
-const MONTH_DATA = [
-  { label: '01 Oct', ingresos: 380 },
-  { label: '08 Oct', ingresos: 520 },
-  { label: '15 Oct', ingresos: 860 },
-  { label: '22 Oct', ingresos: 640 },
-  { label: '29 Oct', ingresos: 980 },
-];
-
-const YEAR_DATA = [
-  { label: 'Ene', ingresos: 2400 },
-  { label: 'Mar', ingresos: 3100 },
-  { label: 'May', ingresos: 4200 },
-  { label: 'Jul', ingresos: 3900 },
-  { label: 'Sep', ingresos: 5100 },
-  { label: 'Nov', ingresos: 6200 },
-];
-
-function SalesChartCard() {
+function SalesChartCard({ weekData = [], monthData = [], yearData = [] }) {
   const [period, setPeriod] = useState('month');
 
   const chartData = useMemo(() => {
-    if (period === 'week') return WEEK_DATA;
-    if (period === 'year') return YEAR_DATA;
-    return MONTH_DATA;
-  }, [period]);
+    if (period === 'week') return weekData;
+    if (period === 'year') return yearData;
+    return monthData;
+  }, [period, weekData, monthData, yearData]);
 
   return (
     <motion.section

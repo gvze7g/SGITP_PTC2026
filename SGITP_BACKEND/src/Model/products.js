@@ -11,6 +11,7 @@ const productSchema = new Schema({
      variants: [{
         size: {type: String},
         color: {type: String},
+        colorHex: {type: String},
         design: {type: String},
         fabric: {type: String},
         stock: {type: String},

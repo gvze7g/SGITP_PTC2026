@@ -4,7 +4,7 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import InventoryTable from "../../components/inventory/InventoryTable";
 import CreateProductModal from "../../components/inventory/CreateProductModal";
 import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
-import useProducts from "../../hooks/inventory/UseProducts";
+import useProducts from "../../hooks/Inventory/UseProducts";
 import { isObjectId, validateProductPayload } from "../../utils/adminValidation";
 
 const DEFAULT_FILTERS = {

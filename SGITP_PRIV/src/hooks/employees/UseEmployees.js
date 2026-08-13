@@ -80,11 +80,11 @@ function useEmployees() {
       };
     } catch (error) {
       console.log("getEmployeeById error:", error);
-      setError("Error de conexiÃ³n con el servidor.");
+      setError("Error de conexión con el servidor.");
 
       return {
         success: false,
-        message: "Error de conexiÃ³n con el servidor.",
+        message: "Error de conexión con el servidor.",
       };
     } finally {
       setLoading(false);

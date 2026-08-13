@@ -6,12 +6,11 @@ import { toast } from "sonner";
 const EMPTY_VARIANT = {
   size: "",
   color: "",
+  colorHex: "#000000",
   design: "",
   embroidery: "",
   fabric: "",
   stock: "",
-  retail: "",
-  wholesale: "",
 };
 
 const EMPTY_FORM = {
@@ -54,12 +53,11 @@ function CreateProductModal({
             ? productData.variants.map((variant) => ({
                 size: variant.size || "",
                 color: variant.color || "",
+                colorHex: variant.colorHex || "#000000",
                 design: variant.design || "",
                 embroidery: variant.embroidery || "",
                 fabric: variant.fabric || "",
                 stock: variant.stock || "",
-                retail: variant.retail || "",
-                wholesale: variant.wholesale || "",
               }))
             : [{ ...EMPTY_VARIANT }],
       });
@@ -107,7 +105,7 @@ function CreateProductModal({
   };
 
   const handleVariantChange = (index, field, value) => {
-    const decimalFields = ["stock", "retail", "wholesale"];
+    const decimalFields = ["stock"];
 
     if (decimalFields.includes(field)) {
       if (value !== "") {
@@ -196,19 +194,17 @@ function CreateProductModal({
     }
 
     if (formData.cost !== "" && Number(formData.cost) < 0) {
-      toast.error("El costo no puede ser menor que 0.");
+      toast.error("El precio mayorista no puede ser menor que 0.");
       return false;
     }
 
     const invalidVariant = formData.variants.some((variant) => {
-      return ["stock", "retail", "wholesale"].some((field) => {
-        const value = variant[field];
-        return value !== "" && (Number.isNaN(Number(value)) || Number(value) < 0);
-      });
+      const value = variant.stock;
+      return value !== "" && (Number.isNaN(Number(value)) || Number(value) < 0);
     });
 
     if (invalidVariant) {
-      toast.error("Las variantes solo aceptan numeros positivos en stock y precios.");
+      toast.error("Las variantes solo aceptan numeros positivos en el stock.");
       return false;
     }
 
@@ -475,7 +471,7 @@ function CreateProductModal({
                   </div>
 
                   <div className="modal-input-group">
-                    <span className="modal-section-label">PRECIO</span>
+                    <span className="modal-section-label">PRECIO (CLIENTE REGULAR)</span>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -490,7 +486,7 @@ function CreateProductModal({
                   </div>
 
                   <div className="modal-input-group">
-                    <span className="modal-section-label">COSTO</span>
+                    <span className="modal-section-label">COSTO (CLIENTE MAYORISTA)</span>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -561,12 +557,11 @@ function CreateProductModal({
                         <div className="variant-table-head">
                           <span>TAMAÑO</span>
                           <span>COLOR</span>
+                          <span>TONO</span>
                           <span>DISEÑO</span>
                           <span>BORDADO</span>
                           <span>TELA</span>
                           <span>STOCK</span>
-                          <span>MINORISTA</span>
-                          <span>MAYORISTA</span>
                         </div>
 
                         <div className="variant-table-row">
@@ -578,9 +573,19 @@ function CreateProductModal({
                           />
                           <input
                             value={variant.color}
+                            placeholder="Ej: Rosado pastel"
                             onChange={(event) =>
                               handleVariantChange(index, "color", event.target.value)
                             }
+                          />
+                          <input
+                            type="color"
+                            className="variant-color-swatch-input"
+                            value={variant.colorHex || "#000000"}
+                            onChange={(event) =>
+                              handleVariantChange(index, "colorHex", event.target.value)
+                            }
+                            title="Selecciona el tono exacto que se mostrará en la web y la app"
                           />
                           <input
                             value={variant.design}
@@ -606,24 +611,6 @@ function CreateProductModal({
                             value={variant.stock}
                             onChange={(event) =>
                               handleVariantChange(index, "stock", event.target.value)
-                            }
-                            onWheel={preventWheelChange}
-                          />
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={variant.retail}
-                            onChange={(event) =>
-                              handleVariantChange(index, "retail", event.target.value)
-                            }
-                            onWheel={preventWheelChange}
-                          />
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={variant.wholesale}
-                            onChange={(event) =>
-                              handleVariantChange(index, "wholesale", event.target.value)
                             }
                             onWheel={preventWheelChange}
                           />

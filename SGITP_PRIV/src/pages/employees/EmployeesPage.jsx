@@ -4,7 +4,7 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import EmployeesTable from "../../components/employees/EmployeesTable";
 import CreateEmployeeModal from "../../components/employees/CreateEmployeeModal";
 import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
-import useEmployees from "../../hooks/employees/useEmployees";
+import useEmployees from "../../hooks/employees/UseEmployees";
 
 const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
 

@@ -1,5 +1,7 @@
-function SaleDetailsModal({ open, onClose, sale }) {
+function SaleDetailsModal({ open, onClose, sale, onVoidSale }) {
   if (!open || !sale) return null;
+
+  const isVoided = sale.payment_status === "Cancelado";
 
   return (
     <div className="app-modal-overlay app-modal-overlay-dark">
@@ -102,6 +104,18 @@ function SaleDetailsModal({ open, onClose, sale }) {
           >
             CERRAR
           </button>
+
+          {!isVoided ? (
+            <button
+              type="button"
+              className="admin-secondary-btn"
+              onClick={() => onVoidSale?.(sale)}
+            >
+              Anular venta
+            </button>
+          ) : (
+            <span className="sales-origin-badge">VENTA ANULADA</span>
+          )}
         </div>
       </div>
     </div>
