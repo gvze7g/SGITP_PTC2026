@@ -10,7 +10,7 @@ const salesSchema = new Schema({
              },
     cart_id: {
                 type: mongoose.Types.ObjectId,
-                ref: "Shoping_cart"
+                ref: "cart"
             },
     origin: {type: String},
     applied_price_type: {type: String},

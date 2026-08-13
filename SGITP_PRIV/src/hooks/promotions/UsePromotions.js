@@ -68,10 +68,10 @@ function usePromotions() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "No se pudo encontrar la promociÃ³n.");
+        setError(data.message || "No se pudo encontrar la promoción.");
         return {
           success: false,
-          message: data.message || "No se pudo encontrar la promociÃ³n.",
+          message: data.message || "No se pudo encontrar la promoción.",
         };
       }
 
@@ -81,11 +81,11 @@ function usePromotions() {
       };
     } catch (error) {
       console.log("getPromotionById error:", error);
-      setError("Error de conexiÃ³n con el servidor.");
+      setError("Error de conexión con el servidor.");
 
       return {
         success: false,
-        message: "Error de conexiÃ³n con el servidor.",
+        message: "Error de conexión con el servidor.",
       };
     } finally {
       setLoading(false);

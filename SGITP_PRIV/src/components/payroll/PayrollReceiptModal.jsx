@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner";
 import DateField from "../ui/DateField";
 
 const EMPTY_PAYROLL = {
@@ -12,7 +13,7 @@ const EMPTY_PAYROLL = {
   deductionsValue: "0.00",
 };
 
-function PayrollReceiptModal({ open, onClose, payrollData = null }) {
+function PayrollReceiptModal({ open, onClose, payrollData = null, onSubmit, loading = false }) {
   const [formData, setFormData] = useState(EMPTY_PAYROLL);
 
   useEffect(() => {
@@ -42,24 +43,20 @@ function PayrollReceiptModal({ open, onClose, payrollData = null }) {
     return (base + bonus - deductions).toFixed(2);
   }, [formData]);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const payload = {
-      employeeName: formData.employeeName,
-      role: formData.role,
-      branch: formData.branch,
-      paymentDate: formData.paymentDate
-        ? formData.paymentDate.toISOString().split("T")[0]
-        : null,
-      baseSalaryValue: formData.baseSalaryValue,
-      bonusesValue: formData.bonusesValue,
-      deductionsValue: formData.deductionsValue,
-      totalToPay,
-    };
+    if (!formData.paymentDate) {
+      toast.error("Selecciona la fecha de pago.");
+      return;
+    }
 
-    console.log("Payroll payload:", payload);
-    onClose?.();
+    await onSubmit?.({
+      payment_date: formData.paymentDate.toISOString().split("T")[0],
+      bonuses: Number(formData.bonusesValue || 0),
+      deductions: Number(formData.deductionsValue || 0),
+      status: "Pagado",
+    });
   };
 
   return (
@@ -151,12 +148,13 @@ function PayrollReceiptModal({ open, onClose, payrollData = null }) {
                   type="button"
                   className="modal-cancel-text-btn"
                   onClick={onClose}
+                  disabled={loading}
                 >
                   CANCELAR
                 </button>
 
-                <button type="submit" className="modal-save-btn">
-                  Emitir recibo
+                <button type="submit" className="modal-save-btn" disabled={loading}>
+                  {loading ? "Guardando..." : "Aprobar y registrar pago"}
                   <span className="modal-save-arrow">›</span>
                 </button>
               </div>

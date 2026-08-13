@@ -1,7 +1,6 @@
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import CustomDropdown from "../ui/CustomDropdown";
 
 const ORIGIN_OPTIONS = [
@@ -11,15 +10,48 @@ const ORIGIN_OPTIONS = [
   { value: "Instagram", label: "Instagram" },
 ];
 
-function PointOfSalePanel() {
-  const [origin, setOrigin] = useState("Store");
-  const [shippingData, setShippingData] = useState("");
-  const [phone, setPhone] = useState("");
+const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
+
+function PointOfSalePanel({
+  cartItems = [],
+  onIncrementItem,
+  onDecrementItem,
+  customer,
+  customers = [],
+  onSelectCustomer,
+  origin,
+  onOriginChange,
+  shippingData,
+  onShippingDataChange,
+  phone,
+  onPhoneChange,
+  total = 0,
+  confirming = false,
+  onConfirmSale,
+}) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const isWholesale = customer?.customer_type === "Wholesale";
+
+  const searchResults = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return [];
+    return customers
+      .filter((item) => item.full_name?.toLowerCase().includes(term))
+      .slice(0, 6);
+  }, [customers, searchTerm]);
 
   const handlePhoneChange = (value) => {
     const phoneRegex = /^[0-9+\-\s]*$/;
     if (!phoneRegex.test(value)) return;
-    setPhone(value);
+    onPhoneChange?.(value);
+  };
+
+  const handleSelectCustomer = (nextCustomer) => {
+    onSelectCustomer?.(nextCustomer);
+    setSearchOpen(false);
+    setSearchTerm("");
   };
 
   return (
@@ -33,25 +65,65 @@ function PointOfSalePanel() {
         <div className="pos-client-header">
           <span>DETALLES DEL CLIENTE</span>
           <button type="button" className="pos-badge-btn">
-            MAYORISTA
+            {isWholesale ? "MAYORISTA" : "MINORISTA"}
           </button>
         </div>
 
         <div className="pos-client-content">
           <div>
-            <h3>Linda Palacios</h3>
-            <p>maria.perez@boutique.co</p>
+            <h3>{customer?.full_name || "Cliente mostrador"}</h3>
+            <p>{customer?.email || "Venta sin cliente registrado"}</p>
           </div>
 
-          <button
-            type="button"
-            className="pos-search-btn"
-            aria-label="Buscar cliente"
-            onClick={() => toast("Búsqueda de clientes disponible próximamente.")}
-          >
-            <Search size={18} strokeWidth={1.8} />
-          </button>
+          {customer ? (
+            <button
+              type="button"
+              className="pos-search-btn"
+              aria-label="Quitar cliente"
+              onClick={() => handleSelectCustomer(null)}
+            >
+              <X size={18} strokeWidth={1.8} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="pos-search-btn"
+              aria-label="Buscar cliente"
+              onClick={() => setSearchOpen((prev) => !prev)}
+            >
+              <Search size={18} strokeWidth={1.8} />
+            </button>
+          )}
         </div>
+
+        {searchOpen ? (
+          <div className="pos-client-search">
+            <input
+              type="text"
+              className="pos-input-field pos-editable-field"
+              placeholder="Buscar cliente por nombre..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              autoFocus
+            />
+
+            {searchResults.length > 0 ? (
+              <div className="pos-client-results">
+                {searchResults.map((result) => (
+                  <button
+                    type="button"
+                    key={result._id}
+                    className="pos-client-result-item"
+                    onClick={() => handleSelectCustomer(result)}
+                  >
+                    <strong>{result.full_name}</strong>
+                    <span>{result.customer_type === "Wholesale" ? "Mayorista" : "Minorista"}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <div className="pos-field-block">
@@ -59,7 +131,7 @@ function PointOfSalePanel() {
           label="ORIGEN"
           value={origin}
           options={ORIGIN_OPTIONS}
-          onChange={setOrigin}
+          onChange={onOriginChange}
         />
       </div>
 
@@ -69,7 +141,7 @@ function PointOfSalePanel() {
           className="pos-textarea-field pos-editable-field"
           placeholder="Ej. Colonia Escalón, pasaje 4, casa 12. Referencia: portón negro."
           value={shippingData}
-          onChange={(event) => setShippingData(event.target.value)}
+          onChange={(event) => onShippingDataChange?.(event.target.value)}
           rows={4}
         />
       </div>
@@ -88,49 +160,65 @@ function PointOfSalePanel() {
       <div className="pos-order-section">
         <span className="pos-field-label">ORDEN ACTUAL</span>
 
-        <motion.div
-          className="pos-order-item"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.25 }}
-        >
-          <img
-            src="https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=300&q=80"
-            alt="Producto"
-            className="pos-order-image"
-          />
+        {cartItems.length === 0 ? (
+          <p style={{ opacity: 0.7, marginTop: "10px" }}>
+            Agrega productos del catálogo para iniciar una venta.
+          </p>
+        ) : (
+          cartItems.map((item) => (
+            <motion.div
+              key={item.key}
+              className="pos-order-item"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <img src={item.image} alt={item.name} className="pos-order-image" />
 
-          <div className="pos-order-info">
-            <div className="pos-order-top">
-              <div>
-                <h4>Mono de algodón orgánico</h4>
-                <p>Talla: 6M, Color: Beige</p>
+              <div className="pos-order-info">
+                <div className="pos-order-top">
+                  <div>
+                    <h4>{item.name}</h4>
+                    <p>
+                      {[item.size && `Talla: ${item.size}`, item.color && `Color: ${item.color}`]
+                        .filter(Boolean)
+                        .join(", ") || "Variante única"}
+                    </p>
+                  </div>
+
+                  <span className="pos-order-price">
+                    {formatMoney(item.unitPrice * item.quantity)}
+                  </span>
+                </div>
+
+                <div className="pos-order-qty">
+                  <button type="button" onClick={() => onDecrementItem?.(item.key)}>
+                    −
+                  </button>
+                  <span>{item.quantity}</span>
+                  <button type="button" onClick={() => onIncrementItem?.(item.key)}>
+                    +
+                  </button>
+                </div>
               </div>
-
-              <span className="pos-order-price">$45.00</span>
-            </div>
-
-            <div className="pos-order-qty">
-              <button type="button">−</button>
-              <span>1</span>
-              <button type="button">+</button>
-            </div>
-          </div>
-        </motion.div>
+            </motion.div>
+          ))
+        )}
       </div>
 
       <div className="pos-total-section">
         <div className="pos-total-row">
           <span>Total:</span>
-          <strong>$48.60</strong>
+          <strong>{formatMoney(total)}</strong>
         </div>
 
         <button
           type="button"
           className="pos-confirm-btn"
-          onClick={() => toast.success("Venta confirmada correctamente.")}
+          disabled={confirming || cartItems.length === 0}
+          onClick={onConfirmSale}
         >
-          Confirmar venta <span>→</span>
+          {confirming ? "Confirmando..." : "Confirmar venta"} <span>→</span>
         </button>
       </div>
     </motion.aside>

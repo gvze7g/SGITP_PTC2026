@@ -30,10 +30,15 @@ export function ProductDetailScreen({ route, navigation }) {
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
 
-  const colorsAvailable = useMemo(
-    () => [...new Set((product?.variants ?? []).map((variant) => variant.color).filter(Boolean))],
-    [product]
-  );
+  const colorsAvailable = useMemo(() => {
+    const seen = new Map();
+    (product?.variants ?? []).forEach((variant) => {
+      if (variant.color && !seen.has(variant.color)) {
+        seen.set(variant.color, variant.colorHex || null);
+      }
+    });
+    return [...seen.entries()].map(([name, hex]) => ({ name, hex }));
+  }, [product]);
   const sizesAvailable = useMemo(
     () => [...new Set((product?.variants ?? []).map((variant) => variant.size).filter(Boolean))],
     [product]
@@ -144,12 +149,12 @@ export function ProductDetailScreen({ route, navigation }) {
               <View style={styles.colorRow}>
                 {colorsAvailable.map((color) => (
                   <Pressable
-                    key={color}
-                    onPress={() => setSelectedColor(color)}
+                    key={color.name}
+                    onPress={() => setSelectedColor(color.name)}
                     style={[
                       styles.colorSwatch,
-                      { backgroundColor: color },
-                      selectedColor === color && styles.colorSwatchActive,
+                      { backgroundColor: color.hex || color.name },
+                      selectedColor === color.name && styles.colorSwatchActive,
                     ]}
                   />
                 ))}

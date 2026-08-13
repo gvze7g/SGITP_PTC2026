@@ -61,7 +61,9 @@ function EmployeesTable({
           paginatedEmployees.map((employee) => (
             <article key={employee._id} className="employees-row">
               <div className="employees-name-cell">{employee.full_name}</div>
-              <div className="employees-role-cell">{getRoleLabel(employee.role)}</div>
+              <div className="employees-role-cell">
+                {employee.position || getRoleLabel(employee.role)}
+              </div>
               <div className="employees-branch-cell">{getBranchName(employee)}</div>
               <div className="employees-status-cell">{getStatusLabel(employee)}</div>
 

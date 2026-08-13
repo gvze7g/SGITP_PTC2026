@@ -4,7 +4,7 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import PromotionsGrid from "../../components/promotions/PromotionsGrid";
 import PromotionFormModal from "../../components/promotions/PromotionFormModal";
 import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
-import usePromotions from "../../hooks/promotions/usePromotions";
+import usePromotions from "../../hooks/promotions/UsePromotions";
 import { isObjectId, validatePromotionPayload } from "../../utils/adminValidation";
 
 const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;

@@ -230,7 +230,7 @@ cartController.getAllCarts = async (req, res) => {
   try {
     const carts = await cartModel
       .find()
-      .populate("customerId", "name email")
+      .populate("customerId", "full_name email")
       .populate("products.productId", "name price images variants description");
 
     return res.status(200).json(carts);
@@ -245,7 +245,7 @@ cartController.getCartById = async (req, res) => {
   try {
     const cart = await cartModel
       .findById(req.params.id)
-      .populate("customerId", "name email")
+      .populate("customerId", "full_name email")
       .populate("products.productId", "name price images variants description");
 
     return res.status(200).json(cart);
