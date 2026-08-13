@@ -6,9 +6,6 @@ import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
 import { getPublicBranches } from '../../services/catalogService';
 
-const DEFAULT_STORE_IMAGE =
-  'https://images.unsplash.com/photo-1604014237800-1c9102c219da?auto=format&fit=crop&w=720&q=90';
-
 function StoresPage() {
   const navigate = useNavigate();
   const [branches, setBranches] = useState([]);
@@ -101,14 +98,6 @@ function StoresPage() {
                       </span>
                     </p>
                   </div>
-
-                  <figure>
-                    <img
-                      src={DEFAULT_STORE_IMAGE}
-                      alt={`Interior de ${featuredStore.name}`}
-                    />
-                    <figcaption>{featuredStore.name}</figcaption>
-                  </figure>
                 </div>
 
                 <div className="store-feature-actions">

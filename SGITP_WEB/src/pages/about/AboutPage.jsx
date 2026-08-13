@@ -5,17 +5,17 @@ const CRAFT_ITEMS = [
   {
     number: '01. Material',
     text: 'Abastecimiento de lino organico certificado GOTS y cachemira de molinos tradicionales que respetan la tierra.',
-    image: 'https://images.unsplash.com/photo-1587353207726-741d3d4f16fe?auto=format&fit=crop&w=680&q=90',
+    image: 'https://images.unsplash.com/photo-1634665810235-011d663754e7?auto=format&fit=crop&w=900&q=90',
   },
   {
     number: '02. Precision',
     text: 'Cada costura es una decision arquitectonica. Utilizamos costuras francesas y puntadas reforzadas para garantizar durabilidad.',
-    image: 'https://images.unsplash.com/photo-1517840933437-c41356892b35?auto=format&fit=crop&w=680&q=90',
+    image: 'https://wc1.prod3.arlocdn.net/p/81fd41a474ea4c08b097e6e81d400d3d/d/RKTcnODTOQzgNn3oLbgeonGQf7QpxUWkQ78m0SzKnyYdHHen/j-williams-ehePIW7RA2g-unsplash.jpg',
   },
   {
     number: '03. Etica',
     text: 'Producido en pequenos lotes en nuestro taller europeo para garantizar salarios justos y cero desperdicio textil.',
-    image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=680&q=90',
+    image: 'https://images.unsplash.com/photo-1613144744918-3d38db15a7e7?auto=format&fit=crop&w=900&q=90',
   },
 ];
 

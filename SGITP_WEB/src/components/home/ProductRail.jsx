@@ -1,57 +1,78 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const PRODUCTS = [
-  {
-    name: 'Abrigo estructurado',
-    material: 'Lana virgen',
-    price: '$290',
-    image: 'https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    name: 'Triptico acanalado',
-    material: 'Algodon pima organico',
-    price: '$95',
-    image: 'https://images.unsplash.com/photo-1522771930-78848d9293e8?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    name: 'Manta de coleccion',
-    material: 'Cachemira reciclada',
-    price: '$320',
-    image: 'https://images.unsplash.com/photo-1600369672770-985fd30004eb?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    name: 'Abrigo estructurado',
-    material: 'Lana virgen',
-    price: '$290',
-    image: 'https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?auto=format&fit=crop&w=700&q=85',
-  },
-  {
-    name: 'Triptico acanalado',
-    material: 'Algodon pima organico',
-    price: '$95',
-    image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=700&q=85',
-  },
-];
+import {
+  formatProductPrice,
+  getBestSellingProducts,
+  getCatalogProducts,
+  getProductImage,
+  getProductMaterial,
+} from '../../services/catalogService';
 
 function ProductRail() {
   const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [sourceLabel, setSourceLabel] = useState('Mas vendido');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTrendingProducts() {
+      try {
+        const bestSellers = await getBestSellingProducts(5);
+        const catalogProducts = await getCatalogProducts();
+        const bestSellerIds = new Set(bestSellers.map((product) => product._id));
+        const displayProducts = [
+          ...bestSellers,
+          ...catalogProducts.filter((product) => !bestSellerIds.has(product._id)),
+        ].slice(0, 5);
+
+        if (isMounted && displayProducts.length > 0) {
+          setProducts(displayProducts);
+          setSourceLabel(bestSellers.length > 0 ? 'Tambien disponible' : 'Disponible');
+          return;
+        }
+      } catch (error) {
+        try {
+          const catalogProducts = await getCatalogProducts();
+
+          if (isMounted) {
+            setProducts(catalogProducts.slice(0, 5));
+            setSourceLabel('Disponible');
+          }
+        } catch {
+          if (isMounted) {
+            setProducts([]);
+          }
+        }
+      }
+    }
+
+    loadTrendingProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <section className="public-section" id="ropa">
-      <h2 className="public-section-title">¡En tendencia ahora mismo!</h2>
+      <h2 className="public-section-title">&iexcl;En tendencia ahora mismo!</h2>
 
       <div className="product-rail">
-        {PRODUCTS.map((product, index) => (
-          <article key={`${product.name}-${index}`} className="product-card">
-            <button type="button" onClick={() => navigate('/product-detail')}>
-              <img src={product.image} alt={product.name} />
+        {products.map((product) => (
+          <article key={product._id} className="product-card">
+            <button type="button" onClick={() => navigate(`/product-detail/${product._id}`)}>
+              <img src={getProductImage(product, 700)} alt={product.name} />
+              <span className="product-card-badge">
+                {product.totalSold ? `${product.totalSold} vendidos` : sourceLabel}
+              </span>
             </button>
             <div className="product-card-info">
               <div>
                 <h3>{product.name}</h3>
-                <p>{product.material}</p>
+                <p>{getProductMaterial(product)}</p>
               </div>
-              <span>{product.price}</span>
+              <span>{formatProductPrice(product.price)}</span>
             </div>
           </article>
         ))}

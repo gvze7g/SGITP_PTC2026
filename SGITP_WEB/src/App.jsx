@@ -31,7 +31,8 @@ const PAGE_TITLES = {
   '/recovery-code': 'Código de recuperación',
   '/reset-password': 'Restablecer contraseña',
   '/home': 'Inicio',
-  '/collections': 'Colecciones',
+  '/collections': 'Categorias',
+  '/categories': 'Categorias',
   '/clothes': 'Ropa',
   '/about': 'Acerca de nosotros',
   '/stores': 'Tiendas',
@@ -64,6 +65,7 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/home" element={<HomePage />} />
       <Route path="/collections" element={<CollectionPage />} />
+      <Route path="/categories" element={<CollectionPage />} />
       <Route path="/clothes" element={<ClothesPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/stores" element={<StoresPage />} />

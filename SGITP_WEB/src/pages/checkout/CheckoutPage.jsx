@@ -22,7 +22,23 @@ const CITY_OPTIONS = [
   { city: 'Usulutan', postal: '3401' },
 ];
 
+const SHIPPING_OPTIONS = {
+  standard: {
+    label: 'Entrega estandar',
+    detail: '3-5 dias habiles',
+    price: 0,
+  },
+  express: {
+    label: 'Entrega expres',
+    detail: 'Entrega al dia siguiente',
+    price: 25,
+  },
+};
+
 const formatPrice = (value) => `$${value.toFixed(2)}`;
+
+const cleanNameValue = (value) => value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ ]/g, '');
+const cleanAddressValue = (value) => value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]/g, '');
 
 const splitFullName = (fullName = '') => {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -52,6 +68,7 @@ function CheckoutPage() {
   const [statusMessage, setStatusMessage] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderMessage, setOrderMessage] = useState('');
+  const [shippingType, setShippingType] = useState('standard');
 
   useEffect(() => {
     let isMounted = true;
@@ -99,6 +116,9 @@ function CheckoutPage() {
 
   const checkoutItems = useMemo(() => cart?.products || [], [cart]);
   const subtotal = Number(cart?.total || 0);
+  const shippingOption = SHIPPING_OPTIONS[shippingType];
+  const shippingCost = shippingOption.price;
+  const orderTotal = subtotal + shippingCost;
 
   const handleFieldChange = (event) => {
     const { name, value } = event.target;
@@ -115,7 +135,14 @@ function CheckoutPage() {
       return;
     }
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const nextValue =
+      name === 'firstName' || name === 'secondName'
+        ? cleanNameValue(value)
+        : name === 'address'
+          ? cleanAddressValue(value)
+          : value;
+
+    setFormData((prev) => ({ ...prev, [name]: nextValue }));
   };
 
   const handlePlaceOrder = async () => {
@@ -131,6 +158,21 @@ function CheckoutPage() {
       return;
     }
 
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/.test(formData.firstName.trim())) {
+      toast.error('El primer nombre solo puede tener letras.');
+      return;
+    }
+
+    if (formData.secondName.trim() && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/.test(formData.secondName.trim())) {
+      toast.error('El segundo nombre solo puede tener letras.');
+      return;
+    }
+
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]+$/.test(formData.address.trim())) {
+      toast.error('La direccion solo puede tener letras y numeros.');
+      return;
+    }
+
     setIsPlacingOrder(true);
     setOrderMessage('');
 
@@ -138,6 +180,8 @@ function CheckoutPage() {
       await placeCartOrder({
         shipping_address: `${formData.address}, ${formData.city}, ${formData.postalCode}, ${formData.country}`,
         shipping_phone: '',
+        shipping_method: shippingOption.label,
+        shipping_cost: shippingCost,
         payment_method: 'Card',
         payment_status: 'Pending',
       });
@@ -237,21 +281,31 @@ function CheckoutPage() {
             <h2>Metodo de envio</h2>
 
             <div className="shipping-options">
-              <label className="shipping-option shipping-option-active">
-                <input type="radio" name="shipping" defaultChecked />
+              <label className={`shipping-option ${shippingType === 'standard' ? 'shipping-option-active' : ''}`}>
+                <input
+                  type="radio"
+                  name="shipping"
+                  checked={shippingType === 'standard'}
+                  onChange={() => setShippingType('standard')}
+                />
                 <span>
-                  <strong>Entrega estandar</strong>
-                  3-5 dias habiles
+                  <strong>{SHIPPING_OPTIONS.standard.label}</strong>
+                  {SHIPPING_OPTIONS.standard.detail}
                 </span>
                 <em>Gratis</em>
               </label>
-              <label className="shipping-option">
-                <input type="radio" name="shipping" />
+              <label className={`shipping-option ${shippingType === 'express' ? 'shipping-option-active' : ''}`}>
+                <input
+                  type="radio"
+                  name="shipping"
+                  checked={shippingType === 'express'}
+                  onChange={() => setShippingType('express')}
+                />
                 <span>
-                  <strong>Entrega expres</strong>
-                  Entrega al dia siguiente
+                  <strong>{SHIPPING_OPTIONS.express.label}</strong>
+                  {SHIPPING_OPTIONS.express.detail}
                 </span>
-                <em>$25.00</em>
+                <em>{formatPrice(SHIPPING_OPTIONS.express.price)}</em>
               </label>
             </div>
           </section>
@@ -310,13 +364,13 @@ function CheckoutPage() {
             </p>
             <p>
               <span>Envio</span>
-              <strong>Gratis</strong>
+              <strong>{shippingCost === 0 ? 'Gratis' : formatPrice(shippingCost)}</strong>
             </p>
           </div>
 
           <div className="summary-total">
             <span>Total</span>
-            <strong>{formatPrice(subtotal)}</strong>
+            <strong>{formatPrice(orderTotal)}</strong>
           </div>
 
           <button

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 
 const NAV_ITEMS = [
-  { key: 'collections', label: 'Colecciones', path: '/collections' },
+  { key: 'categories', label: 'Categorias', path: '/categories' },
   { key: 'clothes', label: 'Ropa', path: '/clothes' },
   { key: 'about', label: 'Acerca de nosotros', path: '/about' },
   { key: 'stores', label: 'Tiendas', path: '/stores' },

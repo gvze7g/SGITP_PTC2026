@@ -91,3 +91,17 @@ export async function placeCartOrder(orderData) {
 
   return parseResponse(response, 'No se pudo realizar el pedido.');
 }
+
+export async function getMyOrders() {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/sales/mine`, {
+      credentials: 'include',
+    });
+  } catch (error) {
+    throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
+  }
+
+  return parseResponse(response, 'No se pudo cargar el historial de pedidos.');
+}

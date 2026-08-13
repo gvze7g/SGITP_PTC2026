@@ -15,7 +15,7 @@ function ProductDetailView({ product, selectedSize, onSelectSize, onAddToCart, o
           Atras
         </button>
 
-        <span className="product-eyebrow">Coleccion permanente</span>
+        <span className="product-eyebrow">Categoria</span>
         <h1>{product.name}</h1>
         <p className="product-price">{product.price}</p>
 

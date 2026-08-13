@@ -3,6 +3,43 @@ import customerModel from "../Model/customer.js";
 const customerController = {};
 
 const ALLOWED_CUSTOMER_TYPES = ["Client", "Wholesale"];
+const ADDRESS_CITIES = [
+  "San Salvador",
+  "Santa Ana",
+  "San Miguel",
+  "Soyapango",
+  "Apopa",
+  "Mejicanos",
+  "Santa Tecla",
+  "Antiguo Cuscatlan",
+  "Sonsonate",
+  "Usulutan",
+];
+const ADDRESS_TEXT_PATTERN = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]*$/;
+
+const validateAddressPayload = ({ label = "", street_and_number = "", city = "", reference = "" }) => {
+  if (!street_and_number?.trim() || !city?.trim()) {
+    return "Address and city are required";
+  }
+
+  if (!ADDRESS_CITIES.includes(city)) {
+    return "Invalid city";
+  }
+
+  if (label.length > 30 || street_and_number.length > 80 || reference.length > 80) {
+    return "Address fields are too long";
+  }
+
+  if (
+    !ADDRESS_TEXT_PATTERN.test(label) ||
+    !ADDRESS_TEXT_PATTERN.test(street_and_number) ||
+    !ADDRESS_TEXT_PATTERN.test(reference)
+  ) {
+    return "Address fields can only contain letters and numbers";
+  }
+
+  return null;
+};
 
 // SELECT
 customerController.getCustomers = async (req, res) => {
@@ -151,6 +188,144 @@ customerController.updateCustomer = async (req, res) => {
     return res.status(200).json({ message: "Customer updated" });
   } catch (error) {
     console.log("error " + error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// SELECT direcciones del cliente autenticado
+customerController.getMyAddresses = async (req, res) => {
+  try {
+    const customer = await customerModel.findById(req.user.id).select("addresses");
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    return res.status(200).json(customer.addresses || []);
+  } catch (error) {
+    console.log("getMyAddresses error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// INSERT direccion del cliente autenticado
+customerController.addMyAddress = async (req, res) => {
+  try {
+    const { label, street_and_number, city, reference, isPrimary = false } = req.body;
+    const addressError = validateAddressPayload({ label, street_and_number, city, reference });
+
+    if (addressError) {
+      return res.status(400).json({ message: addressError });
+    }
+
+    const customer = await customerModel.findById(req.user.id);
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    if (isPrimary) {
+      customer.addresses.forEach((address) => {
+        address.isPrimary = false;
+      });
+    }
+
+    customer.addresses.push({
+      label,
+      street_and_number,
+      city,
+      reference,
+      isPrimary: Boolean(isPrimary) || customer.addresses.length === 0,
+    });
+
+    await customer.save();
+
+    return res.status(201).json({
+      message: "Address saved",
+      addresses: customer.addresses,
+    });
+  } catch (error) {
+    console.log("addMyAddress error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// UPDATE direccion del cliente autenticado
+customerController.updateMyAddress = async (req, res) => {
+  try {
+    const { label, street_and_number, city, reference, isPrimary = false } = req.body;
+    const addressError = validateAddressPayload({ label, street_and_number, city, reference });
+    const customer = await customerModel.findById(req.user.id);
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const address = customer.addresses.id(req.params.addressId);
+
+    if (!address) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    if (addressError) {
+      return res.status(400).json({ message: addressError });
+    }
+
+    if (isPrimary) {
+      customer.addresses.forEach((currentAddress) => {
+        currentAddress.isPrimary = false;
+      });
+    }
+
+    address.label = label;
+    address.street_and_number = street_and_number;
+    address.city = city;
+    address.reference = reference;
+    address.isPrimary = Boolean(isPrimary);
+
+    await customer.save();
+
+    return res.status(200).json({
+      message: "Address updated",
+      addresses: customer.addresses,
+    });
+  } catch (error) {
+    console.log("updateMyAddress error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// DELETE direccion del cliente autenticado
+customerController.deleteMyAddress = async (req, res) => {
+  try {
+    const customer = await customerModel.findById(req.user.id);
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const address = customer.addresses.id(req.params.addressId);
+
+    if (!address) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    const wasPrimary = address.isPrimary;
+
+    address.deleteOne();
+
+    if (wasPrimary && customer.addresses[0]) {
+      customer.addresses[0].isPrimary = true;
+    }
+
+    await customer.save();
+
+    return res.status(200).json({
+      message: "Address deleted",
+      addresses: customer.addresses,
+    });
+  } catch (error) {
+    console.log("deleteMyAddress error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

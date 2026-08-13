@@ -6,7 +6,7 @@ import PublicNavbar from '../../components/home/PublicNavbar';
 function CollectionPage() {
   return (
     <div className="collection-page">
-      <PublicNavbar activeItem="collections" />
+      <PublicNavbar activeItem="categories" />
       <CollectionIntro />
       <CollectionGrid />
       <PublicFooter />

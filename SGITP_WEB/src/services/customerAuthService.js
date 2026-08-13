@@ -135,3 +135,62 @@ export async function logoutCustomer() {
 
   return data;
 }
+
+async function parseCustomerResponse(response, fallbackMessage) {
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message ?? fallbackMessage);
+  }
+
+  return data;
+}
+
+export async function addCustomerAddress(address) {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/customer/me/addresses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(address),
+    });
+  } catch (error) {
+    throw new Error('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
+  }
+
+  return parseCustomerResponse(response, 'No se pudo guardar la direccion.');
+}
+
+export async function updateCustomerAddress(addressId, address) {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/customer/me/addresses/${addressId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(address),
+    });
+  } catch (error) {
+    throw new Error('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
+  }
+
+  return parseCustomerResponse(response, 'No se pudo actualizar la direccion.');
+}
+
+export async function deleteCustomerAddress(addressId) {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/customer/me/addresses/${addressId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+  } catch (error) {
+    throw new Error('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
+  }
+
+  return parseCustomerResponse(response, 'No se pudo eliminar la direccion.');
+}

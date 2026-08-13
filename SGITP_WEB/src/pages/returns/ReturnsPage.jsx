@@ -64,7 +64,7 @@ function ReturnsPage() {
               partir de la recepcion.
             </p>
             <p>
-              Para preservar la integridad de nuestras colecciones, solicitamos que la pieza se
+              Para preservar la integridad de nuestras categorias, solicitamos que la pieza se
               encuentre sin usar, en su estado original y dentro del empaque artesanal en el que fue
               entregada.
             </p>

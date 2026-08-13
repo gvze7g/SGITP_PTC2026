@@ -170,6 +170,8 @@ cartController.checkoutMyCart = async (req, res) => {
     const {
       shipping_address,
       shipping_phone,
+      shipping_method = "Standard",
+      shipping_cost = 0,
       payment_method = "Card",
       payment_status = "Pending",
     } = req.body;
@@ -205,6 +207,8 @@ cartController.checkoutMyCart = async (req, res) => {
       payment_status,
       shipping_address,
       shipping_phone,
+      shipping_method,
+      shipping_cost,
       item_details: itemDetails,
     });
 
