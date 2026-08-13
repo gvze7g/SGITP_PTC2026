@@ -170,6 +170,7 @@ productController.insertProducts = async (req, res) => {
       variants: parsedVariants,
       price,
       cost,
+      offers
     });
 
     await newProduct.save();
@@ -187,7 +188,7 @@ productController.insertProducts = async (req, res) => {
 // UPDATE
 productController.updateProducts = async (req, res) => {
   try {
-    const { name, description, category, variants, price, cost } = req.body;
+    const { name, description, category, variants, price, cost, offers } = req.body;
 
     const product = await productsModel.findById(req.params.id);
 
@@ -229,6 +230,7 @@ productController.updateProducts = async (req, res) => {
         variants: parsedVariants,
         price,
         cost,
+        offers
       },
       { new: true }
     );

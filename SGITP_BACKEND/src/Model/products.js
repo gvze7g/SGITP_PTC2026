@@ -18,6 +18,12 @@ const productSchema = new Schema({
     }],
     price: {type: Number},
     cost: {type: Number},
+    offers: [{
+        value: {type: Number},
+        startDate: {type: Date},
+        endDate: {type: Date},
+        active: {type: Boolean},
+    }],
 },
 {
     timestamps: true,
