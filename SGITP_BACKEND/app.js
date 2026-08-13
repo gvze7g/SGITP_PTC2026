@@ -16,6 +16,7 @@ import cartRoutes from "./src/Routes/shopping_cart.js";
 import spentRoutes from "./src/Routes/spent.js";
 import posRoutes from "./src/Routes/pos.js";
 import payrollRoutes from "./src/Routes/payroll.js";
+import favoritesRoutes from "./src/Routes/favorite.js"
 import loginCustomerRoutes from "./src/Routes/loginCustomer.js";
 import loginEmployeeRoutes from "./src/Routes/loginEmployee.js";
 import logoutRoutes from "./src/Routes/logout.js";
@@ -73,6 +74,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/spent", spentRoutes);
 app.use("/api/pos", posRoutes);
 app.use("/api/payroll", payrollRoutes);
+app.use("/api/favorite", favoritesRoutes);
 app.use("/api/loginCustomer", loginCustomerRoutes);
 app.use("/api/loginEmployee", loginEmployeeRoutes);
 app.use("/api/logout", logoutRoutes);
