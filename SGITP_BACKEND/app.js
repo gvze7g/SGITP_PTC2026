@@ -28,6 +28,9 @@ import wompiRoutes from "./src/Routes/wompi.js"
 import recoveryPasswordRoutes from "./src/Routes/recoveryPassword.js";
 import limiter from "./src/Middlewares/rateLimiter.js";
 
+import swaggerUi from "swagger-ui-express";
+import swaggerDocument from "./src/utils/itr-32d-SIGTP_EXPO-1-resolved.json" with { type: "json" };
+
 import { validateAuthCookie } from "./src/Middlewares/authMiddleware.js";
 
 const app = express();
