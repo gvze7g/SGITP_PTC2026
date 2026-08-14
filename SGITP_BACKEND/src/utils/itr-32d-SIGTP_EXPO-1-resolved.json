@@ -1,0 +1,3301 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Documentacion de api",
+    "description": "Documentacion de la api del proyecto peques proporciona una referencia clara y organizada sobre los servicios disponibles, detallando los diferentes endpoins, metodos HTTP, parametros requeridos, estructura de datos y respuestas generadas ",
+    "version": "1"
+  },
+  "servers": [
+    {
+      "url": "https://virtserver.swaggerhub.com/itr-32d/SIGTP_EXPO/1",
+      "description": "SwaggerHub API Auto Mocking"
+    }
+  ],
+  "paths": {
+    "/Branches": {
+      "get": {
+        "tags": [
+          "Branches"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Metodo para buscar las sucursales ",
+        "operationId": "get-Branches",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Branches"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {}
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Branches"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza las sucursales",
+        "operationId": "put-Branches",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Branches"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Branches"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo agrega nuevas sucursales",
+        "operationId": "post-Branches",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Branches"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Branches"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "este metodo elimina las sucursales",
+        "operationId": "delete-Branches",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Branches{id}": {
+      "get": {
+        "tags": [
+          "Branches"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo muestra todas las sucursales coincidentes por numero de id mediante un filtro",
+        "operationId": "get-Branches-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "selector unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Branches"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Customer": {
+      "get": {
+        "tags": [
+          "Customer"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los clientes ",
+        "operationId": "get-Customer",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Customer"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza los datos de un cliente",
+        "operationId": "put-Customer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Customer"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina un cliente",
+        "operationId": "delete-Customer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/CustomerRegister": {
+      "post": {
+        "tags": [
+          "Customer"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo registra un nuevo cliente",
+        "operationId": "post-CustomerRegister",
+        "parameters": [
+          {
+            "name": "verificationTokenCookie",
+            "in": "cookie",
+            "description": "Token JWT generado tras el registro para validar el código de 6 dígitos. Expira en 15 minutos",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Employee": {
+      "get": {
+        "tags": [
+          "Employee"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los empleados",
+        "operationId": "get-Employee",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Employee"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Employee"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza un empleado",
+        "operationId": "put-Employee",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Employee"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo agrega un nuevo empleado",
+        "operationId": "post-Employee",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Employee"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina empleados",
+        "operationId": "delete-Employee",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Employee{id}": {
+      "get": {
+        "tags": [
+          "Employee"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los empleados mediante filtro coincidiente de id",
+        "operationId": "get-Employee-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico de un empleado",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Employee"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/EmployeeRegister": {
+      "post": {
+        "tags": [
+          "Employee"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo registra un nuevo empleado",
+        "operationId": "post-EmployeeRegister",
+        "parameters": [
+          {
+            "name": "verificationTokenCookie",
+            "in": "cookie",
+            "description": "Token JWT generado tras el registro para validar el código de 6 dígitos. Expira en 15 minutos",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Payment": {
+      "get": {
+        "tags": [
+          "Payment"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los pagos",
+        "operationId": "get-Payment",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Payment"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza los pagos",
+        "operationId": "put-Payment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo crea nuevos pagos ",
+        "operationId": "post-Payment",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Payment"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina los pagos",
+        "operationId": "delete-Payment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Payment{id}": {
+      "get": {
+        "tags": [
+          "Payment"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los pagos mediante filtros de identificador unico ",
+        "operationId": "get-Payment-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Products": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los productos",
+        "operationId": "get-Products",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Products"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza los productos",
+        "operationId": "put-Products",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador Unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Products"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo crea nuevos productos",
+        "operationId": "post-Products",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Products"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina productos",
+        "operationId": "delete-Products",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Products{id}": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los productos mediante filtros del identificador unico",
+        "operationId": "get-Products-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "idenficador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Products"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Products/search": {
+      "post": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo busca los productos por nombre ",
+        "operationId": "post-Products-search",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Products"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Products/price-range": {
+      "post": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo filtra por rangos de precios",
+        "operationId": "post-Products-price-range",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Products"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Products"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Products/low-stock": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo obtiene los productos con bajo stock",
+        "operationId": "get-Products-low-stock",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Products"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Products/count": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo obtiene el total de productos",
+        "operationId": "get-Products-count",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Products"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Promotions": {
+      "get": {
+        "tags": [
+          "Promotions"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca las promociones",
+        "operationId": "get-Promotions",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Promotions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Promotions"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza los estados de las promociones",
+        "operationId": "put-Promotions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Promotions"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Promotions"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo agrega una promocion",
+        "operationId": "post-Promotions",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Promotions"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Promotions"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina una promocion",
+        "operationId": "delete-Promotions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Promotions{id}": {
+      "get": {
+        "tags": [
+          "Promotions"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca las promociones mediante filtro de identificador unico",
+        "operationId": "get-Promotions-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Promotions"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Shopping_cart": {
+      "get": {
+        "tags": [
+          "Shopping_cart"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los carritos de compras",
+        "operationId": "get-Shopping_cart",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shopping_Cart"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Shopping_cart"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza el carrito de compras",
+        "operationId": "put-Shopping_cart",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Shopping_Cart"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Shopping_cart"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo inserta un nuevo carrito de compras",
+        "operationId": "post-Shopping_cart",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Shopping_Cart"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Shopping_cart"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina el un carrito de compras",
+        "operationId": "delete-Shopping_cart",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Shopping_Cart{id}": {
+      "get": {
+        "tags": [
+          "Shopping_cart"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca mediante filtro de identificador unico ",
+        "operationId": "get-Shopping_Cart-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador Unico",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shopping_Cart"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Sales": {
+      "get": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca las ventas realizadas",
+        "operationId": "get-Sales",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sales"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": " Este metodo actualiza una venta",
+        "operationId": "put-Sales",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sales"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo crea una nueva venta",
+        "operationId": "post-Sales",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sales"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina las ventas",
+        "operationId": "delete-Sales",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Pos": {
+      "get": {
+        "tags": [
+          "Pos"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los puntos de venta",
+        "operationId": "get-Pos",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pos"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Pos"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza un punto de venta",
+        "operationId": "put-Pos",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pos"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pos"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo agrega un punto de venta",
+        "operationId": "post-Pos",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pos"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Pos"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina un punto de venta",
+        "operationId": "delete-Pos",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Spent": {
+      "get": {
+        "tags": [
+          "Spent"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los gastos",
+        "operationId": "get-Spent",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Spent"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Spent"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza los gastos",
+        "operationId": "put-Spent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Spent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Spent"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo agrega un nuevo gasto",
+        "operationId": "post-Spent",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Spent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Spent"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina un gasto",
+        "operationId": "delete-Spent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Spent{id}": {
+      "get": {
+        "tags": [
+          "Spent"
+        ],
+        "summary": "Your GET endpoint",
+        "description": " Este metodo busca los gastos por medio de filtros de identificador unico",
+        "operationId": "get-Spent-id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "identificador unico",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Spent"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Favorite": {
+      "get": {
+        "tags": [
+          "Favorites"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca los productos favoritos",
+        "operationId": "get-Favorites",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Favorite"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Favorites"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza los favoritos del usuario",
+        "operationId": "put-Favorite",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Favorite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Favorites"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo agrega a favoritos un producto",
+        "operationId": "post-Favorite",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Favorite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Favorites"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina los productos favoritos",
+        "operationId": "delete-Favorite",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Payroll": {
+      "get": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca las nominas",
+        "operationId": "get-Payroll",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payroll"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza las nominas",
+        "operationId": "put-Payroll",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payroll"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo agrega nuevas nominas",
+        "operationId": "post-Payroll",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payroll"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina las nominas",
+        "operationId": "delete-Payroll",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Payroll/generate": {
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo genera una nueva nomina",
+        "operationId": "post-Payroll-generate",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payroll"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Branches/publicBranches": {
+      "get": {
+        "tags": [
+          "Branches"
+        ],
+        "summary": "Your GET endpoint",
+        "operationId": "get-Branches-publicBranches",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Branches"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/Customer/AddressAuth": {
+      "get": {
+        "tags": [
+          "Customer"
+        ],
+        "summary": "Your GET endpoint",
+        "description": "Este metodo busca las direcciones del cliente",
+        "operationId": "get-Customer-AddressAuth",
+        "parameters": [
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Customer"
+        ],
+        "summary": "Your PUT endpoint",
+        "description": "Este metodo actualiza la direccion autenticada del client",
+        "operationId": "put-Customer-AddressAuth",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "validateAddressPayload",
+            "in": "cookie",
+            "description": "Cookie que valida la autenticación del cliente",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Customer"
+        ],
+        "summary": "Your POST endpoint",
+        "description": "Este metodo crea una direccion del cliente autenticado",
+        "operationId": "post-Customer-AddressAuth",
+        "parameters": [
+          {
+            "name": "validateAddressPayload",
+            "in": "cookie",
+            "description": "Cookie que valida la autenticación del cliente",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Customer"
+        ],
+        "summary": "Your DELETE endpoint",
+        "description": "Este metodo elimina la direccion autenticada",
+        "operationId": "delete-Customer-AddressAuth",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Identificador unico",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "AuthCookie",
+            "in": "cookie",
+            "description": "Cookie de sesión que almacena el token JWT de autenticación para validar la identidad del usuario y permitir el acceso",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Branches": {
+        "title": "Branches",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "opening_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Customer": {
+        "title": "Customer",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          " customer_type": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/customer_type"
+            }
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "main_phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          " addresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/addresses"
+            }
+          },
+          "phone_numbers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/phone_numbers_employee"
+            }
+          },
+          " isVerified": {
+            "type": "boolean"
+          },
+          "loginAttempts": {
+            "type": "number"
+          },
+          "timeOut": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "customer_type": {
+        "title": "customer_type",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "enum": {
+            "type": "string"
+          },
+          "default": {
+            "type": "string"
+          }
+        }
+      },
+      "addresses": {
+        "title": "addresses",
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          " street_and_number": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "string"
+          }
+        }
+      },
+      "Employee": {
+        "title": "Employee",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "main_phone": {
+            "type": "string"
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "branch_id": {
+            "$ref": "#/components/schemas/Branches"
+          },
+          "password": {
+            "type": "string"
+          },
+          "addresses": {
+            "$ref": "#/components/schemas/addresses_employe"
+          },
+          "phone_numbers": {
+            "$ref": "#/components/schemas/phone_numbers_employee"
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "hire_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "role": {
+            "$ref": "#/components/schemas/role_employee"
+          },
+          "isVerified": {
+            "type": "boolean"
+          },
+          "loginAttempts": {
+            "type": "number"
+          },
+          "timeOut": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "addresses_employe": {
+        "title": "addresses_employe",
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "address_line": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "string"
+          }
+        }
+      },
+      "phone_numbers_employee": {
+        "title": "phone_numbers_employee",
+        "type": "object",
+        "properties": {
+          "numbers": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          }
+        }
+      },
+      "role_employee": {
+        "title": "role_employee",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "enum": {
+            "type": "string"
+          },
+          "default": {
+            "type": "string"
+          }
+        }
+      },
+      "Payment": {
+        "title": "Payment",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "employe_id": {
+            "$ref": "#/components/schemas/Employee"
+          },
+          "period": {
+            "type": "string",
+            "format": "date"
+          },
+          "base_salary": {
+            "type": "number"
+          },
+          "bonuses": {
+            "type": "number"
+          },
+          "retentions": {
+            "type": "number"
+          },
+          "total_paid": {
+            "type": "number"
+          },
+          "payment_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Products": {
+        "title": "Products",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "images": {
+            "$ref": "#/components/schemas/images_product"
+          },
+          "variants": {
+            "$ref": "#/components/schemas/variants_products"
+          },
+          "price": {
+            "type": "number"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "offers": {
+            "$ref": "#/components/schemas/offers_products"
+          }
+        }
+      },
+      "images_product": {
+        "title": "images_product",
+        "type": "object",
+        "properties": {
+          "image": {
+            "type": "string"
+          },
+          "public_id": {
+            "type": "string"
+          }
+        },
+        "description": ""
+      },
+      "variants_products": {
+        "title": "variants_products",
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "design": {
+            "type": "string"
+          },
+          "fabric": {
+            "type": "string"
+          },
+          "stock": {
+            "type": "string"
+          }
+        }
+      },
+      "Promotions": {
+        "title": "Promotions",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "coupon_code": {
+            "type": "string"
+          },
+          "descriptions": {
+            "type": "string"
+          },
+          "discount_percentage": {
+            "type": "number"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Shopping_Cart": {
+        "title": "Shopping_Cart",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "customer_id": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "products": {
+            "$ref": "#/components/schemas/product_shoppingCart"
+          },
+          "total": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "product_shoppingCart": {
+        "title": "product_shoppingCart",
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "$ref": "#/components/schemas/Products"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "subtotal": {
+            "type": "number"
+          }
+        }
+      },
+      "Sales": {
+        "title": "Sales",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sales_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "employee_id": {
+            "$ref": "#/components/schemas/Employee"
+          },
+          "cart_id": {
+            "$ref": "#/components/schemas/Shopping_Cart"
+          },
+          "origin": {
+            "type": "string"
+          },
+          " applied_price_type": {
+            "type": "string"
+          },
+          "payment_method": {
+            "type": "string"
+          },
+          " payment_status": {
+            "type": "string"
+          },
+          "shipping_address": {
+            "type": "string"
+          },
+          " shipping_phone": {
+            "type": "string"
+          },
+          " item_details": {
+            "$ref": "#/components/schemas/item-details_sales"
+          },
+          "name": {
+            "type": "string"
+          },
+          "selected_variant": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          }
+        }
+      },
+      "item-details_sales": {
+        "title": "item-details_sales",
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "$ref": "#/components/schemas/Products"
+          }
+        }
+      },
+      "Pos": {
+        "title": "Pos",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "customer_id": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "employee_id": {
+            "$ref": "#/components/schemas/Employee"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "shippingData": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "sales_id": {
+            "$ref": "#/components/schemas/Sales"
+          }
+        }
+      },
+      "Spent": {
+        "title": "Spent",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "expense_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "expense_type": {
+            "type": "string"
+          },
+          "payment_method": {
+            "type": "string"
+          },
+          "branch_id": {
+            "$ref": "#/components/schemas/Branches"
+          }
+        }
+      },
+      "Favorite": {
+        "title": "Favorite",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "customer_id": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "product_id": {
+            "$ref": "#/components/schemas/Products"
+          }
+        }
+      },
+      "offers_products": {
+        "title": "offers_products",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Payroll": {
+        "title": "Payroll",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "employee_id": {
+            "$ref": "#/components/schemas/Employee"
+          },
+          "period": {
+            "type": "string"
+          },
+          "payment_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "base_salary": {
+            "type": "number"
+          },
+          "bonuses": {
+            "type": "number"
+          },
+          "deductions": {
+            "type": "number"
+          },
+          "net_salary": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
