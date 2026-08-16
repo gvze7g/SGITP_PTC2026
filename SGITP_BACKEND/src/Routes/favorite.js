@@ -7,8 +7,28 @@ import {
 
 const router = Router();
 
+// Rutas del cliente logueado (app móvil / web pública): cada quien solo ve
+// y edita sus propios favoritos. Van antes que las rutas de admin de abajo
+// porque "/mine" no debe pasar por validateEmployeeRole.
+router.get(
+  "/mine",
+  validateAuthCookie(["Customer"]),
+  favoriteController.getMyFavorites
+);
 
-// GET ALL
+router.post(
+  "/mine",
+  validateAuthCookie(["Customer"]),
+  favoriteController.addMyFavorite
+);
+
+router.delete(
+  "/mine/:productId",
+  validateAuthCookie(["Customer"]),
+  favoriteController.removeMyFavorite
+);
+
+// GET ALL (panel de administración)
 router.get(
   "/",
   validateAuthCookie(["Employee"]),

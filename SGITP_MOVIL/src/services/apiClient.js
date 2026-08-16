@@ -5,10 +5,10 @@ import { translateBackendMessage } from '../constants/errorMessages';
 // de dejar a la pantalla esperando para siempre.
 const REQUEST_TIMEOUT_MS = 8000;
 
-// Función base para llamar al backend, la usan authService y productService
-// (y cualquier servicio nuevo que se agregue). Se encarga de: mandar la
-// petición, cancelarla si tarda mucho, y convertir cualquier error del
-// servidor en un mensaje en español.
+// Función base para llamar al backend: la usan directamente los hooks y
+// contexts que necesitan datos del servidor (no hay una capa de "services"
+// aparte). Se encarga de: mandar la petición, cancelarla si tarda mucho, y
+// convertir cualquier error del servidor en un mensaje en español.
 export async function request(path, options) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);

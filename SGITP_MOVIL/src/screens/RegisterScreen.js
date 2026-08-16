@@ -7,6 +7,7 @@ import { KeyboardAvoidingScreen } from '../components/KeyboardAvoidingScreen';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextField } from '../components/TextField';
 import { useRegisterForm } from '../hooks/useRegisterForm';
+import { lettersOnly } from '../utils/inputFilters';
 
 // Pantalla de registro. Al crear la cuenta, el backend manda un código por
 // correo, así que aquí mandamos al usuario a VerifyCode (modo "register")
@@ -41,6 +42,8 @@ export function RegisterScreen({ navigation }) {
                   value={field.value}
                   onChangeText={field.onChange}
                   autoCapitalize="words"
+                  filter={lettersOnly}
+                  maxLength={50}
                   error={errors.firstName?.message}
                 />
               )}
@@ -58,6 +61,8 @@ export function RegisterScreen({ navigation }) {
                   value={field.value}
                   onChangeText={field.onChange}
                   autoCapitalize="words"
+                  filter={lettersOnly}
+                  maxLength={50}
                   error={errors.lastName?.message}
                 />
               )}

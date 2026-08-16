@@ -8,10 +8,20 @@ import { useToast } from '../context/ToastContext';
 // Reglas de validación del formulario de registro. Zod revisa esto antes
 // de dejar enviar el formulario y react-hook-form muestra el error debajo
 // de cada campo automáticamente.
+const NAME_PATTERN = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+$/;
+
 const registerSchema = z
   .object({
-    firstName: z.string().min(1, 'El nombre es requerido'),
-    lastName: z.string().min(1, 'El apellido es requerido'),
+    firstName: z
+      .string()
+      .min(1, 'El nombre es requerido')
+      .max(50, 'Máximo 50 caracteres')
+      .regex(NAME_PATTERN, 'Solo se permiten letras'),
+    lastName: z
+      .string()
+      .min(1, 'El apellido es requerido')
+      .max(50, 'Máximo 50 caracteres')
+      .regex(NAME_PATTERN, 'Solo se permiten letras'),
     email: z.string().min(1, 'El correo es requerido').email('Correo inválido'),
     password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
     confirmPassword: z.string().min(1, 'Confirma tu contraseña'),

@@ -51,6 +51,23 @@ function InventoryTable({
     return "Stock estable";
   };
 
+  // Busca, entre las ofertas del producto, una que esté marcada como activa
+  // y cuyo rango de fechas incluya hoy (si no trae fechas, se toma como
+  // vigente todo el tiempo). Misma regla que usa la app móvil.
+  const getActiveOffer = (product) => {
+    if (!Array.isArray(product?.offers)) return null;
+    const now = Date.now();
+
+    return (
+      product.offers.find((offer) => {
+        if (!offer?.active) return false;
+        if (offer.startDate && new Date(offer.startDate).getTime() > now) return false;
+        if (offer.endDate && new Date(offer.endDate).getTime() < now) return false;
+        return true;
+      }) || null
+    );
+  };
+
   const handlePriceInputChange = (field, value) => {
     const sanitized = value.replace(/[^\d.]/g, "");
     onChangeFilter?.(field, sanitized);
@@ -193,6 +210,7 @@ function InventoryTable({
           paginatedProducts.map((product) => {
             const firstVariant = product.variants?.[0] || {};
             const totalStock = getTotalStock(product.variants);
+            const activeOffer = getActiveOffer(product);
 
             return (
               <article key={product._id} className="inventory-row">
@@ -225,6 +243,22 @@ function InventoryTable({
 
                 <div className="inventory-price-cell">
                   ${Number(product.price || 0).toFixed(2)}
+                  {activeOffer ? (
+                    <span
+                      style={{
+                        display: "inline-block",
+                        marginTop: "4px",
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "#fff",
+                        backgroundColor: "#C0392B",
+                      }}
+                    >
+                      -{activeOffer.value}% activa
+                    </span>
+                  ) : null}
                 </div>
 
                 <div className="inventory-price-cell">

@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { AppText } from './AppText';
 
 // Sección que se abre/cierra al tocarla (ej. "Materiales & Cuidado" en el
 // detalle de producto). Empieza cerrada y muestra "children" al abrirse.
 export function Accordion({ title, children }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -27,24 +29,26 @@ export function Accordion({ title, children }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingVertical: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    letterSpacing: 1,
-  },
-  iconOpen: {
-    transform: [{ rotate: '180deg' }],
-  },
-  body: {
-    marginTop: 12,
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    container: {
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      paddingVertical: 16,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    title: {
+      letterSpacing: 1,
+    },
+    iconOpen: {
+      transform: [{ rotate: '180deg' }],
+    },
+    body: {
+      marginTop: 12,
+    },
+  });
+}

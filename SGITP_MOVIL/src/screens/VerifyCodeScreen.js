@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { MailCheck } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +8,7 @@ import { BrandFooter } from '../components/BrandFooter';
 import { Button } from '../components/Button';
 import { CodeInput } from '../components/CodeInput';
 import { IconBadge } from '../components/IconBadge';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { useVerifyCodeForm } from '../hooks/useVerifyCodeForm';
 
 // Pantalla para escribir el código de 6 caracteres que llega por correo.
@@ -15,6 +16,8 @@ import { useVerifyCodeForm } from '../hooks/useVerifyCodeForm';
 // pantalla anterior: "register" (verificar cuenta nueva) o "recovery"
 // (recuperar contraseña). Esa lógica vive en useVerifyCodeForm.
 export function VerifyCodeScreen({ route, navigation }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { mode, email } = route.params ?? {};
   const { code, setCode, submit, resend, isSubmitting, isResending } = useVerifyCodeForm({
     mode,
@@ -80,55 +83,57 @@ export function VerifyCodeScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  flex: {
-    flex: 1,
-  },
-  glow: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: -120,
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    backgroundColor: colors.glow,
-  },
-  content: {
-    flexGrow: 1,
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 24,
-  },
-  wordmark: {
-    marginBottom: 32,
-  },
-  title: {
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 32,
-  },
-  codeInput: {
-    alignSelf: 'stretch',
-    marginBottom: 28,
-  },
-  buttonWrapper: {
-    alignSelf: 'stretch',
-  },
-  resendRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  resendLink: {
-    textDecorationLine: 'underline',
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    flex: {
+      flex: 1,
+    },
+    glow: {
+      position: 'absolute',
+      alignSelf: 'center',
+      top: -120,
+      width: 420,
+      height: 420,
+      borderRadius: 210,
+      backgroundColor: colors.glow,
+    },
+    content: {
+      flexGrow: 1,
+      alignItems: 'center',
+      paddingHorizontal: 24,
+      paddingTop: 40,
+      paddingBottom: 24,
+    },
+    wordmark: {
+      marginBottom: 32,
+    },
+    title: {
+      textAlign: 'center',
+      marginTop: 20,
+    },
+    subtitle: {
+      textAlign: 'center',
+      marginTop: 10,
+      marginBottom: 32,
+    },
+    codeInput: {
+      alignSelf: 'stretch',
+      marginBottom: 28,
+    },
+    buttonWrapper: {
+      alignSelf: 'stretch',
+    },
+    resendRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 20,
+    },
+    resendLink: {
+      textDecorationLine: 'underline',
+    },
+  });
+}

@@ -16,6 +16,8 @@ const ADDRESS_CITIES = [
   "Usulutan",
 ];
 const ADDRESS_TEXT_PATTERN = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]*$/;
+const NAME_PATTERN = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]*$/;
+const PHONE_PATTERN = /^[0-9]*$/;
 
 const validateAddressPayload = ({ label = "", street_and_number = "", city = "", reference = "" }) => {
   if (!street_and_number?.trim() || !city?.trim()) {
@@ -188,6 +190,49 @@ customerController.updateCustomer = async (req, res) => {
     return res.status(200).json({ message: "Customer updated" });
   } catch (error) {
     console.log("error " + error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// UPDATE de los datos básicos del cliente autenticado (nombre y teléfono
+// principal). Deliberadamente no toca email/password/customer_type: eso
+// necesitaría re-verificación y no es lo que pide "Editar Perfil".
+customerController.updateMyProfile = async (req, res) => {
+  try {
+    const { full_name, main_phone } = req.body;
+    const trimmedName = full_name?.trim() ?? "";
+    const trimmedPhone = main_phone?.trim() ?? "";
+
+    if (trimmedName.length < 3 || trimmedName.length > 50) {
+      return res.status(400).json({ message: "Invalid name" });
+    }
+
+    if (!NAME_PATTERN.test(trimmedName)) {
+      return res.status(400).json({ message: "Name can only contain letters" });
+    }
+
+    if (trimmedPhone && (!PHONE_PATTERN.test(trimmedPhone) || trimmedPhone.length > 12)) {
+      return res.status(400).json({ message: "Invalid phone number" });
+    }
+
+    const updatedCustomer = await customerModel
+      .findByIdAndUpdate(
+        req.user.id,
+        { full_name: trimmedName, main_phone: trimmedPhone },
+        { new: true }
+      )
+      .select("-password");
+
+    if (!updatedCustomer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    return res.status(200).json({
+      message: "Profile updated",
+      user: updatedCustomer,
+    });
+  } catch (error) {
+    console.log("updateMyProfile error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

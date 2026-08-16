@@ -57,6 +57,11 @@ function PromotionFormModal({
     }));
   };
 
+  const handleCouponCodeChange = (value) => {
+    const sanitized = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    handleChange("couponCode", sanitized);
+  };
+
   const handleDiscountChange = (value) => {
     const sanitized = value.replace(/[^\d]/g, "");
 
@@ -165,7 +170,8 @@ function PromotionFormModal({
                       className="form-editable-input"
                       placeholder="Ej. VERANO2026"
                       value={formData.couponCode}
-                      onChange={(event) => handleChange("couponCode", event.target.value)}
+                      maxLength={20}
+                      onChange={(event) => handleCouponCodeChange(event.target.value)}
                     />
                   </div>
 

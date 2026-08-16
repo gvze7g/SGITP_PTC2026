@@ -2,6 +2,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ImagePlus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import CustomDropdown from "../ui/CustomDropdown";
+import DateField from "../ui/DateField";
+
+const OFFER_ACTIVE_OPTIONS = [
+  { value: "yes", label: "Sí" },
+  { value: "no", label: "No" },
+];
+
+const EMPTY_OFFER = {
+  active: false,
+  value: "",
+  startDate: null,
+  endDate: null,
+};
 
 const EMPTY_VARIANT = {
   size: "",
@@ -20,6 +34,7 @@ const EMPTY_FORM = {
   price: "",
   cost: "",
   variants: [{ ...EMPTY_VARIANT }],
+  offer: { ...EMPTY_OFFER },
 };
 
 function CreateProductModal({
@@ -42,6 +57,8 @@ function CreateProductModal({
     if (!open) return;
 
     if (productData) {
+      const existingOffer = productData.offers?.[0];
+
       setFormData({
         name: productData.name || "",
         category: productData.category || "",
@@ -60,6 +77,14 @@ function CreateProductModal({
                 stock: variant.stock || "",
               }))
             : [{ ...EMPTY_VARIANT }],
+        offer: existingOffer
+          ? {
+              active: Boolean(existingOffer.active),
+              value: existingOffer.value ?? "",
+              startDate: existingOffer.startDate ? new Date(existingOffer.startDate) : null,
+              endDate: existingOffer.endDate ? new Date(existingOffer.endDate) : null,
+            }
+          : { ...EMPTY_OFFER },
       });
 
       const existingImages = productData.images?.slice(0, 4) || [];
@@ -78,6 +103,7 @@ function CreateProductModal({
       setFormData({
         ...EMPTY_FORM,
         variants: [{ ...EMPTY_VARIANT }],
+        offer: { ...EMPTY_OFFER },
       });
       setImageSlots([null, null, null, null]);
     }
@@ -102,6 +128,29 @@ function CreateProductModal({
     if (Number(value) < 0) return;
 
     handleChange(field, value);
+  };
+
+  const handleOfferChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      offer: {
+        ...prev.offer,
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleOfferValueChange = (value) => {
+    if (value === "") {
+      handleOfferChange("value", "");
+      return;
+    }
+
+    const decimalRegex = /^\d*\.?\d*$/;
+    if (!decimalRegex.test(value)) return;
+    if (Number(value) < 0 || Number(value) > 100) return;
+
+    handleOfferChange("value", value);
   };
 
   const handleVariantChange = (index, field, value) => {
@@ -215,6 +264,22 @@ function CreateProductModal({
       return false;
     }
 
+    if (formData.offer.active) {
+      if (formData.offer.value === "" || Number(formData.offer.value) <= 0) {
+        toast.error("Ingresa un porcentaje de descuento válido para la oferta.");
+        return false;
+      }
+
+      if (
+        formData.offer.startDate &&
+        formData.offer.endDate &&
+        formData.offer.startDate > formData.offer.endDate
+      ) {
+        toast.error("La fecha de inicio de la oferta no puede ser después de la fecha final.");
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -232,6 +297,19 @@ function CreateProductModal({
     payload.append("price", formData.price || 0);
     payload.append("cost", formData.cost || 0);
     payload.append("variants", JSON.stringify(formData.variants));
+
+    const offers =
+      formData.offer.active && formData.offer.value !== ""
+        ? [
+            {
+              value: Number(formData.offer.value),
+              startDate: formData.offer.startDate,
+              endDate: formData.offer.endDate,
+              active: true,
+            },
+          ]
+        : [];
+    payload.append("offers", JSON.stringify(offers));
 
     imageSlots.forEach((slot) => {
       if (slot?.file) {
@@ -509,6 +587,55 @@ function CreateProductModal({
                       style={{ minHeight: "86px", resize: "none" }}
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="variant-section" style={{ marginTop: "4px" }}>
+                <h3 style={{ marginBottom: "10px" }}>Oferta</h3>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr 1fr",
+                    gap: "14px",
+                    alignItems: "start",
+                  }}
+                >
+                  <CustomDropdown
+                    label="¿PRODUCTO EN OFERTA?"
+                    value={formData.offer.active ? "yes" : "no"}
+                    options={OFFER_ACTIVE_OPTIONS}
+                    onChange={(value) => handleOfferChange("active", value === "yes")}
+                  />
+
+                  <div className="modal-input-group">
+                    <span className="modal-section-label">DESCUENTO (%)</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      className="modal-line-input"
+                      placeholder="0"
+                      value={formData.offer.value}
+                      disabled={!formData.offer.active}
+                      onChange={(event) => handleOfferValueChange(event.target.value)}
+                      onWheel={preventWheelChange}
+                    />
+                  </div>
+
+                  <DateField
+                    label="DESDE (OPCIONAL)"
+                    value={formData.offer.startDate}
+                    onChange={(date) => handleOfferChange("startDate", date)}
+                    disabled={!formData.offer.active}
+                  />
+
+                  <DateField
+                    label="HASTA (OPCIONAL)"
+                    value={formData.offer.endDate}
+                    onChange={(date) => handleOfferChange("endDate", date)}
+                    minDate={formData.offer.startDate}
+                    disabled={!formData.offer.active}
+                  />
                 </div>
               </div>
 

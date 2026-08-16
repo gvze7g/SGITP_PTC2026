@@ -144,7 +144,7 @@ productController.countProducts = async (req, res) => {
 // INSERT
 productController.insertProducts = async (req, res) => {
   try {
-    const { name, description, category, variants, price, cost } = req.body;
+    const { name, description, category, variants, price, cost, offers } = req.body;
 
     let imagesArray = [];
 
@@ -161,6 +161,7 @@ productController.insertProducts = async (req, res) => {
 
     const parsedVariants =
       typeof variants === "string" ? JSON.parse(variants) : variants;
+    const parsedOffers = typeof offers === "string" ? JSON.parse(offers) : offers;
 
     const newProduct = new productsModel({
       name,
@@ -170,7 +171,7 @@ productController.insertProducts = async (req, res) => {
       variants: parsedVariants,
       price,
       cost,
-      offers
+      offers: parsedOffers,
     });
 
     await newProduct.save();
@@ -219,6 +220,7 @@ productController.updateProducts = async (req, res) => {
 
     const parsedVariants =
       typeof variants === "string" ? JSON.parse(variants) : variants;
+    const parsedOffers = typeof offers === "string" ? JSON.parse(offers) : offers;
 
     const updatedProduct = await productsModel.findByIdAndUpdate(
       req.params.id,
@@ -230,7 +232,7 @@ productController.updateProducts = async (req, res) => {
         variants: parsedVariants,
         price,
         cost,
-        offers
+        offers: parsedOffers,
       },
       { new: true }
     );

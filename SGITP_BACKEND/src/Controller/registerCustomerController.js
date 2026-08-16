@@ -1,10 +1,11 @@
-import nodemailer from "nodemailer";
 import crypto from "crypto";
 import jsonwebtoken from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 
 import customerModel from "../Model/customer.js";
 import { config } from "../config.js";
+import { sendEmail } from "../utils/sendMailjet.js";
+import HTMLVerificationEmail from "../utils/sendMailVerification.js";
 
 const registerCustomerController = {};
 
@@ -79,32 +80,11 @@ registerCustomerController.register = async (req, res) => {
     });
 
     // Configurar y enviar correo con el código
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: config.email.user_email,
-        pass: config.email.user_password,
-      },
-    });
+    const htmlContent = HTMLVerificationEmail(verificationCode);
 
-    const mailOptions = {
-      from: config.email.user_email,
-      to: email,
-      subject: "Verificación de cuenta",
-      text:
-        "Para verificar tu cuenta, utiliza este código: " +
-        verificationCode +
-        " expira en 15 minutos",
-    };
+    await sendEmail(email, "Verificación de cuenta", htmlContent);
 
-    transporter.sendMail(mailOptions, (error) => {
-      if (error) {
-        console.log("error " + error);
-        return res.status(500).json({ message: "error" });
-      }
-
-      return res.status(200).json({ message: "email send" });
-    });
+    return res.status(200).json({ message: "email send" });
   } catch (error) {
     console.log("error " + error);
     return res.status(500).json({ message: "Internal server error" });
