@@ -2,11 +2,11 @@
 
 ## Integrantes del equipo
 
-- Eduardo José Gálvez Benítez
-- Leonel Adrián Ramos López
-- Diego Alejandro López Granados
-- Paul Melquisedec Cañas Palacios
-- Brandon Alejandro Orellana Cerón
+* Eduardo José Gálvez Benítez
+* Leonel Adrián Ramos López
+* Diego Alejandro López Granados
+* Paul Melquisedec Cañas Palacios
+* Brandon Alejandro Orellana Cerón
 
 ---
 
@@ -18,10 +18,10 @@ El proyecto busca optimizar los procesos administrativos de la empresa y mejorar
 
 La solución está compuesta por cuatro módulos principales:
 
-- Frontend Público (Tienda en línea)
-- Frontend Administrativo
-- Backend (API REST)
-- Aplicación Móvil
+* Frontend Público (Tienda en línea)
+* Frontend Administrativo
+* Backend (API REST)
+* Aplicación Móvil
 
 ---
 
@@ -33,11 +33,11 @@ Desarrollar una solución digital que permita al emprendimiento **Peques** admin
 
 ## Objetivos específicos
 
-- Gestionar productos, categorías, usuarios y pedidos.
-- Facilitar el control y seguimiento del inventario.
-- Mejorar la experiencia de compra de los clientes.
-- Centralizar la administración de la información del negocio.
-- Implementar una arquitectura escalable y mantenible.
+* Gestionar productos, categorías, usuarios y pedidos.
+* Facilitar el control y seguimiento del inventario.
+* Mejorar la experiencia de compra de los clientes.
+* Centralizar la administración de la información del negocio.
+* Implementar una arquitectura escalable y mantenible.
 
 ---
 
@@ -45,43 +45,64 @@ Desarrollar una solución digital que permita al emprendimiento **Peques** admin
 
 ## Frontend Público
 
-- React
-- Vite
-- Tailwind CSS
-- React Router DOM
-- Lucide React
-- Sonner
-- React Hook Form
-- Framer Motion
+* React
+* Vite
+* Tailwind CSS
+* React Router DOM
+* Lucide React
+* Sonner
+* React Hook Form
+* Framer Motion
 
 ## Frontend Administrativo
 
-- React
-- Vite
-- Tailwind CSS
-- React Router DOM
-- Lucide React
-- Sonner
-- React Hook Form
-- Framer Motion
-- Recharts
+* React
+* Vite
+* Tailwind CSS
+* React Router DOM
+* Lucide React
+* Sonner
+* React Hook Form
+* Framer Motion
+* Recharts
 
 ## Backend
 
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JWT
-- Bcrypt
-- Cloudinary
-- Nodemailer
-- Cookie Parser
-- Dotenv
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
+* JWT
+* Bcrypt
+* Cloudinary
+* Nodemailer
+* Cookie Parser
+* Dotenv
+* Multer
+* CORS
 
 ## Aplicación Móvil
 
-Pendiente de definición tecnológica.
+* React Native
+* Expo
+* React Navigation
+* React Hook Form
+* Zod
+* Zustand
+* TanStack React Query
+* Async Storage
+* Expo Secure Store
+* Expo Notifications
+* Expo Image
+* Expo Font
+* React Native Reanimated
+* React Native Gesture Handler
+* React Native Safe Area Context
+* React Native Screens
+* React Native SVG
+* Lucide React Native
+* Manrope
+* Montserrat
 
 ---
 
@@ -96,7 +117,7 @@ SGITP_PTC2026/
 │
 ├── SGITP_BACKEND/
 │
-├── SGITP_MOBILE/
+├── SGITP_MOVIL/
 │
 └── README.md
 ```
@@ -126,48 +147,56 @@ src/
 
 ## Frontend Público
 
-- Catálogo de productos
-- Vista detallada de productos
-- Carrito de compras
-- Gestión de favoritos
-- Registro de usuarios
-- Inicio de sesión
-- Recuperación de contraseña
-- Perfil de usuario
-- Historial de pedidos
-- Diseño responsive
+* Catálogo de productos
+* Vista detallada de productos
+* Carrito de compras
+* Gestión de favoritos
+* Registro de usuarios
+* Inicio de sesión
+* Recuperación de contraseña
+* Perfil de usuario
+* Historial de pedidos
+* Diseño responsive
 
 ## Frontend Administrativo
 
-- Dashboard administrativo
-- Gestión de productos
-- Gestión de categorías
-- Gestión de usuarios
-- Gestión de pedidos
-- Gestión de inventario
-- Estadísticas y gráficas
-- Control de acceso mediante autenticación
-- Diseño responsive
+* Dashboard administrativo
+* Gestión de productos
+* Gestión de categorías
+* Gestión de usuarios
+* Gestión de pedidos
+* Gestión de inventario
+* Estadísticas y gráficas
+* Control de acceso mediante autenticación
+* Diseño responsive
 
 ## Backend
 
-- API REST
-- Registro de usuarios
-- Inicio de sesión
-- Recuperación de contraseña
-- Validaciones de datos
-- Manejo de cookies JWT
-- Encriptación de contraseñas
-- CRUD de productos
-- CRUD de categorías
-- CRUD de usuarios
-- CRUD de pedidos
-- Integración con Cloudinary
-- Envío de correos electrónicos
+* API REST
+* Registro de usuarios
+* Inicio de sesión
+* Recuperación de contraseña
+* Validaciones de datos
+* Manejo de cookies JWT
+* Encriptación de contraseñas
+* CRUD de productos
+* CRUD de categorías
+* CRUD de usuarios
+* CRUD de pedidos
+* Integración con Cloudinary
+* Envío de correos electrónicos
 
 ## Aplicación Móvil
 
-Pendiente de implementación.
+* Catálogo de productos
+* Vista detallada de productos
+* Carrito de compras
+* Gestión de favoritos
+* Registro de usuarios
+* Inicio de sesión
+* Recuperación de contraseña
+* Perfil de usuario
+* Historial de pedidos
 
 ---
 
@@ -243,7 +272,11 @@ npm run dev
 
 ## Aplicación Móvil
 
-Pendiente de implementación.
+```bash
+cd SGITP_MOVIL
+npm install
+npx expo start
+```
 
 ---
 
@@ -273,12 +306,12 @@ EMAIL_PASSWORD=
 
 # Seguridad implementada
 
-- Contraseñas almacenadas mediante encriptación con Bcrypt.
-- Autenticación basada en JWT.
-- Almacenamiento del token en cookies seguras.
-- Validaciones en cliente y servidor.
-- Protección de rutas privadas.
-- Manejo seguro de variables de entorno.
+* Contraseñas almacenadas mediante encriptación con Bcrypt.
+* Autenticación basada en JWT.
+* Almacenamiento del token en cookies seguras.
+* Validaciones en cliente y servidor.
+* Protección de rutas privadas.
+* Manejo seguro de variables de entorno.
 
 ---
 
@@ -294,7 +327,7 @@ Ejemplos:
 SGITP_PRIV
 SGITP_WEB
 SGITP_BACKEND
-SGITP_MOBILE
+SGITP_MOVIL
 ```
 
 ## Carpetas internas
@@ -374,13 +407,13 @@ Las validaciones se realizan tanto en el frontend como en el backend.
 
 Entre ellas:
 
-- Campos obligatorios.
-- Formatos de correo electrónico.
-- Contraseñas seguras.
-- Longitudes mínimas y máximas.
-- Validación de datos numéricos.
-- Validación de fechas.
-- Validación de autenticación y autorización.
+* Campos obligatorios.
+* Formatos de correo electrónico.
+* Contraseñas seguras.
+* Longitudes mínimas y máximas.
+* Validación de datos numéricos.
+* Validación de fechas.
+* Validación de autenticación y autorización.
 
 ---
 
@@ -388,11 +421,11 @@ Entre ellas:
 
 La aplicación utiliza notificaciones visuales mediante Sonner para informar:
 
-- Operaciones exitosas.
-- Errores del sistema.
-- Advertencias.
-- Confirmaciones de acciones.
-- Eventos importantes.
+* Operaciones exitosas.
+* Errores del sistema.
+* Advertencias.
+* Confirmaciones de acciones.
+* Eventos importantes.
 
 ---
 
@@ -402,10 +435,10 @@ Actualmente el proyecto se encuentra en fase de desarrollo como parte del Proyec
 
 Se continúa trabajando en:
 
-- Implementación de funcionalidades pendientes.
-- Integración completa entre frontend y backend.
-- Desarrollo de la aplicación móvil.
-- Pruebas funcionales y optimización.
+* Implementación de funcionalidades pendientes.
+* Integración completa entre frontend y backend.
+* Desarrollo de la aplicación móvil.
+* Pruebas funcionales y optimización.
 
 ---
 
