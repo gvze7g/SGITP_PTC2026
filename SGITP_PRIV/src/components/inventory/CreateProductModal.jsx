@@ -20,6 +20,18 @@ const EMPTY_FORM = {
   price: "",
   cost: "",
   variants: [{ ...EMPTY_VARIANT }],
+  offerActive: false,
+  offerValue: "",
+  offerStartDate: "",
+  offerEndDate: "",
+};
+
+// yyyy-mm-dd para <input type="date">
+const toDateInputValue = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
 };
 
 function CreateProductModal({
@@ -42,6 +54,8 @@ function CreateProductModal({
     if (!open) return;
 
     if (productData) {
+      const existingOffer = productData.offers?.[0] || null;
+
       setFormData({
         name: productData.name || "",
         category: productData.category || "",
@@ -60,6 +74,13 @@ function CreateProductModal({
                 stock: variant.stock || "",
               }))
             : [{ ...EMPTY_VARIANT }],
+        offerActive: Boolean(existingOffer?.active),
+        offerValue:
+          existingOffer?.value !== undefined && existingOffer?.value !== null
+            ? String(existingOffer.value)
+            : "",
+        offerStartDate: toDateInputValue(existingOffer?.startDate),
+        offerEndDate: toDateInputValue(existingOffer?.endDate),
       });
 
       const existingImages = productData.images?.slice(0, 4) || [];
@@ -198,6 +219,24 @@ function CreateProductModal({
       return false;
     }
 
+    if (formData.offerActive) {
+      const value = Number(formData.offerValue);
+
+      if (formData.offerValue === "" || Number.isNaN(value) || value <= 0 || value > 100) {
+        toast.error("El porcentaje de descuento debe estar entre 1 y 100.");
+        return false;
+      }
+
+      if (
+        formData.offerStartDate &&
+        formData.offerEndDate &&
+        formData.offerStartDate > formData.offerEndDate
+      ) {
+        toast.error("La fecha de inicio de la oferta no puede ser posterior a la fecha de fin.");
+        return false;
+      }
+    }
+
     const invalidVariant = formData.variants.some((variant) => {
       const value = variant.stock;
       return value !== "" && (Number.isNaN(Number(value)) || Number(value) < 0);
@@ -232,6 +271,19 @@ function CreateProductModal({
     payload.append("price", formData.price || 0);
     payload.append("cost", formData.cost || 0);
     payload.append("variants", JSON.stringify(formData.variants));
+
+    const offers = formData.offerActive
+      ? [
+          {
+            value: Number(formData.offerValue),
+            active: true,
+            startDate: formData.offerStartDate || null,
+            endDate: formData.offerEndDate || null,
+          },
+        ]
+      : [];
+
+    payload.append("offers", JSON.stringify(offers));
 
     imageSlots.forEach((slot) => {
       if (slot?.file) {
@@ -510,6 +562,75 @@ function CreateProductModal({
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="offer-section" style={{ marginTop: "4px" }}>
+                <h3 style={{ marginBottom: "10px" }}>Oferta / Descuento</h3>
+
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: formData.offerActive ? "14px" : "0",
+                    cursor: "pointer",
+                    width: "fit-content",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.offerActive}
+                    onChange={(event) => handleChange("offerActive", event.target.checked)}
+                  />
+                  <span className="modal-section-label" style={{ margin: 0 }}>
+                    ACTIVAR OFERTA PARA ESTE PRODUCTO
+                  </span>
+                </label>
+
+                {formData.offerActive ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, minmax(140px, 1fr))",
+                      gap: "14px",
+                    }}
+                  >
+                    <div className="modal-input-group">
+                      <span className="modal-section-label">% DE DESCUENTO</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        className="modal-line-input"
+                        placeholder="Ej: 20"
+                        value={formData.offerValue}
+                        onChange={(event) =>
+                          handleDecimalChange("offerValue", event.target.value)
+                        }
+                        onWheel={preventWheelChange}
+                      />
+                    </div>
+
+                    <div className="modal-input-group">
+                      <span className="modal-section-label">DESDE (OPCIONAL)</span>
+                      <input
+                        type="date"
+                        className="modal-line-input"
+                        value={formData.offerStartDate}
+                        onChange={(event) => handleChange("offerStartDate", event.target.value)}
+                      />
+                    </div>
+
+                    <div className="modal-input-group">
+                      <span className="modal-section-label">HASTA (OPCIONAL)</span>
+                      <input
+                        type="date"
+                        className="modal-line-input"
+                        value={formData.offerEndDate}
+                        onChange={(event) => handleChange("offerEndDate", event.target.value)}
+                      />
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="variant-section" style={{ marginTop: "4px" }}>

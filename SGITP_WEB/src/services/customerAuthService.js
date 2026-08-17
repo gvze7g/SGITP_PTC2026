@@ -115,6 +115,33 @@ export async function loginWebUser(credentials) {
   return data;
 }
 
+export async function loginWithGoogle(credential) {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ credential }),
+    });
+  } catch (error) {
+    throw new Error('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    if (response.status === 503) {
+      throw new Error('La base de datos no esta conectada. Intenta mas tarde.');
+    }
+
+    throw new Error(data.message ?? 'No se pudo iniciar sesion con Google.');
+  }
+
+  return data;
+}
+
 export async function logoutCustomer() {
   let response;
 

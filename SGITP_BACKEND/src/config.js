@@ -30,5 +30,8 @@ export const config = {
     client_id: process.env.CLIENT_ID,
     client_secret: process.env.CLIENT_SECRET,
   },
+  google: {
+    client_id: process.env.GOOGLE_CLIENT_ID,
+  },
 };
 

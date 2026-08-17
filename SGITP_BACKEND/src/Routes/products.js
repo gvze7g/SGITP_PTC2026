@@ -42,6 +42,13 @@ router.get(
   productController.getProducts
 );
 
+// Ofertas activas para la seccion publica "Ofertas" del Home. Va antes de
+// "/catalog/:id" para que Express no confunda "offers" con un id de producto.
+router.get(
+  "/catalog/offers",
+  productController.getOfferProducts
+);
+
 router.get(
   "/catalog/:id",
   productController.getProductById

@@ -7,6 +7,14 @@ import {
 
 const router = Router();
 
+// Favoritos del propio cliente (privados: solo el dueno de la sesion los ve)
+router.get("/mine", validateAuthCookie(["Customer"]), favoriteController.getMyFavorites);
+router.post("/mine", validateAuthCookie(["Customer"]), favoriteController.addMyFavorite);
+router.delete(
+  "/mine/:productId",
+  validateAuthCookie(["Customer"]),
+  favoriteController.removeMyFavorite
+);
 
 // GET ALL
 router.get(

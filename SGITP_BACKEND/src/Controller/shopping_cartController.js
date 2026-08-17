@@ -173,8 +173,15 @@ cartController.checkoutMyCart = async (req, res) => {
       shipping_method = "Standard",
       shipping_cost = 0,
       payment_method = "Card",
-      payment_status = "Pending",
     } = req.body;
+
+    // payment_status nunca se toma del cliente: hoy no hay una confirmacion
+    // real de pago (webhook/gateway) conectada al checkout web, asi que todo
+    // pedido nace "Pending" y solo un Employee puede marcarlo "Paid" (PUT
+    // /api/sales/:id) una vez verifica el cobro. Si se aceptara del body,
+    // cualquiera podria mandar payment_status:"Paid" y aparecer en tendencias
+    // sin haber pagado.
+    const payment_status = "Pending";
 
     const cart = await populateCart(
       cartModel.findOne({ customerId: req.user.id, status: CART_STATUS })

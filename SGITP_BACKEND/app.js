@@ -2,10 +2,6 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-
-import swaggerUi from "swagger-ui-express";
-import swaggerDocument from "./src/utils/itr-32d-SIGTP_EXPO-1-resolved (1).json" with { type: "json" };
-
 import authRoutes from "./src/Routes/auth.js";
 import BranchesRoutes from "./src/Routes/branches.js";
 import customerRoutes from "./src/Routes/customer.js";

@@ -20,6 +20,7 @@ import ProfilePage from './pages/profile/ProfilePage';
 import ReturnsPage from './pages/returns/ReturnsPage';
 import ConciergePage from './pages/concierge/ConciergePage';
 import { ThemeContext } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthProvider';
 import NotFoundPage from './pages/NotFoundPage';
 import usePageTitle from './hooks/usePageTitle';
 
@@ -83,7 +84,16 @@ function AppRoutes() {
 
 function App() {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('sgitp-web-theme') || 'light';
+    const saved = localStorage.getItem('sgitp-web-theme');
+    if (saved === 'light' || saved === 'dark') {
+      return saved;
+    }
+
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    return 'dark';
   });
 
   const toggleTheme = () => {
@@ -99,10 +109,12 @@ function App() {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <BrowserRouter>
-        <Toaster position="top-right" richColors closeButton duration={2500} />
-        <AppRoutes />
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Toaster position="top-right" richColors closeButton duration={2500} />
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeContext.Provider>
   );
 }

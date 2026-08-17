@@ -21,6 +21,13 @@ loginCustomerController.login = async (req, res) => {
       return res.status(403).json({ message: "Cuenta bloqueada temporalmente" });
     }
 
+    // Cuenta creada únicamente con Google: no tiene contraseña local que comparar
+    if (!userFound.password) {
+      return res.status(400).json({
+        message: "Esta cuenta fue creada con Google. Usa 'Continuar con Google' para iniciar sesión.",
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, userFound.password);
 
     if (!isMatch) {
