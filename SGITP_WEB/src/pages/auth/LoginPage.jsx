@@ -69,10 +69,15 @@ function LoginPage() {
     }
   };
 
-  const handleGoogleSuccess = () => {
-    toast.success('Inicio de sesion con Google exitoso.');
+  // Mismo flujo para Google y Apple: el backend ya dejo la sesion lista,
+  // aqui solo avisamos y entramos a la tienda.
+  const handleSocialSuccess = (provider) => () => {
+    toast.success(`Inicio de sesion con ${provider} exitoso.`);
     navigate('/home', { replace: true });
   };
+
+  const handleGoogleSuccess = handleSocialSuccess('Google');
+  const handleAppleSuccess = handleSocialSuccess('Apple');
 
   return (
     <section className="auth-split-screen auth-split-screen-login">
@@ -140,7 +145,11 @@ function LoginPage() {
             </AuthButton>
           </form>
 
-          <SocialAuthButtons onGoogleSuccess={handleGoogleSuccess} googleText="continue_with" />
+          <SocialAuthButtons
+            onGoogleSuccess={handleGoogleSuccess}
+            onAppleSuccess={handleAppleSuccess}
+            googleText="continue_with"
+          />
         </AuthCard>
       </section>
 

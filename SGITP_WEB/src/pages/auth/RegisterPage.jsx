@@ -79,10 +79,15 @@ function RegisterPage() {
     }
   };
 
-  const handleGoogleSuccess = () => {
-    toast.success('Cuenta creada e inicio de sesion con Google exitoso.');
+  // Google y Apple crean la cuenta automaticamente si el correo aun no existe,
+  // asi que el mismo manejador sirve para registro e inicio de sesion.
+  const handleSocialSuccess = (provider) => () => {
+    toast.success(`Cuenta creada e inicio de sesion con ${provider} exitoso.`);
     navigate('/home', { replace: true });
   };
+
+  const handleGoogleSuccess = handleSocialSuccess('Google');
+  const handleAppleSuccess = handleSocialSuccess('Apple');
 
   return (
     <section className="auth-split-screen">
@@ -140,7 +145,11 @@ function RegisterPage() {
             </AuthButton>
           </form>
 
-          <SocialAuthButtons onGoogleSuccess={handleGoogleSuccess} googleText="signup_with" />
+          <SocialAuthButtons
+            onGoogleSuccess={handleGoogleSuccess}
+            onAppleSuccess={handleAppleSuccess}
+            googleText="signup_with"
+          />
 
           <div className="auth-bottom-text">
             <span>¿Ya eres miembro?</span>

@@ -1,12 +1,11 @@
-import { toast } from 'sonner';
 import GoogleAuthButton from './GoogleAuthButton';
-import { AppleGlyph } from './socialIcons';
+import AppleAuthButton from './AppleAuthButton';
 
 // Accesos sociales compartidos por Login y Register: solo iconos, circulares.
-// Google usa el flujo OAuth real (GoogleAuthButton). Apple aun no tiene
-// autenticacion real configurada, asi que queda visualmente lista pero
-// avisa que todavia no esta disponible, sin simular un login.
-function SocialAuthButtons({ onGoogleSuccess, googleText = 'continue_with' }) {
+// Los dos usan el flujo OAuth real del proveedor: PEQUES nunca dibuja la
+// pantalla de contrasena ni ve las credenciales del usuario, solo recibe un
+// token firmado que el backend verifica contra Google / Apple.
+function SocialAuthButtons({ onGoogleSuccess, onAppleSuccess, googleText = 'continue_with' }) {
   return (
     <div className="social-auth-block">
       <div className="auth-divider">
@@ -16,15 +15,9 @@ function SocialAuthButtons({ onGoogleSuccess, googleText = 'continue_with' }) {
       <div className="social-icon-row">
         <GoogleAuthButton onSuccess={onGoogleSuccess} text={googleText} variant="circle" />
 
-        <button
-          type="button"
-          className="social-icon-btn"
-          aria-label="Continuar con Apple (próximamente)"
-          title="Continuar con Apple (próximamente)"
-          onClick={() => toast('Apple estará disponible próximamente.')}
-        >
-          <AppleGlyph size={20} />
-        </button>
+        {/* Si no se pasa onAppleSuccess se reutiliza el manejador de Google:
+            ambos endpoints devuelven la misma forma { message, token, user }. */}
+        <AppleAuthButton onSuccess={onAppleSuccess ?? onGoogleSuccess} />
       </div>
     </div>
   );

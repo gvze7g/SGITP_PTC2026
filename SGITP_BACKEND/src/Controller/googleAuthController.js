@@ -1,21 +1,42 @@
-import jsonwebtoken from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import customerModel from "../Model/customer.js";
 import { config } from "../config.js";
+import {
+  createSessionToken,
+  publicCustomer,
+  setSessionCookie,
+} from "../utils/sessionToken.js";
 
 const googleAuthController = {};
 
-const client = new OAuth2Client(config.google.client_id);
+// Google firma el id_token con el client ID de la plataforma desde la que se
+// inicio sesion: web, iOS, Android y Expo Go tienen client IDs distintos.
+// Si aqui solo se acepta el de la web, el login desde el celular siempre
+// respondera "Token de Google invalido o expirado".
+const getAllowedAudiences = () =>
+  [
+    config.google.client_id,
+    config.google.ios_client_id,
+    config.google.android_client_id,
+    config.google.expo_client_id,
+  ].filter(Boolean);
+
+const client = new OAuth2Client();
 
 googleAuthController.google = async (req, res) => {
   try {
-    if (!config.google.client_id) {
-      return res
-        .status(500)
-        .json({ message: "Google Sign-In no está configurado en el servidor" });
+    const allowedAudiences = getAllowedAudiences();
+
+    if (allowedAudiences.length === 0) {
+      return res.status(500).json({
+        message:
+          "Google Sign-In no esta configurado en el servidor. Falta GOOGLE_CLIENT_ID en el .env del backend.",
+      });
     }
 
-    const { credential } = req.body;
+    // La web manda "credential" (Google Identity Services) y la app movil
+    // manda "idToken" (expo-auth-session). Se aceptan los dos nombres.
+    const credential = req.body?.credential || req.body?.idToken;
 
     if (!credential) {
       return res.status(400).json({ message: "Falta el credential de Google" });
@@ -25,28 +46,36 @@ googleAuthController.google = async (req, res) => {
     try {
       const ticket = await client.verifyIdToken({
         idToken: credential,
-        audience: config.google.client_id,
+        audience: allowedAudiences,
       });
       payload = ticket.getPayload();
     } catch (verifyError) {
       console.log("google verify error: " + verifyError);
-      return res.status(401).json({ message: "Token de Google inválido o expirado" });
+      return res
+        .status(401)
+        .json({ message: "Token de Google invalido o expirado" });
     }
 
     if (!payload?.email) {
-      return res.status(400).json({ message: "Google no proporcionó un correo" });
+      return res
+        .status(400)
+        .json({ message: "Google no proporciono un correo" });
     }
 
     if (!payload.email_verified) {
-      return res.status(403).json({ message: "Tu correo de Google no está verificado" });
+      return res
+        .status(403)
+        .json({ message: "Tu correo de Google no esta verificado" });
     }
 
     let userFound = await customerModel.findOne({ email: payload.email });
 
     if (userFound) {
-      // Cuenta bloqueada por intentos fallidos de login local, respeta el mismo bloqueo
+      // Cuenta bloqueada por intentos fallidos de login local: respeta el mismo bloqueo
       if (userFound.timeOut && userFound.timeOut > Date.now()) {
-        return res.status(403).json({ message: "Cuenta bloqueada temporalmente" });
+        return res
+          .status(403)
+          .json({ message: "Cuenta bloqueada temporalmente" });
       }
 
       // Vincula la cuenta local existente con Google la primera vez que se usa
@@ -61,7 +90,7 @@ googleAuthController.google = async (req, res) => {
         await userFound.save();
       }
     } else {
-      // No existe la cuenta: se crea usando únicamente los datos autorizados por Google
+      // No existe la cuenta: se crea usando unicamente los datos autorizados por Google
       userFound = await customerModel.create({
         full_name: payload.name || payload.email,
         email: payload.email,
@@ -73,32 +102,15 @@ googleAuthController.google = async (req, res) => {
       });
     }
 
-    const token = jsonwebtoken.sign(
-      {
-        id: userFound._id,
-        userType: "Customer",
-        customerType: userFound.customer_type,
-      },
-      config.JWT.secret,
-      { expiresIn: "30d" }
-    );
-
-    res.cookie("authCookie", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    const token = createSessionToken(userFound);
+    setSessionCookie(res, token);
 
     return res.status(200).json({
       message: "Login con Google exitoso",
-      user: {
-        id: userFound._id,
-        full_name: userFound.full_name,
-        email: userFound.email,
-        customer_type: userFound.customer_type,
-        profileImage: userFound.profileImage,
-      },
+      // La web usa la cookie e ignora este token; la app movil lo guarda
+      // en SecureStore porque no puede depender de cookies.
+      token,
+      user: publicCustomer(userFound),
     });
   } catch (error) {
     console.log("google auth error: " + error);

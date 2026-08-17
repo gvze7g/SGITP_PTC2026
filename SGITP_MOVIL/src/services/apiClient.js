@@ -1,25 +1,36 @@
 import { API_URL } from '../constants/api';
 import { translateBackendMessage } from '../constants/errorMessages';
+import { sessionStore } from './sessionStore';
 
 // Si el servidor no responde en este tiempo, cancelamos la petición en vez
 // de dejar a la pantalla esperando para siempre.
 const REQUEST_TIMEOUT_MS = 8000;
 
 // Función base para llamar al backend: la usan directamente los hooks y
-// contexts que necesitan datos del servidor (no hay una capa de "services"
-// aparte). Se encarga de: mandar la petición, cancelarla si tarda mucho, y
+// contexts que necesitan datos del servidor. Se encarga de: mandar la
+// petición, adjuntar el token de sesión, cancelarla si tarda mucho, y
 // convertir cualquier error del servidor en un mensaje en español.
-export async function request(path, options) {
+export async function request(path, options = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  // Mandamos el token guardado como "Authorization: Bearer". El backend acepta
+  // tanto la cookie (que usa la web) como esta cabecera (que usa el móvil).
+  const token = await sessionStore.getToken();
 
   let response;
   try {
     response = await fetch(`${API_URL}${path}`, {
-      credentials: 'include', // manda la cookie de sesión en cada petición
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // manda la cookie de sesión si el sistema la conservó
       signal: controller.signal,
       ...options,
+      // Los headers van después del spread para que el token no se pierda si
+      // quien llama pasa sus propios headers.
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
     });
   } catch {
     throw new Error('No se pudo conectar con el servidor. Verifica tu conexión.');

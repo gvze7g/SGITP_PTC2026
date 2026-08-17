@@ -90,6 +90,9 @@ function CreateProductModal({
         slots[index] = {
           file: null,
           preview: img.image,
+          // Guardamos el public_id para poder decirle al backend exactamente
+          // que imagenes conservar al editar (antes las borraba todas).
+          publicId: img.public_id,
           existing: true,
         };
       });
@@ -285,6 +288,15 @@ function CreateProductModal({
 
     payload.append("offers", JSON.stringify(offers));
 
+    // Imagenes ya guardadas en Cloudinary que el usuario NO quito del formulario.
+    // El backend borra unicamente las que no aparezcan en esta lista.
+    const keptImages = imageSlots
+      .filter((slot) => slot?.existing)
+      .map((slot) => ({ image: slot.preview, public_id: slot.publicId }));
+
+    payload.append("existingImages", JSON.stringify(keptImages));
+
+    // Imagenes nuevas seleccionadas desde el disco.
     imageSlots.forEach((slot) => {
       if (slot?.file) {
         payload.append("images", slot.file);

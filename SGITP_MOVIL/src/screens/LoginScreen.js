@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Controller } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Globe, Monitor } from 'lucide-react-native';
+import { Apple, Globe } from 'lucide-react-native';
 
 import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
@@ -11,14 +11,30 @@ import { KeyboardAvoidingScreen } from '../components/KeyboardAvoidingScreen';
 import { TextField } from '../components/TextField';
 import { useTheme } from '../context/ThemeContext';
 import { useLoginForm } from '../hooks/useLoginForm';
+import { useSocialAuth } from '../hooks/useSocialAuth';
 
 // Pantalla de inicio de sesión. Toda la lógica (validación, llamada al
 // backend, mensajes) vive en useLoginForm; aquí solo armamos la vista.
 export function LoginScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const goToApp = () => navigation.replace('MainTabs');
+
   const { control, errors, onSubmit, isSubmitting, rememberMe, toggleRememberMe } =
-    useLoginForm(() => navigation.replace('MainTabs'));
+    useLoginForm(goToApp);
+
+  // Login con Google y Apple: la lógica vive en useSocialAuth.
+  const {
+    signInWithGoogle,
+    signInWithApple,
+    isGoogleReady,
+    isAppleAvailable,
+    isGoogleLoading,
+    isAppleLoading,
+  } = useSocialAuth(goToApp);
+
+  const isBusy = isSubmitting || isGoogleLoading || isAppleLoading;
 
   return (
     <KeyboardAvoidingScreen contentStyle={styles.content}>
@@ -70,25 +86,37 @@ export function LoginScreen({ navigation }) {
         label="Iniciar sesión"
         onPress={onSubmit}
         loading={isSubmitting}
-        disabled={isSubmitting}
+        disabled={isBusy}
       />
 
       <View style={styles.divider}>
         <Divider label="o" />
       </View>
 
-      {/* Botones de Apple/Google: solo visuales por ahora, no tenemos ese login todavía */}
+      {/* Apple solo aparece en iOS: en Android su SDK no existe.
+          Google funciona en ambas plataformas. */}
       <View style={styles.socialGroup}>
-        <Button
-          label="Continuar con Apple"
-          variant="outline"
-          icon={<Monitor size={18} color={colors.text} />}
-        />
-        <View style={styles.socialGap} />
+        {isAppleAvailable ? (
+          <>
+            <Button
+              label="Continuar con Apple"
+              variant="outline"
+              icon={<Apple size={18} color={colors.text} />}
+              onPress={signInWithApple}
+              loading={isAppleLoading}
+              disabled={isBusy}
+            />
+            <View style={styles.socialGap} />
+          </>
+        ) : null}
+
         <Button
           label="Continuar con Google"
           variant="outline"
           icon={<Globe size={18} color={colors.text} />}
+          onPress={signInWithGoogle}
+          loading={isGoogleLoading}
+          disabled={isBusy || !isGoogleReady}
         />
       </View>
 

@@ -1,23 +1,64 @@
 import productsModel from "../Model/products.js";
-import { cloudinary } from "../utils/cloudinaryConfig.js";
+import {
+  destroyCloudinaryImage,
+  isCloudinaryConfigured,
+  uploadBufferToCloudinary,
+} from "../utils/cloudinaryConfig.js";
 
 const productController = {};
 
-const uploadBufferToCloudinary = (buffer, folder = "SGITP_BACKEND/products") => {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type: "image",
-      },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      }
-    );
+// Sube todos los archivos que trajo multer y los deja en el formato que guarda
+// el modelo ({ image, public_id }). Si Cloudinary no esta configurado o falla,
+// lanza un error con mensaje entendible en vez de un 500 generico.
+const uploadProductImages = async (files = []) => {
+  if (!files.length) return [];
 
-    stream.end(buffer);
-  });
+  if (!isCloudinaryConfigured) {
+    const error = new Error(
+      "Cloudinary no esta configurado en el servidor. Revisa CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET en el .env del backend."
+    );
+    error.statusCode = 500;
+    throw error;
+  }
+
+  let uploaded;
+
+  try {
+    uploaded = await Promise.all(
+      files.map((file) => uploadBufferToCloudinary(file.buffer))
+    );
+  } catch (cloudinaryError) {
+    console.log("Cloudinary upload error:", cloudinaryError);
+
+    const error = new Error(
+      "No se pudieron subir las imagenes a Cloudinary. Verifica las credenciales y tu conexion."
+    );
+    error.statusCode = 502;
+    throw error;
+  }
+
+  return uploaded.map((image) => ({
+    image: image.secure_url,
+    public_id: image.public_id,
+  }));
+};
+
+// El panel admin manda en "existingImages" las imagenes que el usuario decidio
+// conservar al editar. Sin esto no hay forma de distinguir "no toque las fotos"
+// de "borra todas y deja solo las nuevas".
+const parseExistingImages = (rawExistingImages) => {
+  if (rawExistingImages === undefined) return null;
+
+  try {
+    const parsed =
+      typeof rawExistingImages === "string"
+        ? JSON.parse(rawExistingImages)
+        : rawExistingImages;
+
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
 };
 
 const getTotalStock = (variants = []) => {
@@ -209,18 +250,7 @@ productController.insertProducts = async (req, res) => {
   try {
     const { name, description, category, variants, price, cost, offers } = req.body;
 
-    let imagesArray = [];
-
-    if (req.files && req.files.length > 0) {
-      const uploadedImages = await Promise.all(
-        req.files.map((file) => uploadBufferToCloudinary(file.buffer))
-      );
-
-      imagesArray = uploadedImages.map((image) => ({
-        image: image.secure_url,
-        public_id: image.public_id,
-      }));
-    }
+    const imagesArray = await uploadProductImages(req.files || []);
 
     const parsedVariants =
       typeof variants === "string" ? JSON.parse(variants) : variants;
@@ -246,6 +276,12 @@ productController.insertProducts = async (req, res) => {
     });
   } catch (error) {
     console.log("Error: " + error);
+
+    // Los errores de Cloudinary ya traen un mensaje util para el usuario.
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -261,26 +297,39 @@ productController.updateProducts = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    let imagesArray = product.images || [];
+    const currentImages = product.images || [];
+    const files = req.files || [];
 
-    if (req.files && req.files.length > 0) {
-      if (product.images && product.images.length > 0) {
-        for (const img of product.images) {
-          if (img.public_id) {
-            await cloudinary.uploader.destroy(img.public_id);
-          }
-        }
-      }
+    // Imagenes que el panel admin decidio conservar. Si el frontend no manda el
+    // campo (peticiones viejas o desde Postman), se conservan todas las actuales.
+    const keptImages = parseExistingImages(req.body.existingImages);
 
-      const uploadedImages = await Promise.all(
-        req.files.map((file) => uploadBufferToCloudinary(file.buffer))
-      );
+    const imagesToKeep =
+      keptImages === null
+        ? currentImages
+        : currentImages.filter((img) =>
+            keptImages.some(
+              (kept) =>
+                kept?.public_id === img.public_id ||
+                kept?.image === img.image ||
+                kept === img.image
+            )
+          );
 
-      imagesArray = uploadedImages.map((image) => ({
-        image: image.secure_url,
-        public_id: image.public_id,
-      }));
+    // Solo se borran de Cloudinary las que el usuario realmente quito, no todas.
+    const imagesToDelete = currentImages.filter(
+      (img) => !imagesToKeep.includes(img)
+    );
+
+    const newImages = await uploadProductImages(files);
+
+    // Si se subieron imagenes nuevas o se quitaron viejas, recien ahi limpiamos
+    // Cloudinary. Asi una edicion que solo cambia el precio no toca las fotos.
+    for (const img of imagesToDelete) {
+      await destroyCloudinaryImage(img.public_id);
     }
+
+    const imagesArray = [...imagesToKeep, ...newImages];
 
     const parsedVariants =
       typeof variants === "string" ? JSON.parse(variants) : variants;
@@ -308,6 +357,11 @@ productController.updateProducts = async (req, res) => {
     });
   } catch (error) {
     console.log("Error: " + error);
+
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
+
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -321,12 +375,9 @@ productController.deleteProducts = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    if (product.images && product.images.length > 0) {
-      for (const img of product.images) {
-        if (img.public_id) {
-          await cloudinary.uploader.destroy(img.public_id);
-        }
-      }
+    // Al borrar el producto si se limpian todas sus imagenes de Cloudinary.
+    for (const img of product.images || []) {
+      await destroyCloudinaryImage(img.public_id);
     }
 
     await productsModel.findByIdAndDelete(req.params.id);

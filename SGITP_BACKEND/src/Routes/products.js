@@ -84,11 +84,11 @@ router.put(
   productController.updateProducts
 );
 
+// DELETE no recibe archivos, por eso ya no pasa por multer.
 router.delete(
   "/:id",
   validateAuthCookie(["Employee"]),
   validateEmployeeRole("Administrator"),
-  upload.array("images", 5),
   productController.deleteProducts
 );
 

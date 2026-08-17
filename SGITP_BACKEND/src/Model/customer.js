@@ -13,8 +13,13 @@ const customerSchema = new Schema(
     main_phone: { type: String },
     email: { type: String },
     password: { type: String },
-    provider: { type: String, enum: ["local", "google"], default: "local" },
+    provider: {
+      type: String,
+      enum: ["local", "google", "apple"],
+      default: "local",
+    },
     googleId: { type: String },
+    appleId: { type: String },
     profileImage: { type: String },
     addresses: [
       {

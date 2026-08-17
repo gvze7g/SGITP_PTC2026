@@ -1,18 +1,33 @@
 import jsonwebtoken from "jsonwebtoken";
 import { config } from "../config.js";
 
+// La web manda la sesion en una cookie httpOnly. React Native no persiste
+// cookies de forma confiable entre reinicios de la app, asi que el movil manda
+// el mismo token en la cabecera Authorization. Aqui se aceptan las dos formas.
+const extractToken = (req) => {
+  if (req.cookies?.authCookie) return req.cookies.authCookie;
+
+  const authHeader = req.headers?.authorization;
+
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.slice(7).trim();
+  }
+
+  return null;
+};
+
 export const validateAuthCookie = (allowedUserTypes = []) => {
   return (req, res, next) => {
     try {
-      const { authCookie } = req.cookies;
+      const token = extractToken(req);
 
-      if (!authCookie) {
+      if (!token) {
         return res.status(401).json({
           message: "No cookie found, authorization required",
         });
       }
 
-      const decoded = jsonwebtoken.verify(authCookie, config.JWT.secret);
+      const decoded = jsonwebtoken.verify(token, config.JWT.secret);
 
       if (
         allowedUserTypes.length > 0 &&
