@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Mail } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { StoreHeader } from '../components/StoreHeader';
 import { TextField } from '../components/TextField';
 import { useTheme } from '../context/ThemeContext';
 import { getCategoryIcon } from '../constants/categoryIcons';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useProducts } from '../hooks/useProducts';
 
@@ -22,8 +23,19 @@ export function HomeStoreScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: products, isLoading, isError } = useProducts();
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [newsletterEmail, setNewsletterEmail] = useState('');
+
+  // Saluda con el nombre real del cliente logueado, una sola vez por
+  // sesión (no en cada vez que la pestaña "Inicio" vuelve a tener foco).
+  const hasWelcomed = useRef(false);
+  useEffect(() => {
+    if (user?.full_name && !hasWelcomed.current) {
+      hasWelcomed.current = true;
+      showToast(`¡Bienvenido, ${user.full_name}!`, 'success');
+    }
+  }, [user, showToast]);
 
   // Las categorías del menú salen de los productos reales que ya cargaron
   // (no están escritas a mano), así funcionan sin importar qué haya en la base de datos.

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+
+import NotFoundPage from "../../pages/NotFoundPage";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
@@ -51,7 +52,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (status !== "authenticated") {
-    return <Navigate to="/" replace />;
+    return <NotFoundPage variant="protected" />;
   }
 
   return children;
