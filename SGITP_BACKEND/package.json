@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "predev": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/free-port.ps1 4000",
     "dev": "nodemon index.js"
   },
   "keywords": [],
@@ -19,8 +20,9 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.4.1",
+    "google-auth-library": "^11.0.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "9.9.1",
+    "mongoose": "^9.9.2",
     "multer": "^2.2.0",
     "node-fetch": "^3.3.2",
     "node-mailjet": "^6.0.11",

@@ -53,12 +53,19 @@ salesController.getSales = async (req, res) => {
   }
 };
 
-// Productos mas vendidos para mostrar tendencias en la web publica
+// Productos mas vendidos para mostrar tendencias en la web publica.
+// Solo cuentan ventas realmente confirmadas: una venta en carrito, pendiente,
+// cancelada o fallida nunca debe sumar aqui. El POS (SGITP_PRIV) marca sus
+// ventas como "Pagado" (en espanol); el checkout web usa "Paid" en ingles.
+// Se aceptan ambas para no dejar fuera las ventas reales de tienda fisica.
+const CONFIRMED_PAYMENT_STATUS = /^(paid|pagad[oa])$/i;
+
 salesController.getBestSellers = async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit || 5), 10);
 
     const products = await salesModel.aggregate([
+      { $match: { payment_status: CONFIRMED_PAYMENT_STATUS } },
       { $unwind: "$item_details" },
       {
         $match: {

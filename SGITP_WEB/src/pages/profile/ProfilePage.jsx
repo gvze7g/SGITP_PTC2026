@@ -3,11 +3,10 @@ import PublicNavbar from '../../components/home/PublicNavbar';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import {
   addCustomerAddress,
   deleteCustomerAddress,
-  getCurrentCustomer,
-  logoutCustomer,
   updateCustomerAddress,
 } from '../../services/customerAuthService';
 import { getMyOrders } from '../../services/cartService';
@@ -71,8 +70,7 @@ function getOrderTotal(order) {
 
 function ProfilePage() {
   const navigate = useNavigate();
-  const [customer, setCustomer] = useState(null);
-  const [loadingSession, setLoadingSession] = useState(true);
+  const { user: customer, isLoading: loadingSession, logout, refreshUser } = useAuth();
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState('');
   const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM);
@@ -80,61 +78,41 @@ function ProfilePage() {
   const [ordersError, setOrdersError] = useState('');
 
   useEffect(() => {
+    if (!customer || customer.userType !== 'Customer') {
+      return undefined;
+    }
+
     let isMounted = true;
 
-    async function loadCustomerSession() {
+    async function loadOrders() {
       try {
-        const currentCustomer = await getCurrentCustomer();
+        const customerOrders = await getMyOrders();
 
         if (isMounted) {
-          setCustomer(currentCustomer);
+          setOrders(Array.isArray(customerOrders) ? customerOrders : []);
         }
-
-        if (currentCustomer?.userType === 'Customer') {
-          try {
-            const customerOrders = await getMyOrders();
-
-            if (isMounted) {
-              setOrders(Array.isArray(customerOrders) ? customerOrders : []);
-            }
-          } catch (ordersRequestError) {
-            if (isMounted) {
-              setOrdersError(ordersRequestError.message);
-            }
-          }
-        }
-      } catch (error) {
-        toast.error(error.message ?? 'No se pudo verificar la sesion.');
-      } finally {
+      } catch (ordersRequestError) {
         if (isMounted) {
-          setLoadingSession(false);
+          setOrdersError(ordersRequestError.message);
         }
       }
     }
 
-    loadCustomerSession();
+    loadOrders();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [customer]);
 
   const handleLogout = async () => {
     try {
-      await logoutCustomer();
-      setCustomer(null);
+      await logout();
       toast.success('Sesion cerrada correctamente.');
       navigate('/login', { replace: true });
     } catch (error) {
       toast.error(error.message ?? 'No se pudo cerrar sesion.');
     }
-  };
-
-  const updateCustomerAddresses = (addresses) => {
-    setCustomer((currentCustomer) => ({
-      ...currentCustomer,
-      addresses,
-    }));
   };
 
   const handleAddressInputChange = (event) => {
@@ -208,11 +186,13 @@ function ProfilePage() {
     }
 
     try {
-      const response = editingAddressId
-        ? await updateCustomerAddress(editingAddressId, addressForm)
-        : await addCustomerAddress(addressForm);
+      if (editingAddressId) {
+        await updateCustomerAddress(editingAddressId, addressForm);
+      } else {
+        await addCustomerAddress(addressForm);
+      }
 
-      updateCustomerAddresses(response.addresses || []);
+      await refreshUser();
       toast.success(editingAddressId ? 'Direccion actualizada.' : 'Direccion guardada.');
       handleCancelAddress();
     } catch (error) {
@@ -222,8 +202,8 @@ function ProfilePage() {
 
   const handleDeleteAddress = async (addressId) => {
     try {
-      const response = await deleteCustomerAddress(addressId);
-      updateCustomerAddresses(response.addresses || []);
+      await deleteCustomerAddress(addressId);
+      await refreshUser();
       toast.success('Direccion eliminada.');
     } catch (error) {
       toast.error(error.message ?? 'No se pudo eliminar la direccion.');

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AuthButton from '../../components/auth/AuthButton';
 import AuthInput from '../../components/auth/AuthInput';
+import ThemeToggle from '../../components/auth/ThemeToggle';
 import { requestCustomerRecoveryCode } from '../../services/passwordRecoveryService';
 
 function ForgotPasswordPage() {
@@ -42,14 +43,15 @@ function ForgotPasswordPage() {
           &lt; Volver
         </button>
         <strong>PEQUES</strong>
-        <span />
+        <ThemeToggle />
       </header>
 
       <main className="verify-content">
         <form className="verify-card recovery-card" onSubmit={handleSubmit} noValidate>
           <h1>Recuperar contraseña</h1>
           <p>
-            Ingresa tu correo y enviaremos un codigo para cambiar tu contraseña.
+            Ingresa el correo asociado a tu cuenta y te enviaremos un código para cambiar tu
+            contraseña.
           </p>
 
           <div className="recovery-input-wrap">
@@ -65,7 +67,7 @@ function ForgotPasswordPage() {
           </div>
 
           <AuthButton type="submit" className="verify-button" disabled={isSubmitting}>
-            {isSubmitting ? 'Enviando...' : 'Enviar codigo'}
+            {isSubmitting ? 'Enviando...' : 'Enviar código'}
           </AuthButton>
         </form>
       </main>

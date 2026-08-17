@@ -6,7 +6,9 @@ if (config.db.dnsServers?.length) {
   dns.setServers(config.db.dnsServers);
 }
 
-mongoose.connect(config.db.URI);
+mongoose.connect(config.db.URI).catch((error) => {
+  console.error("DB connection failed:", error.message);
+});
 
 const connection = mongoose.connection;
 

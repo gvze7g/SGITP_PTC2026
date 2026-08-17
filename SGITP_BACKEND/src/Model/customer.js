@@ -13,6 +13,9 @@ const customerSchema = new Schema(
     main_phone: { type: String },
     email: { type: String },
     password: { type: String },
+    provider: { type: String, enum: ["local", "google"], default: "local" },
+    googleId: { type: String },
+    profileImage: { type: String },
     addresses: [
       {
         label: { type: String },

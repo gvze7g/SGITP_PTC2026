@@ -4,7 +4,10 @@ import { toast } from 'sonner';
 import AuthButton from '../../components/auth/AuthButton';
 import AuthCard from '../../components/auth/AuthCard';
 import AuthInput from '../../components/auth/AuthInput';
+import PequesBeeIcon from '../../components/auth/PequesBeeIcon';
 import PequesBrandPanel from '../../components/auth/PequesBrandPanel';
+import SocialAuthButtons from '../../components/auth/SocialAuthButtons';
+import ThemeToggle from '../../components/auth/ThemeToggle';
 import { loginWebUser } from '../../services/customerAuthService';
 
 function LoginPage() {
@@ -66,10 +69,22 @@ function LoginPage() {
     }
   };
 
+  const handleGoogleSuccess = () => {
+    toast.success('Inicio de sesion con Google exitoso.');
+    navigate('/home', { replace: true });
+  };
+
   return (
     <section className="auth-split-screen auth-split-screen-login">
       <section className="auth-form-panel auth-login-panel">
+        <ThemeToggle />
+
         <AuthCard className="auth-login-card">
+          <div className="auth-mobile-brand">
+            <PequesBeeIcon size={40} />
+            <span>Peques</span>
+          </div>
+
           <h1 className="auth-title">Bienvenido de nuevo</h1>
           <p className="auth-subtitle">Ingresa tus datos para continuar</p>
 
@@ -115,35 +130,17 @@ function LoginPage() {
             >
               Ingresar como invitado
             </AuthButton>
+
+            <AuthButton
+              type="button"
+              className="auth-button-secondary"
+              onClick={() => navigate('/')}
+            >
+              Crear cuenta
+            </AuthButton>
           </form>
 
-          <AuthButton className="auth-button-secondary" onClick={() => navigate('/')}>
-            Crear cuenta
-          </AuthButton>
-
-          <div className="auth-divider">
-            <span>O unete mediante</span>
-          </div>
-
-          <div className="auth-social-grid">
-            <button
-              type="button"
-              className="auth-social-btn"
-              onClick={() => toast('Google estara disponible proximamente.')}
-            >
-              <span>google</span>
-              <strong>G</strong>
-            </button>
-
-            <button
-              type="button"
-              className="auth-social-btn"
-              onClick={() => toast('Apple estara disponible proximamente.')}
-            >
-              <span>iOS</span>
-              <strong>Apple</strong>
-            </button>
-          </div>
+          <SocialAuthButtons onGoogleSuccess={handleGoogleSuccess} googleText="continue_with" />
         </AuthCard>
       </section>
 

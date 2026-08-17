@@ -30,11 +30,16 @@ export const config = {
     client_id: process.env.CLIENT_ID,
     client_secret: process.env.CLIENT_SECRET,
   },
-    mailjet: {
-    apiKey:    process.env.API_KEY_MAILJET,
+  // Viene de develop: envio de correos con Mailjet
+  mailjet: {
+    apiKey: process.env.API_KEY_MAILJET,
     secretKey: process.env.API_SECRET_MAILJET,
     fromEmail: process.env.MAILJET_FROM_EMAIL,
-    fromName:  process.env.MAILJET_FROM_NAME,
+    fromName: process.env.MAILJET_FROM_NAME,
+  },
+  // Viene de main: login con Google
+  google: {
+    client_id: process.env.GOOGLE_CLIENT_ID,
   },
 };
 

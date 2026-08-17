@@ -29,6 +29,46 @@ const getTotalStock = (variants = []) => {
   }, 0);
 };
 
+// Busca la oferta vigente de un producto: activa y dentro de su rango de fechas
+// (si no tiene fechas, basta con "active: true"). "value" es un porcentaje 0-100.
+const getActiveOffer = (offers = [], now = new Date()) => {
+  if (!Array.isArray(offers)) return null;
+
+  return (
+    offers.find((offer) => {
+      if (!offer?.active) return false;
+      if (typeof offer.value !== "number" || offer.value <= 0) return false;
+      if (offer.startDate && now < new Date(offer.startDate)) return false;
+      if (offer.endDate && now > new Date(offer.endDate)) return false;
+      return true;
+    }) || null
+  );
+};
+
+// Unico lugar donde se calcula el precio de oferta, para que el badge (-20%,
+// -35%...) y el precio final mostrados nunca queden inconsistentes entre
+// componentes/paginas.
+const decorateWithOfferPricing = (productDoc) => {
+  const product = typeof productDoc.toObject === "function" ? productDoc.toObject() : productDoc;
+  const activeOffer = getActiveOffer(product.offers);
+
+  if (!activeOffer) {
+    return { ...product, hasActiveOffer: false };
+  }
+
+  const discountPercentage = Math.min(Math.max(Number(activeOffer.value) || 0, 0), 100);
+  const originalPrice = Number(product.price) || 0;
+  const finalPrice = Number((originalPrice * (1 - discountPercentage / 100)).toFixed(2));
+
+  return {
+    ...product,
+    hasActiveOffer: true,
+    discountPercentage,
+    originalPrice,
+    finalPrice,
+  };
+};
+
 // GET ALL
 productController.getProducts = async (req, res) => {
   try {
@@ -49,7 +89,30 @@ productController.getProductById = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    return res.status(200).json(product);
+    return res.status(200).json(decorateWithOfferPricing(product));
+  } catch (error) {
+    console.log("Error: " + error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Productos con oferta activa vigente, para la seccion "Ofertas" de la web publica
+productController.getOfferProducts = async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit || 8), 20);
+
+    // Pre-filtro barato en Mongo (cualquier oferta marcada activa); la fecha
+    // exacta y el orden final se resuelven en JS con la misma logica que
+    // getProductById, para que el precio mostrado nunca quede inconsistente.
+    const candidates = await productsModel.find({ "offers.active": true });
+
+    const productsWithOffer = candidates
+      .map(decorateWithOfferPricing)
+      .filter((product) => product.hasActiveOffer)
+      .sort((a, b) => b.discountPercentage - a.discountPercentage)
+      .slice(0, limit);
+
+    return res.status(200).json(productsWithOffer);
   } catch (error) {
     console.log("Error: " + error);
     return res.status(500).json({ message: "Internal server error" });
@@ -161,7 +224,8 @@ productController.insertProducts = async (req, res) => {
 
     const parsedVariants =
       typeof variants === "string" ? JSON.parse(variants) : variants;
-    const parsedOffers = typeof offers === "string" ? JSON.parse(offers) : offers;
+    const parsedOffers =
+      typeof offers === "string" ? JSON.parse(offers) : offers;
 
     const newProduct = new productsModel({
       name,
@@ -220,7 +284,8 @@ productController.updateProducts = async (req, res) => {
 
     const parsedVariants =
       typeof variants === "string" ? JSON.parse(variants) : variants;
-    const parsedOffers = typeof offers === "string" ? JSON.parse(offers) : offers;
+    const parsedOffers =
+      typeof offers === "string" ? JSON.parse(offers) : offers;
 
     const updatedProduct = await productsModel.findByIdAndUpdate(
       req.params.id,
