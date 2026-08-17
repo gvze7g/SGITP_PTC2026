@@ -81,6 +81,7 @@ function ResetPasswordPage() {
               value={formData.newPassword}
               onChange={handleChange}
               autoComplete="new-password"
+              maxLength={72}
             />
 
             <AuthInput
@@ -91,6 +92,7 @@ function ResetPasswordPage() {
               value={formData.confirmNewPassword}
               onChange={handleChange}
               autoComplete="new-password"
+              maxLength={72}
             />
           </div>
 

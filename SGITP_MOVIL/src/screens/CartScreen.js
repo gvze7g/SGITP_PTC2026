@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ArrowLeft, Minus, Plus, ShoppingBag, X } from 'lucide-react-native';
@@ -9,6 +9,7 @@ import { Button } from '../components/Button';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { useCart } from '../hooks/useCart';
+import { request } from '../services/apiClient';
 
 // Pantalla "Tu Selección": el carrito real del cliente (GET/PUT/DELETE
 // /cart/mine, ver useCart.js). El backend no guarda talla/color por línea
@@ -19,6 +20,14 @@ export function CartScreen({ navigation }) {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { showToast } = useToast();
   const { items, total, isLoading, updateItem, removeItem } = useCart();
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+  const discountAmount = appliedCoupon
+    ? Number((total * (appliedCoupon.discount_percentage / 100)).toFixed(2))
+    : 0;
+  const totalWithDiscount = Math.max(0, Number(total) - discountAmount);
 
   async function changeQuantity(productId, nextQuantity) {
     try {
@@ -30,6 +39,30 @@ export function CartScreen({ navigation }) {
     } catch (error) {
       showToast(error.message, 'error');
     }
+  }
+
+  async function handleApplyCoupon() {
+    const code = couponInput.trim();
+    if (!code) return;
+
+    setIsValidatingCoupon(true);
+    try {
+      const coupon = await request(`/promotions/validate/${encodeURIComponent(code)}`, {
+        method: 'GET',
+      });
+      setAppliedCoupon(coupon);
+      showToast(`Cupón "${coupon.coupon_code}" aplicado: -${coupon.discount_percentage}%`, 'success');
+    } catch (error) {
+      setAppliedCoupon(null);
+      showToast(error.message, 'error');
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponInput('');
   }
 
   return (
@@ -132,20 +165,62 @@ export function CartScreen({ navigation }) {
               <View style={styles.summaryCard}>
                 <AppText variant="headingSemiBold">Resumen</AppText>
 
+                <View style={styles.couponRow}>
+                  <TextInput
+                    style={styles.couponInput}
+                    placeholder="Código de descuento"
+                    placeholderTextColor={colors.textMuted}
+                    value={couponInput}
+                    onChangeText={(value) => setCouponInput(value.toUpperCase())}
+                    maxLength={20}
+                    autoCapitalize="characters"
+                    editable={!appliedCoupon}
+                  />
+                  {appliedCoupon ? (
+                    <Pressable style={styles.couponButton} onPress={handleRemoveCoupon} hitSlop={8}>
+                      <AppText variant="bodySemiBold" style={styles.couponButtonLabel}>
+                        Quitar
+                      </AppText>
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      style={styles.couponButton}
+                      onPress={handleApplyCoupon}
+                      disabled={isValidatingCoupon}
+                      hitSlop={8}
+                    >
+                      <AppText variant="bodySemiBold" style={styles.couponButtonLabel}>
+                        {isValidatingCoupon ? '...' : 'Aplicar'}
+                      </AppText>
+                    </Pressable>
+                  )}
+                </View>
+
                 <View style={styles.summaryRow}>
                   <AppText variant="muted">Subtotal</AppText>
                   <AppText variant="bodySemiBold">${Number(total).toFixed(2)} USD</AppText>
                 </View>
+                {appliedCoupon ? (
+                  <View style={styles.summaryRow}>
+                    <AppText variant="muted">Descuento ({appliedCoupon.coupon_code})</AppText>
+                    <AppText variant="bodySemiBold">-${discountAmount.toFixed(2)} USD</AppText>
+                  </View>
+                ) : null}
                 <AppText variant="muted" style={styles.summaryNote}>
                   El envío se calcula en el siguiente paso.
                 </AppText>
 
                 <View style={styles.summaryTotalRow}>
                   <AppText variant="headingSemiBold">Total</AppText>
-                  <AppText variant="headingSemiBold">${Number(total).toFixed(2)} USD</AppText>
+                  <AppText variant="headingSemiBold">${totalWithDiscount.toFixed(2)} USD</AppText>
                 </View>
 
-                <Button label="Proceder al Pago" onPress={() => navigation.navigate('Checkout')} />
+                <Button
+                  label="Proceder al Pago"
+                  onPress={() =>
+                    navigation.navigate('Checkout', { couponCode: appliedCoupon?.coupon_code })
+                  }
+                />
               </View>
             </>
           ) : null
@@ -269,6 +344,32 @@ function createStyles(colors) {
     summaryRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+    },
+    couponRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    couponInput: {
+      flex: 1,
+      height: 42,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      color: colors.text,
+    },
+    couponButton: {
+      height: 42,
+      paddingHorizontal: 16,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.text,
+    },
+    couponButtonLabel: {
+      color: colors.background,
+      fontSize: 13,
     },
     summaryNote: {
       marginTop: -8,

@@ -91,38 +91,55 @@ function ProductDetailPage() {
 
   const variants = useMemo(() => rawProduct?.variants || [], [rawProduct]);
 
-  const sizeOptions = useMemo(() => {
-    const list = [];
+  // Un color aparece una sola vez aunque tenga varias tallas (varias filas
+  // de variante con el mismo color): antes se listaba una vez por variante,
+  // asi que "Rojo" en S, M y L salia repetido 3 veces en los swatches.
+  const colorOptions = useMemo(() => {
+    const seen = new Map();
     variants.forEach((variant) => {
-      if (variant.size && !list.includes(variant.size)) list.push(variant.size);
+      if (variant.color && !seen.has(variant.color)) {
+        seen.set(variant.color, variant.colorHex || null);
+      }
     });
-    return list;
+    return [...seen.entries()].map(([color, colorHex]) => ({ color, colorHex }));
   }, [variants]);
 
-  const colorsForSelectedSize = useMemo(
-    () => variants.filter((variant) => variant.size === selectedSize),
-    [variants, selectedSize]
+  // Las tallas disponibles dependen del color elegido, no al reves: si "Rojo"
+  // solo viene en S/M y "Azul" en M/L, cambiar de color debe cambiar la
+  // lista de tallas que se puede elegir.
+  const variantsForSelectedColor = useMemo(
+    () => variants.filter((variant) => variant.color === selectedColor),
+    [variants, selectedColor]
+  );
+
+  const sizeOptions = useMemo(
+    () => variantsForSelectedColor.map((variant) => variant.size).filter(Boolean),
+    [variantsForSelectedColor]
   );
 
   const selectedVariant = useMemo(
     () =>
-      colorsForSelectedSize.find((variant) => variant.color === selectedColor) ||
-      colorsForSelectedSize[0] ||
+      variantsForSelectedColor.find((variant) => variant.size === selectedSize) ||
+      variantsForSelectedColor[0] ||
       null,
-    [colorsForSelectedSize, selectedColor]
+    [variantsForSelectedColor, selectedSize]
   );
+
+  const handleSelectColor = (color) => {
+    setSelectedColor(color);
+
+    const stillHasSize = variants.some(
+      (variant) => variant.color === color && variant.size === selectedSize
+    );
+
+    if (!stillHasSize) {
+      const fallbackVariant = variants.find((variant) => variant.color === color);
+      setSelectedSize(fallbackVariant?.size || null);
+    }
+  };
 
   const handleSelectSize = (size) => {
     setSelectedSize(size);
-
-    const stillHasColor = variants.some(
-      (variant) => variant.size === size && variant.color === selectedColor
-    );
-
-    if (!stillHasColor) {
-      const fallbackVariant = variants.find((variant) => variant.size === size);
-      setSelectedColor(fallbackVariant?.color || null);
-    }
   };
 
   const product = useMemo(() => {
@@ -159,6 +176,12 @@ function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     if (!rawProduct?._id) return;
+
+    if (!isAuthenticated) {
+      toast.error('Inicia sesion para agregar productos al carrito.');
+      navigate('/login');
+      return;
+    }
 
     if (selectedVariant && Number(selectedVariant.stock || 0) <= 0) {
       toast.error('Esa combinacion de talla y color esta agotada.');
@@ -215,9 +238,9 @@ function ProductDetailPage() {
           sizeOptions={sizeOptions}
           selectedSize={selectedSize}
           onSelectSize={handleSelectSize}
-          colorsForSelectedSize={colorsForSelectedSize}
+          colorOptions={colorOptions}
           selectedColor={selectedColor}
-          onSelectColor={setSelectedColor}
+          onSelectColor={handleSelectColor}
           isFavorite={isFavorite}
           favoriteBusy={favoriteBusy}
           onToggleFavorite={handleToggleFavorite}

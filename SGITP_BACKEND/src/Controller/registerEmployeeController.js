@@ -6,6 +6,7 @@ import employeeModel from "../Model/employee.js";
 import { config } from "../config.js";
 import { sendEmail } from "../utils/sendMailjet.js";
 import HTMLVerificationEmail from "../utils/sendMailVerification.js";
+import { getAuthCookieOptions, getClearCookieOptions } from "../utils/cookieOptions.js";
 
 const registerEmployeeController = {};
 
@@ -70,12 +71,7 @@ registerEmployeeController.register = async (req, res) => {
       { expiresIn: "15m" }
     );
 
-    res.cookie("verificationTokenCookie", tokenCode, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie("verificationTokenCookie", tokenCode, getAuthCookieOptions(15 * 60 * 1000));
 
     const htmlContent = HTMLVerificationEmail(verificationCode);
 
@@ -110,7 +106,7 @@ registerEmployeeController.verifyCode = async (req, res) => {
       { new: true }
     );
 
-    res.clearCookie("verificationTokenCookie");
+    res.clearCookie("verificationTokenCookie", getClearCookieOptions());
 
     return res.status(200).json({ message: "Account verified successfully" });
   } catch (error) {

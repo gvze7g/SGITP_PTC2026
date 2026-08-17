@@ -4,6 +4,14 @@ import { validateAuthCookie, validateEmployeeRole } from "../Middlewares/authMid
 
 const router = Router();
 
+// Validar un cupón desde el carrito (cliente logueado). Va antes de "/:id"
+// para que Express no confunda "validate" con un id de promocion.
+router.get(
+  "/validate/:code",
+  validateAuthCookie(["Customer", "Employee"]),
+  promotionsController.validateCoupon
+);
+
 router.get(
   "/",
   validateAuthCookie(["Employee"]),

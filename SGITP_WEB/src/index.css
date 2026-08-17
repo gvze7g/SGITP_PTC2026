@@ -102,11 +102,9 @@ button {
 .peques-logo-image {
   position: relative;
   z-index: 1;
-  width: min(360px, 68%);
+  width: min(620px, 88%);
   aspect-ratio: 1 / 1;
   object-fit: contain;
-  background: #fff;
-  box-shadow: 0 28px 80px rgba(45, 36, 30, 0.12);
 }
 
 .auth-split-screen-login .peques-logo-mark {
@@ -3944,6 +3942,68 @@ button {
   letter-spacing: 0.04em;
 }
 
+.coupon-field {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.coupon-field label {
+  color: #9d9690;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.coupon-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #d9d3ca;
+  padding-bottom: 10px;
+}
+
+.coupon-input-row input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  color: #403a36;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.coupon-input-row input::placeholder {
+  color: #8d837d;
+  text-transform: none;
+}
+
+.coupon-input-row input:focus {
+  outline: none;
+}
+
+.coupon-input-row button {
+  flex-shrink: 0;
+  border: 0;
+  padding: 0;
+  color: #8d837d;
+  background: transparent;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.coupon-field .catalog-status-text {
+  margin: 0;
+  font-size: 0.62rem;
+  text-align: left;
+}
+
 .summary-lines {
   display: grid;
   gap: 18px;
@@ -4459,7 +4519,8 @@ body.theme-dark .returns-faq-list p,
 body.theme-dark .profile-order p,
 body.theme-dark .address-grid p,
 body.theme-dark .cart-item-copy p,
-body.theme-dark .checkout-summary p {
+body.theme-dark .checkout-summary p,
+body.theme-dark .personal-grid p {
   color: #cfc4bb;
 }
 
@@ -4486,8 +4547,45 @@ body.theme-dark .profile-order h3,
 body.theme-dark .address-grid h3,
 body.theme-dark .product-price,
 body.theme-dark .product-size-header,
-body.theme-dark .store-product-summary h2 {
+body.theme-dark .store-product-summary h2,
+body.theme-dark .public-footer h2,
+body.theme-dark .profile-guest-card h2,
+body.theme-dark .profile-section-heading h2,
+body.theme-dark .returns-philosophy-copy h2,
+body.theme-dark .returns-step-grid h3,
+body.theme-dark .returns-contact-card h2 {
   color: #eadfd6;
+}
+
+body.theme-dark .collection-product-info span,
+body.theme-dark .returns-philosophy-copy strong {
+  color: #b7aaa1;
+}
+
+body.theme-dark .auth-title {
+  color: #eadfd6;
+}
+
+body.theme-dark .auth-subtitle {
+  color: #cfc4bb;
+}
+
+body.theme-dark .order-summary h2,
+body.theme-dark .summary-lines strong,
+body.theme-dark .summary-total {
+  color: #eadfd6;
+}
+
+body.theme-dark .coupon-input-row {
+  border-bottom-color: #3a332e;
+}
+
+body.theme-dark .coupon-input-row input {
+  color: #f4ede7;
+}
+
+body.theme-dark .coupon-input-row input::placeholder {
+  color: #8f837c;
 }
 
 body.theme-dark .all-stores-section h2,

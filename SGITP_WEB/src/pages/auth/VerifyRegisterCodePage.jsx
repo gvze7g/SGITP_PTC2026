@@ -25,7 +25,7 @@ function VerifyRegisterCodePage() {
   return (
     <section className="verify-screen">
       <header className="verify-topbar">
-        <button type="button" onClick={() => navigate('/')}>
+        <button type="button" onClick={() => navigate('/register')}>
           &lt; Volver
         </button>
         <strong>PEQUES</strong>
@@ -45,7 +45,9 @@ function VerifyRegisterCodePage() {
             type="text"
             maxLength={6}
             value={code}
-            onChange={(event) => setCode(event.target.value)}
+            onChange={(event) =>
+              setCode(event.target.value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase())
+            }
             placeholder="-  -  -  -  -  -"
             autoComplete="one-time-code"
             aria-label="Codigo de verificacion"

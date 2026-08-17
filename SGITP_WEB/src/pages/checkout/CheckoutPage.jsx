@@ -1,6 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import PublicFooter from '../../components/home/PublicFooter';
@@ -8,6 +8,8 @@ import PublicNavbar from '../../components/home/PublicNavbar';
 import { getCurrentCustomer } from '../../services/customerAuthService';
 import { getMyCart, placeCartOrder } from '../../services/cartService';
 import { getProductImage } from '../../services/catalogService';
+import { validateCoupon } from '../../services/promotionsService';
+import { cardExpiry, cardNumber as filterCardNumber, digitsOnly } from '../../utils/inputFilters';
 
 const CITY_OPTIONS = [
   { city: 'San Salvador', postal: '1101' },
@@ -55,6 +57,9 @@ const getPrimaryAddress = (user) => {
 
 function CheckoutPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const couponCodeFromCart = location.state?.couponCode || '';
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
     secondName: '',
@@ -63,6 +68,9 @@ function CheckoutPage() {
     city: CITY_OPTIONS[0].city,
     postalCode: CITY_OPTIONS[0].postal,
     country: 'El Salvador',
+    cardNumber: '',
+    cardExpiry: '',
+    cardCvv: '',
   });
   const [cart, setCart] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
@@ -90,7 +98,10 @@ function CheckoutPage() {
           const cityMatch = CITY_OPTIONS.find((option) => option.city === address.city);
           const defaultCity = cityMatch || CITY_OPTIONS[0];
 
-          setFormData({
+          // Merge, no reemplazo: si se reemplaza el objeto completo se
+          // pierden los campos de tarjeta que el usuario ya haya escrito.
+          setFormData((prev) => ({
+            ...prev,
             firstName: names.firstName,
             secondName: names.secondName,
             email: user.email || '',
@@ -98,7 +109,7 @@ function CheckoutPage() {
             city: defaultCity.city,
             postalCode: defaultCity.postal,
             country: 'El Salvador',
-          });
+          }));
         }
       } catch (error) {
         if (isMounted) {
@@ -109,16 +120,31 @@ function CheckoutPage() {
 
     loadCheckoutData();
 
+    if (couponCodeFromCart) {
+      validateCoupon(couponCodeFromCart)
+        .then((coupon) => {
+          if (isMounted) setAppliedCoupon(coupon);
+        })
+        .catch(() => {
+          // El cupon pudo vencer justo entre el carrito y el checkout: se
+          // ignora en vez de bloquear la compra.
+        });
+    }
+
     return () => {
       isMounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkoutItems = useMemo(() => cart?.products || [], [cart]);
   const subtotal = Number(cart?.total || 0);
+  const discountAmount = appliedCoupon
+    ? Number((subtotal * (appliedCoupon.discount_percentage / 100)).toFixed(2))
+    : 0;
   const shippingOption = SHIPPING_OPTIONS[shippingType];
   const shippingCost = shippingOption.price;
-  const orderTotal = subtotal + shippingCost;
+  const orderTotal = Math.max(0, subtotal - discountAmount) + shippingCost;
 
   const handleFieldChange = (event) => {
     const { name, value } = event.target;
@@ -140,7 +166,13 @@ function CheckoutPage() {
         ? cleanNameValue(value)
         : name === 'address'
           ? cleanAddressValue(value)
-          : value;
+          : name === 'cardNumber'
+            ? filterCardNumber(value)
+            : name === 'cardExpiry'
+              ? cardExpiry(value)
+              : name === 'cardCvv'
+                ? digitsOnly(value)
+                : value;
 
     setFormData((prev) => ({ ...prev, [name]: nextValue }));
   };
@@ -184,6 +216,7 @@ function CheckoutPage() {
         shipping_cost: shippingCost,
         payment_method: 'Card',
         payment_status: 'Pending',
+        coupon_code: appliedCoupon?.coupon_code || undefined,
       });
 
       setCart((prev) => ({ ...prev, products: [], total: 0 }));
@@ -219,6 +252,7 @@ function CheckoutPage() {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleFieldChange}
+                  maxLength={30}
                 />
               </label>
               <label>
@@ -228,6 +262,7 @@ function CheckoutPage() {
                   name="secondName"
                   value={formData.secondName}
                   onChange={handleFieldChange}
+                  maxLength={30}
                 />
               </label>
               <label className="checkout-field-full">
@@ -237,6 +272,7 @@ function CheckoutPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleFieldChange}
+                  maxLength={100}
                 />
               </label>
               <label className="checkout-field-full">
@@ -245,6 +281,7 @@ function CheckoutPage() {
                   type="text"
                   name="address"
                   value={formData.address}
+                  maxLength={80}
                   onChange={handleFieldChange}
                 />
               </label>
@@ -316,15 +353,39 @@ function CheckoutPage() {
             <div className="checkout-form-grid">
               <label className="checkout-field-full payment-card-field">
                 <span>Numero de tarjeta</span>
-                <input type="text" defaultValue="0000 0000 0000 0000" />
+                <input
+                  type="text"
+                  name="cardNumber"
+                  inputMode="numeric"
+                  placeholder="0000 0000 0000 0000"
+                  value={formData.cardNumber}
+                  onChange={handleFieldChange}
+                  maxLength={19}
+                />
               </label>
               <label>
                 <span>Fecha de vencimiento</span>
-                <input type="text" defaultValue="MM / YY" />
+                <input
+                  type="text"
+                  name="cardExpiry"
+                  inputMode="numeric"
+                  placeholder="MM/YY"
+                  value={formData.cardExpiry}
+                  onChange={handleFieldChange}
+                  maxLength={5}
+                />
               </label>
               <label>
                 <span>CVV</span>
-                <input type="text" defaultValue="123" />
+                <input
+                  type="text"
+                  name="cardCvv"
+                  inputMode="numeric"
+                  placeholder="123"
+                  value={formData.cardCvv}
+                  onChange={handleFieldChange}
+                  maxLength={4}
+                />
               </label>
             </div>
           </section>
@@ -362,6 +423,12 @@ function CheckoutPage() {
               <span>Subtotal</span>
               <strong>{formatPrice(subtotal)}</strong>
             </p>
+            {appliedCoupon ? (
+              <p>
+                <span>Descuento ({appliedCoupon.coupon_code})</span>
+                <strong>-{formatPrice(discountAmount)}</strong>
+              </p>
+            ) : null}
             <p>
               <span>Envio</span>
               <strong>{shippingCost === 0 ? 'Gratis' : formatPrice(shippingCost)}</strong>

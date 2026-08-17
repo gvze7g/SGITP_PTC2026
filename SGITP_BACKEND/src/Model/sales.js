@@ -20,6 +20,8 @@ const salesSchema = new Schema({
     shipping_phone: {type: String},
     shipping_method: {type: String},
     shipping_cost: {type: Number},
+    coupon_code: {type: String},
+    discount_percentage: {type: Number},
     item_details: [{
         product_id: {
                 type: mongoose.Types.ObjectId,

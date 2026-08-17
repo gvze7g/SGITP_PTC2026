@@ -32,11 +32,19 @@ import { validateAuthCookie } from "./src/Middlewares/authMiddleware.js";
 
 const app = express();
 
+// ALLOWED_ORIGINS (opcional, separado por comas) deja agregar el dominio real
+// del frontend en producción (Vercel/Netlify/etc) sin tocar código: se
+// define como variable de entorno en Render el día que se despliegue.
+const extraOrigins = process.env.ALLOWED_ORIGINS?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean) ?? [];
+
 const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://localhost:5174",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5174",
+  ...extraOrigins,
 ]);
 
 const isLocalViteOrigin = (origin = "") =>

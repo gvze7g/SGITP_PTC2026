@@ -2,6 +2,7 @@ import jsonwebtoken from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import customerModel from "../Model/customer.js";
 import { config } from "../config.js";
+import { getAuthCookieOptions } from "../utils/cookieOptions.js";
 
 const googleAuthController = {};
 
@@ -83,12 +84,7 @@ googleAuthController.google = async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    res.cookie("authCookie", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("authCookie", token, getAuthCookieOptions(30 * 24 * 60 * 60 * 1000));
 
     return res.status(200).json({
       message: "Login con Google exitoso",

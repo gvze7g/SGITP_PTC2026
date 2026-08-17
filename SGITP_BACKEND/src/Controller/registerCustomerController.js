@@ -6,6 +6,7 @@ import customerModel from "../Model/customer.js";
 import { config } from "../config.js";
 import { sendEmail } from "../utils/sendMailjet.js";
 import HTMLVerificationEmail from "../utils/sendMailVerification.js";
+import { getAuthCookieOptions, getClearCookieOptions } from "../utils/cookieOptions.js";
 
 const registerCustomerController = {};
 
@@ -72,12 +73,7 @@ registerCustomerController.register = async (req, res) => {
     );
 
     // Guarda token temporal en cookie (15 min)
-    res.cookie("verificationTokenCookie", tokenCode, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie("verificationTokenCookie", tokenCode, getAuthCookieOptions(15 * 60 * 1000));
 
     // Configurar y enviar correo con el código
     const htmlContent = HTMLVerificationEmail(verificationCode);
@@ -117,7 +113,7 @@ registerCustomerController.verifyCode = async (req, res) => {
     );
 
     // Borra cookie de verificación al finalizar
-    res.clearCookie("verificationTokenCookie");
+    res.clearCookie("verificationTokenCookie", getClearCookieOptions());
 
     return res.status(200).json({ message: "Account verified successfully" });
   } catch (error) {
