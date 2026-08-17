@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Controller } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ArrowRight, LockKeyholeOpen } from 'lucide-react-native';
@@ -8,12 +9,14 @@ import { IconBadge } from '../components/IconBadge';
 import { KeyboardAvoidingScreen } from '../components/KeyboardAvoidingScreen';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextField } from '../components/TextField';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { useForgotPasswordForm } from '../hooks/useForgotPasswordForm';
 
 // Pantalla "Recuperar Acceso": el usuario escribe su correo y le mandamos un
 // código de 6 caracteres. Luego lo llevamos a VerifyCode en modo "recovery".
 export function ForgotPasswordScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { control, errors, onSubmit, isSubmitting } = useForgotPasswordForm((email) =>
     navigation.navigate('VerifyCode', { mode: 'recovery', email })
   );
@@ -75,31 +78,33 @@ export function ForgotPasswordScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  card: {
-    backgroundColor: colors.cardTan,
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
-  },
-  title: {
-    textAlign: 'center',
-    marginTop: 18,
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 28,
-  },
-  backToLogin: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  backToLoginLabel: {
-    letterSpacing: 1,
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    content: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
+    card: {
+      backgroundColor: colors.cardTan,
+      borderRadius: 24,
+      paddingHorizontal: 24,
+      paddingVertical: 32,
+    },
+    title: {
+      textAlign: 'center',
+      marginTop: 18,
+    },
+    subtitle: {
+      textAlign: 'center',
+      marginTop: 10,
+      marginBottom: 28,
+    },
+    backToLogin: {
+      marginTop: 20,
+      alignItems: 'center',
+    },
+    backToLoginLabel: {
+      letterSpacing: 1,
+    },
+  });
+}

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import { authService } from '../services/authService';
+import { request } from '../services/apiClient';
 import { useToast } from '../context/ToastContext';
 
 // Solo pedimos el correo en esta pantalla.
@@ -29,7 +29,10 @@ export function useForgotPasswordForm(onSuccess) {
   const onSubmit = handleSubmit(async ({ email }) => {
     setIsSubmitting(true);
     try {
-      await authService.requestRecoveryCode(email);
+      await request('/recoveryPassword/requestCode', {
+        method: 'POST',
+        body: JSON.stringify({ email, userType: 'Customer' }),
+      });
       showToast('Código enviado a tu correo', 'success');
       onSuccess?.(email); // le pasamos el correo a la pantalla siguiente (VerifyCode)
     } catch (error) {

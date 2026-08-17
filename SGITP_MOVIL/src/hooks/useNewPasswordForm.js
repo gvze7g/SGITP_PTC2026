@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import { authService } from '../services/authService';
+import { request } from '../services/apiClient';
 import { useToast } from '../context/ToastContext';
 
 // La contraseña nueva debe tener mínimo 8 caracteres, una mayúscula y un número.
@@ -38,7 +38,10 @@ export function useNewPasswordForm(onSuccess) {
   const onSubmit = handleSubmit(async ({ newPassword, confirmNewPassword }) => {
     setIsSubmitting(true);
     try {
-      await authService.resetPassword(newPassword, confirmNewPassword);
+      await request('/recoveryPassword/newPassword', {
+        method: 'POST',
+        body: JSON.stringify({ newPassword, confirmNewPassword }),
+      });
       // Mensaje propio en español (el backend responde en inglés acá).
       showToast('Contraseña actualizada correctamente', 'success');
       onSuccess?.();

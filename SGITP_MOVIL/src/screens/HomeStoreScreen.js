@@ -10,7 +10,7 @@ import { IconBadge } from '../components/IconBadge';
 import { ProductCard } from '../components/ProductCard';
 import { StoreHeader } from '../components/StoreHeader';
 import { TextField } from '../components/TextField';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { getCategoryIcon } from '../constants/categoryIcons';
 import { useToast } from '../context/ToastContext';
 import { useProducts } from '../hooks/useProducts';
@@ -19,6 +19,8 @@ import { useProducts } from '../hooks/useProducts';
 // que realmente existen en los productos cargados, una selección de
 // productos y un formulario de newsletter (todavía sin backend, solo visual).
 export function HomeStoreScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: products, isLoading, isError } = useProducts();
   const { showToast } = useToast();
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -141,85 +143,87 @@ export function HomeStoreScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  hero: {
-    marginHorizontal: 20,
-    height: 300,
-    borderRadius: 20,
-    backgroundColor: colors.cardTan,
-    justifyContent: 'flex-end',
-    padding: 20,
-  },
-  heroEyebrow: {
-    marginBottom: 6,
-  },
-  heroTitle: {
-    marginBottom: 16,
-  },
-  heroButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.black,
-    borderRadius: 10,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-  },
-  heroButtonLabel: {
-    color: colors.white,
-    fontSize: 12,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginTop: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  seeAll: {
-    textDecorationLine: 'underline',
-  },
-  categoriesRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 16,
-  },
-  loading: {
-    marginTop: 24,
-  },
-  horizontalCard: {
-    width: 160,
-    marginRight: 16,
-    marginTop: 16,
-  },
-  newsletterCard: {
-    margin: 20,
-    marginTop: 36,
-    marginBottom: 32,
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
-  },
-  newsletterTitle: {
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  newsletterSubtitle: {
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  newsletterForm: {
-    alignSelf: 'stretch',
-  },
-  newsletterInput: {
-    marginBottom: 4,
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    hero: {
+      marginHorizontal: 20,
+      height: 300,
+      borderRadius: 20,
+      backgroundColor: colors.cardTan,
+      justifyContent: 'flex-end',
+      padding: 20,
+    },
+    heroEyebrow: {
+      marginBottom: 6,
+    },
+    heroTitle: {
+      marginBottom: 16,
+    },
+    heroButton: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.black,
+      borderRadius: 10,
+      paddingHorizontal: 18,
+      paddingVertical: 12,
+    },
+    heroButtonLabel: {
+      color: colors.white,
+      fontSize: 12,
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+    },
+    section: {
+      paddingHorizontal: 20,
+      marginTop: 32,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    seeAll: {
+      textDecorationLine: 'underline',
+    },
+    categoriesRow: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 16,
+    },
+    loading: {
+      marginTop: 24,
+    },
+    horizontalCard: {
+      width: 160,
+      marginRight: 16,
+      marginTop: 16,
+    },
+    newsletterCard: {
+      margin: 20,
+      marginTop: 36,
+      marginBottom: 32,
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: 24,
+      alignItems: 'center',
+    },
+    newsletterTitle: {
+      marginTop: 16,
+      textAlign: 'center',
+    },
+    newsletterSubtitle: {
+      textAlign: 'center',
+      marginTop: 10,
+      marginBottom: 20,
+    },
+    newsletterForm: {
+      alignSelf: 'stretch',
+    },
+    newsletterInput: {
+      marginBottom: 4,
+    },
+  });
+}

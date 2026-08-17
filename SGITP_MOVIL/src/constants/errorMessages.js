@@ -1,7 +1,7 @@
 // El backend a veces responde en inglés y a veces en español (no es
 // consistente). Para que el usuario SIEMPRE vea español en la app, acá
 // traducimos los mensajes que ya conocemos. Si llega uno que no está en
-// esta lista, se muestra un mensaje genérico en español (ver authService.js).
+// esta lista, se muestra un mensaje genérico en español (ver apiClient.js).
 export const BACKEND_MESSAGE_TRANSLATIONS = {
   'Customer not found': 'No encontramos una cuenta con ese correo',
   'User not found': 'No encontramos una cuenta con ese correo',

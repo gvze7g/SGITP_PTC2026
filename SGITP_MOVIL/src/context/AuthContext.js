@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
-import { authService } from '../services/authService';
+import { request } from '../services/apiClient';
 
 // Nombre de la "casilla" donde guardamos el usuario en el almacenamiento
 // seguro del teléfono, para no perder la sesión al cerrar la app.
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
         const cached = await SecureStore.getItemAsync(USER_STORAGE_KEY);
         if (cached) setUser(JSON.parse(cached));
 
-        const { user: freshUser } = await authService.fetchMe();
+        const { user: freshUser } = await request('/auth/me', { method: 'GET' });
         setUser(freshUser);
         await SecureStore.setItemAsync(USER_STORAGE_KEY, JSON.stringify(freshUser));
       } catch {
@@ -47,7 +47,10 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     setIsSubmitting(true);
     try {
-      const { user: loggedInUser } = await authService.loginCustomer(email, password);
+      const { user: loggedInUser } = await request('/loginCustomer', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
       setUser(loggedInUser);
       await SecureStore.setItemAsync(USER_STORAGE_KEY, JSON.stringify(loggedInUser));
       return loggedInUser;
@@ -56,10 +59,13 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const register = useCallback(async (payload) => {
+  const register = useCallback(async ({ fullName, email, password }) => {
     setIsSubmitting(true);
     try {
-      return await authService.registerCustomer(payload);
+      return await request('/registerCustomer', {
+        method: 'POST',
+        body: JSON.stringify({ full_name: fullName, email, password }),
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -67,15 +73,34 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
-      await authService.logout();
+      await request('/logout', { method: 'POST' });
     } finally {
       setUser(null);
       await SecureStore.deleteItemAsync(USER_STORAGE_KEY);
     }
   }, []);
 
+  // Actualiza nombre/teléfono del cliente logueado (pantalla "Mis Datos" /
+  // "Editar Perfil") y refresca la sesión guardada con los datos nuevos.
+  const updateProfile = useCallback(async ({ full_name, main_phone }) => {
+    setIsSubmitting(true);
+    try {
+      const { user: updatedUser } = await request('/customer/me', {
+        method: 'PUT',
+        body: JSON.stringify({ full_name, main_phone }),
+      });
+      setUser(updatedUser);
+      await SecureStore.setItemAsync(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+      return updatedUser;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isBootstrapping, isSubmitting, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, isBootstrapping, isSubmitting, login, register, logout, updateProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

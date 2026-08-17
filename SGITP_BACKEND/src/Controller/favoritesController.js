@@ -73,7 +73,7 @@ favoriteController.removeMyFavorite = async (req, res) => {
   }
 };
 
-// GET ALL
+// GET ALL (panel de administración: todos los favoritos de todos los clientes)
 favoriteController.getFavorites = async (req, res) => {
   try {
     const favorites = await favoriteModel.find();

@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
 import { AppText } from '../components/AppText';
 import { Logo } from '../components/Logo';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
 // Cuánto tiempo mínimo se muestra esta pantalla, aunque todo cargue más rápido.
@@ -13,6 +13,8 @@ const MIN_DISPLAY_MS = 1800;
 // llegar a Login o Home). Es la "pantalla de carga personalizada" además
 // del splash nativo: muestra el logo con una animación suave.
 export function SplashScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, isBootstrapping } = useAuth(); // isBootstrapping: true mientras revisamos si ya había una sesión guardada
   const [minDelayDone, setMinDelayDone] = useState(false);
 
@@ -65,28 +67,30 @@ export function SplashScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-  glow: {
-    position: 'absolute',
-    width: 380,
-    height: 380,
-    borderRadius: 190,
-    backgroundColor: colors.glow,
-  },
-  taglineWrapper: {
-    alignItems: 'center',
-    marginTop: 22,
-  },
-  wordmark: {
-    fontSize: 18,
-  },
-  tagline: {
-    marginTop: 6,
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.background,
+    },
+    glow: {
+      position: 'absolute',
+      width: 380,
+      height: 380,
+      borderRadius: 190,
+      backgroundColor: colors.glow,
+    },
+    taglineWrapper: {
+      alignItems: 'center',
+      marginTop: 22,
+    },
+    wordmark: {
+      fontSize: 18,
+    },
+    tagline: {
+      marginTop: 6,
+    },
+  });
+}

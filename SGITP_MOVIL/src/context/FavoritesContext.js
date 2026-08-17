@@ -1,23 +1,61 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-// Guarda qué productos marcó el usuario como favoritos (solo en memoria: si
-// cierra la app se pierde la lista, todavía no hay backend para guardarlo).
+import { request } from '../services/apiClient';
+import { useAuth } from './AuthContext';
+
+// Guarda qué productos marcó el usuario como favoritos. Pide la lista al
+// backend (GET /favorite/mine) y usa mutaciones para agregar/quitar, así la
+// lista sobrevive a cerrar la app (antes vivía solo en memoria).
 const FavoritesContext = createContext(null);
 
 export function FavoritesProvider({ children }) {
-  const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const toggleFavorite = useCallback((productId) => {
-    setFavoriteIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(productId)) {
-        next.delete(productId);
+  // enabled: false mientras no haya sesión, para no pedir /favorite/mine sin
+  // cookie de cliente (daría 401).
+  const { data: favorites } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: () => request('/favorite/mine', { method: 'GET' }),
+    enabled: Boolean(user),
+  });
+
+  // Si cierra sesión, se ignora cualquier dato viejo en caché y se muestra vacío.
+  const favoriteIds = useMemo(() => {
+    if (!user) return new Set();
+    return new Set((favorites ?? []).map((favorite) => favorite.product_id));
+  }, [favorites, user]);
+
+  const invalidateFavorites = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+    [queryClient]
+  );
+
+  const addFavorite = useMutation({
+    mutationFn: (productId) =>
+      request('/favorite/mine', {
+        method: 'POST',
+        body: JSON.stringify({ product_id: productId }),
+      }),
+    onSuccess: invalidateFavorites,
+  });
+
+  const removeFavorite = useMutation({
+    mutationFn: (productId) => request(`/favorite/mine/${productId}`, { method: 'DELETE' }),
+    onSuccess: invalidateFavorites,
+  });
+
+  const toggleFavorite = useCallback(
+    (productId) => {
+      if (favoriteIds.has(productId)) {
+        removeFavorite.mutate(productId);
       } else {
-        next.add(productId);
+        addFavorite.mutate(productId);
       }
-      return next;
-    });
-  }, []);
+    },
+    [favoriteIds, addFavorite, removeFavorite]
+  );
 
   const isFavorite = useCallback((productId) => favoriteIds.has(productId), [favoriteIds]);
 

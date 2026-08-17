@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
@@ -27,6 +27,7 @@ function BranchFormModal({
 }) {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const isEditMode = Boolean(branchData);
+  const lastNameWarningRef = useRef(0);
 
   useEffect(() => {
     if (!open) return;
@@ -43,6 +44,8 @@ function BranchFormModal({
     } else {
       setFormData(EMPTY_FORM);
     }
+
+    lastNameWarningRef.current = 0;
   }, [open, branchData]);
 
   const handleChange = (field, value) => {
@@ -52,9 +55,23 @@ function BranchFormModal({
     }));
   };
 
+  const handleNameChange = (value) => {
+    const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s]*$/;
+    if (!nameRegex.test(value)) {
+      const now = Date.now();
+      if (now - lastNameWarningRef.current > 1500) {
+        toast.warning("El nombre no puede contener símbolos.");
+        lastNameWarningRef.current = now;
+      }
+      return;
+    }
+    handleChange("name", value);
+  };
+
   const handlePhoneChange = (value) => {
     const phoneRegex = /^[0-9+\-\s]*$/;
     if (!phoneRegex.test(value)) return;
+    if (value.length > 15) return;
     handleChange("phone", value);
   };
 
@@ -140,7 +157,8 @@ function BranchFormModal({
                     className="form-editable-input"
                     placeholder="Ej. Sucursal Centro"
                     value={formData.name}
-                    onChange={(event) => handleChange("name", event.target.value)}
+                    maxLength={60}
+                    onChange={(event) => handleNameChange(event.target.value)}
                   />
                 </div>
 
@@ -163,6 +181,7 @@ function BranchFormModal({
                       className="form-editable-input"
                       placeholder="Ej. +503 2222-2222"
                       value={formData.phone}
+                      maxLength={15}
                       onChange={(event) => handlePhoneChange(event.target.value)}
                     />
                   </div>

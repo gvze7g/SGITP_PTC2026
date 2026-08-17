@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { productService } from '../services/productService';
+import { request } from '../services/apiClient';
 
 // Trae la lista completa de productos del backend. React Query se encarga
 // de guardar el resultado en caché, mostrar isLoading mientras carga, y
@@ -8,6 +8,6 @@ import { productService } from '../services/productService';
 export function useProducts() {
   return useQuery({
     queryKey: ['products'],
-    queryFn: productService.getProducts,
+    queryFn: () => request('/products/catalog', { method: 'GET' }),
   });
 }

@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import crypto from "crypto";
 import jsonwebtoken from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -6,20 +5,10 @@ import bcrypt from "bcryptjs";
 import employeeModel from "../Model/employee.js";
 import customerModel from "../Model/customer.js";
 import { config } from "../config.js";
+import { sendEmail } from "../utils/sendMailjet.js";
+import HTMLRecoveryEmail from "../utils/sendMailRecoveryPassword.js";
 
 const recoveryPasswordController = {};
-
-// Plantilla HTML simple para el correo con el código
-const HTMLRecoveryEmail = (code) => {
-  return `
-    <div style="font-family: Arial, sans-serif; padding: 20px;">
-      <h2>Código de recuperación</h2>
-      <p>Tu código de recuperación es:</p>
-      <h1 style="letter-spacing: 4px;">${code}</h1>
-      <p>Este código vence en 15 minutos.</p>
-    </div>
-  `;
-};
 
 recoveryPasswordController.sendRecoveryCode = async (req, res) => {
   try {
@@ -57,30 +46,10 @@ recoveryPasswordController.sendRecoveryCode = async (req, res) => {
       maxAge: 15 * 60 * 1000,
     });
 
-    // Configuración del correo
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: config.email.user_email,
-        pass: config.email.user_password,
-      },
-    });
-
-    const mailOptions = {
-      from: config.email.user_email,
-      to: email,
-      subject: "Código de recuperación de contraseña",
-      text: "Tu código es: " + randomCode + ". Vence en 15 minutos.",
-      html: HTMLRecoveryEmail(randomCode),
-    };
-
     // Enviar correo con el código
-    transporter.sendMail(mailOptions, (error) => {
-      if (error) {
-        console.log("Error nodemailer:", error);
-        return res.status(500).json({ message: "Error al enviar correo" });
-      }
-    });
+    const htmlContent = HTMLRecoveryEmail(randomCode);
+
+    await sendEmail(email, "Código de recuperación de contraseña", htmlContent);
 
     return res.status(200).json({ message: "Recovery email sent" });
   } catch (error) {
