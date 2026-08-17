@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import * as SecureStore from 'expo-secure-store';
 
 import { request } from '../services/apiClient';
+import { sessionStore } from '../services/sessionStore';
 
 // Nombre de la "casilla" donde guardamos el usuario en el almacenamiento
 // seguro del teléfono, para no perder la sesión al cerrar la app.
@@ -21,6 +22,19 @@ export function AuthProvider({ children }) {
   const [isBootstrapping, setIsBootstrapping] = useState(true); // true mientras revisamos si ya había sesión guardada
   const [isSubmitting, setIsSubmitting] = useState(false); // true mientras se está iniciando sesión o registrando
 
+  // Guarda el resultado de cualquier login (normal, Google o Apple).
+  // El backend devuelve { token, user }: el token se guarda aparte porque es
+  // lo que se manda como "Authorization: Bearer" en las siguientes peticiones
+  // (React Native no conserva cookies de forma confiable entre reinicios).
+  const persistSession = useCallback(async ({ token, user: loggedInUser }) => {
+    if (token) await sessionStore.setToken(token);
+
+    setUser(loggedInUser);
+    await SecureStore.setItemAsync(USER_STORAGE_KEY, JSON.stringify(loggedInUser));
+
+    return loggedInUser;
+  }, []);
+
   // Al abrir la app: revisa si había un usuario guardado y le pregunta al
   // backend si esa sesión todavía es válida.
   useEffect(() => {
@@ -36,6 +50,7 @@ export function AuthProvider({ children }) {
         // No hay sesión válida (o no hay internet): dejamos al usuario deslogueado.
         setUser(null);
         await SecureStore.deleteItemAsync(USER_STORAGE_KEY);
+        await sessionStore.clear();
       } finally {
         setIsBootstrapping(false);
       }
@@ -44,20 +59,59 @@ export function AuthProvider({ children }) {
     bootstrapSession();
   }, []);
 
-  const login = useCallback(async (email, password) => {
-    setIsSubmitting(true);
-    try {
-      const { user: loggedInUser } = await request('/loginCustomer', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
-      setUser(loggedInUser);
-      await SecureStore.setItemAsync(USER_STORAGE_KEY, JSON.stringify(loggedInUser));
-      return loggedInUser;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, []);
+  const login = useCallback(
+    async (email, password) => {
+      setIsSubmitting(true);
+      try {
+        const result = await request('/loginCustomer', {
+          method: 'POST',
+          body: JSON.stringify({ email, password }),
+        });
+        return await persistSession(result);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [persistSession]
+  );
+
+  // Recibe el id_token que devolvió Google y deja que el backend lo verifique
+  // contra los servidores de Google (nunca confiamos en el token solo porque
+  // venga del celular).
+  const loginWithGoogle = useCallback(
+    async (idToken) => {
+      setIsSubmitting(true);
+      try {
+        const result = await request('/auth/google', {
+          method: 'POST',
+          body: JSON.stringify({ idToken }),
+        });
+        return await persistSession(result);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [persistSession]
+  );
+
+  // Recibe el identityToken de Apple. fullName solo llega la PRIMERA vez que
+  // el usuario autoriza la app, por eso se manda junto con el token: si no,
+  // la cuenta se crearía sin nombre.
+  const loginWithApple = useCallback(
+    async ({ identityToken, fullName }) => {
+      setIsSubmitting(true);
+      try {
+        const result = await request('/auth/apple', {
+          method: 'POST',
+          body: JSON.stringify({ identityToken, fullName }),
+        });
+        return await persistSession(result);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [persistSession]
+  );
 
   const register = useCallback(async ({ fullName, email, password }) => {
     setIsSubmitting(true);
@@ -77,6 +131,7 @@ export function AuthProvider({ children }) {
     } finally {
       setUser(null);
       await SecureStore.deleteItemAsync(USER_STORAGE_KEY);
+      await sessionStore.clear();
     }
   }, []);
 
@@ -99,7 +154,17 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isBootstrapping, isSubmitting, login, register, logout, updateProfile }}
+      value={{
+        user,
+        isBootstrapping,
+        isSubmitting,
+        login,
+        loginWithGoogle,
+        loginWithApple,
+        register,
+        logout,
+        updateProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>

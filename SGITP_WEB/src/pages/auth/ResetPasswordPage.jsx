@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AuthButton from '../../components/auth/AuthButton';
 import AuthInput from '../../components/auth/AuthInput';
+import ThemeToggle from '../../components/auth/ThemeToggle';
 import { updateCustomerPassword } from '../../services/passwordRecoveryService';
 
 function ResetPasswordPage() {
@@ -63,30 +64,30 @@ function ResetPasswordPage() {
           &lt; Volver
         </button>
         <strong>PEQUES</strong>
-        <span />
+        <ThemeToggle />
       </header>
 
       <main className="verify-content">
         <form className="verify-card recovery-card" onSubmit={handleSubmit} noValidate>
-          <h1>Cambiar contrasena</h1>
-          <p>Ingresa una nueva contrasena para recuperar el acceso a tu cuenta.</p>
+          <h1>Nueva contraseña</h1>
+          <p>Ingresa una nueva contraseña para recuperar el acceso a tu cuenta.</p>
 
           <div className="recovery-input-wrap recovery-password-fields">
             <AuthInput
-              label="Nueva contrasena"
+              label="Nueva contraseña"
               name="newPassword"
               type="password"
-              placeholder="Minimo 8 caracteres"
+              placeholder="Mínimo 8 caracteres"
               value={formData.newPassword}
               onChange={handleChange}
               autoComplete="new-password"
             />
 
             <AuthInput
-              label="Confirmar contrasena"
+              label="Confirmar contraseña"
               name="confirmNewPassword"
               type="password"
-              placeholder="Repite la contrasena"
+              placeholder="Repite la contraseña"
               value={formData.confirmNewPassword}
               onChange={handleChange}
               autoComplete="new-password"
@@ -94,7 +95,7 @@ function ResetPasswordPage() {
           </div>
 
           <AuthButton type="submit" className="verify-button" disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : 'Guardar contrasena'}
+            {isSubmitting ? 'Cambiando...' : 'Cambiar contraseña'}
           </AuthButton>
         </form>
       </main>

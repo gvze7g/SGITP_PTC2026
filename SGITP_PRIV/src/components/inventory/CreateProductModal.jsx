@@ -2,20 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ImagePlus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import CustomDropdown from "../ui/CustomDropdown";
-import DateField from "../ui/DateField";
-
-const OFFER_ACTIVE_OPTIONS = [
-  { value: "yes", label: "Sí" },
-  { value: "no", label: "No" },
-];
-
-const EMPTY_OFFER = {
-  active: false,
-  value: "",
-  startDate: null,
-  endDate: null,
-};
 
 const EMPTY_VARIANT = {
   size: "",
@@ -34,7 +20,18 @@ const EMPTY_FORM = {
   price: "",
   cost: "",
   variants: [{ ...EMPTY_VARIANT }],
-  offer: { ...EMPTY_OFFER },
+  offerActive: false,
+  offerValue: "",
+  offerStartDate: "",
+  offerEndDate: "",
+};
+
+// yyyy-mm-dd para <input type="date">
+const toDateInputValue = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
 };
 
 function CreateProductModal({
@@ -57,7 +54,7 @@ function CreateProductModal({
     if (!open) return;
 
     if (productData) {
-      const existingOffer = productData.offers?.[0];
+      const existingOffer = productData.offers?.[0] || null;
 
       setFormData({
         name: productData.name || "",
@@ -77,14 +74,13 @@ function CreateProductModal({
                 stock: variant.stock || "",
               }))
             : [{ ...EMPTY_VARIANT }],
-        offer: existingOffer
-          ? {
-              active: Boolean(existingOffer.active),
-              value: existingOffer.value ?? "",
-              startDate: existingOffer.startDate ? new Date(existingOffer.startDate) : null,
-              endDate: existingOffer.endDate ? new Date(existingOffer.endDate) : null,
-            }
-          : { ...EMPTY_OFFER },
+        offerActive: Boolean(existingOffer?.active),
+        offerValue:
+          existingOffer?.value !== undefined && existingOffer?.value !== null
+            ? String(existingOffer.value)
+            : "",
+        offerStartDate: toDateInputValue(existingOffer?.startDate),
+        offerEndDate: toDateInputValue(existingOffer?.endDate),
       });
 
       const existingImages = productData.images?.slice(0, 4) || [];
@@ -94,6 +90,9 @@ function CreateProductModal({
         slots[index] = {
           file: null,
           preview: img.image,
+          // Guardamos el public_id para poder decirle al backend exactamente
+          // que imagenes conservar al editar (antes las borraba todas).
+          publicId: img.public_id,
           existing: true,
         };
       });
@@ -103,7 +102,6 @@ function CreateProductModal({
       setFormData({
         ...EMPTY_FORM,
         variants: [{ ...EMPTY_VARIANT }],
-        offer: { ...EMPTY_OFFER },
       });
       setImageSlots([null, null, null, null]);
     }
@@ -128,29 +126,6 @@ function CreateProductModal({
     if (Number(value) < 0) return;
 
     handleChange(field, value);
-  };
-
-  const handleOfferChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      offer: {
-        ...prev.offer,
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleOfferValueChange = (value) => {
-    if (value === "") {
-      handleOfferChange("value", "");
-      return;
-    }
-
-    const decimalRegex = /^\d*\.?\d*$/;
-    if (!decimalRegex.test(value)) return;
-    if (Number(value) < 0 || Number(value) > 100) return;
-
-    handleOfferChange("value", value);
   };
 
   const handleVariantChange = (index, field, value) => {
@@ -247,6 +222,24 @@ function CreateProductModal({
       return false;
     }
 
+    if (formData.offerActive) {
+      const value = Number(formData.offerValue);
+
+      if (formData.offerValue === "" || Number.isNaN(value) || value <= 0 || value > 100) {
+        toast.error("El porcentaje de descuento debe estar entre 1 y 100.");
+        return false;
+      }
+
+      if (
+        formData.offerStartDate &&
+        formData.offerEndDate &&
+        formData.offerStartDate > formData.offerEndDate
+      ) {
+        toast.error("La fecha de inicio de la oferta no puede ser posterior a la fecha de fin.");
+        return false;
+      }
+    }
+
     const invalidVariant = formData.variants.some((variant) => {
       const value = variant.stock;
       return value !== "" && (Number.isNaN(Number(value)) || Number(value) < 0);
@@ -262,22 +255,6 @@ function CreateProductModal({
     if (!hasAtLeastOneImage && !isEditMode) {
       toast.error("Debes subir al menos una imagen.");
       return false;
-    }
-
-    if (formData.offer.active) {
-      if (formData.offer.value === "" || Number(formData.offer.value) <= 0) {
-        toast.error("Ingresa un porcentaje de descuento válido para la oferta.");
-        return false;
-      }
-
-      if (
-        formData.offer.startDate &&
-        formData.offer.endDate &&
-        formData.offer.startDate > formData.offer.endDate
-      ) {
-        toast.error("La fecha de inicio de la oferta no puede ser después de la fecha final.");
-        return false;
-      }
     }
 
     return true;
@@ -298,19 +275,28 @@ function CreateProductModal({
     payload.append("cost", formData.cost || 0);
     payload.append("variants", JSON.stringify(formData.variants));
 
-    const offers =
-      formData.offer.active && formData.offer.value !== ""
-        ? [
-            {
-              value: Number(formData.offer.value),
-              startDate: formData.offer.startDate,
-              endDate: formData.offer.endDate,
-              active: true,
-            },
-          ]
-        : [];
+    const offers = formData.offerActive
+      ? [
+          {
+            value: Number(formData.offerValue),
+            active: true,
+            startDate: formData.offerStartDate || null,
+            endDate: formData.offerEndDate || null,
+          },
+        ]
+      : [];
+
     payload.append("offers", JSON.stringify(offers));
 
+    // Imagenes ya guardadas en Cloudinary que el usuario NO quito del formulario.
+    // El backend borra unicamente las que no aparezcan en esta lista.
+    const keptImages = imageSlots
+      .filter((slot) => slot?.existing)
+      .map((slot) => ({ image: slot.preview, public_id: slot.publicId }));
+
+    payload.append("existingImages", JSON.stringify(keptImages));
+
+    // Imagenes nuevas seleccionadas desde el disco.
     imageSlots.forEach((slot) => {
       if (slot?.file) {
         payload.append("images", slot.file);
@@ -590,53 +576,73 @@ function CreateProductModal({
                 </div>
               </div>
 
-              <div className="variant-section" style={{ marginTop: "4px" }}>
-                <h3 style={{ marginBottom: "10px" }}>Oferta</h3>
+              <div className="offer-section" style={{ marginTop: "4px" }}>
+                <h3 style={{ marginBottom: "10px" }}>Oferta / Descuento</h3>
 
-                <div
+                <label
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr 1fr",
-                    gap: "14px",
-                    alignItems: "start",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: formData.offerActive ? "14px" : "0",
+                    cursor: "pointer",
+                    width: "fit-content",
                   }}
                 >
-                  <CustomDropdown
-                    label="¿PRODUCTO EN OFERTA?"
-                    value={formData.offer.active ? "yes" : "no"}
-                    options={OFFER_ACTIVE_OPTIONS}
-                    onChange={(value) => handleOfferChange("active", value === "yes")}
+                  <input
+                    type="checkbox"
+                    checked={formData.offerActive}
+                    onChange={(event) => handleChange("offerActive", event.target.checked)}
                   />
+                  <span className="modal-section-label" style={{ margin: 0 }}>
+                    ACTIVAR OFERTA PARA ESTE PRODUCTO
+                  </span>
+                </label>
 
-                  <div className="modal-input-group">
-                    <span className="modal-section-label">DESCUENTO (%)</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      className="modal-line-input"
-                      placeholder="0"
-                      value={formData.offer.value}
-                      disabled={!formData.offer.active}
-                      onChange={(event) => handleOfferValueChange(event.target.value)}
-                      onWheel={preventWheelChange}
-                    />
+                {formData.offerActive ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, minmax(140px, 1fr))",
+                      gap: "14px",
+                    }}
+                  >
+                    <div className="modal-input-group">
+                      <span className="modal-section-label">% DE DESCUENTO</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        className="modal-line-input"
+                        placeholder="Ej: 20"
+                        value={formData.offerValue}
+                        onChange={(event) =>
+                          handleDecimalChange("offerValue", event.target.value)
+                        }
+                        onWheel={preventWheelChange}
+                      />
+                    </div>
+
+                    <div className="modal-input-group">
+                      <span className="modal-section-label">DESDE (OPCIONAL)</span>
+                      <input
+                        type="date"
+                        className="modal-line-input"
+                        value={formData.offerStartDate}
+                        onChange={(event) => handleChange("offerStartDate", event.target.value)}
+                      />
+                    </div>
+
+                    <div className="modal-input-group">
+                      <span className="modal-section-label">HASTA (OPCIONAL)</span>
+                      <input
+                        type="date"
+                        className="modal-line-input"
+                        value={formData.offerEndDate}
+                        onChange={(event) => handleChange("offerEndDate", event.target.value)}
+                      />
+                    </div>
                   </div>
-
-                  <DateField
-                    label="DESDE (OPCIONAL)"
-                    value={formData.offer.startDate}
-                    onChange={(date) => handleOfferChange("startDate", date)}
-                    disabled={!formData.offer.active}
-                  />
-
-                  <DateField
-                    label="HASTA (OPCIONAL)"
-                    value={formData.offer.endDate}
-                    onChange={(date) => handleOfferChange("endDate", date)}
-                    minDate={formData.offer.startDate}
-                    disabled={!formData.offer.active}
-                  />
-                </div>
+                ) : null}
               </div>
 
               <div className="variant-section" style={{ marginTop: "4px" }}>

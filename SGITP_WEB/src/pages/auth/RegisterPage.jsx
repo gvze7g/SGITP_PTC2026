@@ -4,7 +4,10 @@ import { toast } from 'sonner';
 import AuthButton from '../../components/auth/AuthButton';
 import AuthCard from '../../components/auth/AuthCard';
 import AuthInput from '../../components/auth/AuthInput';
+import PequesBeeIcon from '../../components/auth/PequesBeeIcon';
 import PequesBrandPanel from '../../components/auth/PequesBrandPanel';
+import SocialAuthButtons from '../../components/auth/SocialAuthButtons';
+import ThemeToggle from '../../components/auth/ThemeToggle';
 import { registerCustomer } from '../../services/customerAuthService';
 
 function RegisterPage() {
@@ -76,12 +79,29 @@ function RegisterPage() {
     }
   };
 
+  // Google y Apple crean la cuenta automaticamente si el correo aun no existe,
+  // asi que el mismo manejador sirve para registro e inicio de sesion.
+  const handleSocialSuccess = (provider) => () => {
+    toast.success(`Cuenta creada e inicio de sesion con ${provider} exitoso.`);
+    navigate('/home', { replace: true });
+  };
+
+  const handleGoogleSuccess = handleSocialSuccess('Google');
+  const handleAppleSuccess = handleSocialSuccess('Apple');
+
   return (
     <section className="auth-split-screen">
       <PequesBrandPanel />
 
       <section className="auth-form-panel">
+        <ThemeToggle />
+
         <AuthCard>
+          <div className="auth-mobile-brand">
+            <PequesBeeIcon size={40} />
+            <span>Peques</span>
+          </div>
+
           <h1 className="auth-title">Crear cuenta</h1>
 
           <p className="auth-subtitle">
@@ -125,29 +145,11 @@ function RegisterPage() {
             </AuthButton>
           </form>
 
-          <div className="auth-divider">
-            <span>O unete mediante</span>
-          </div>
-
-          <div className="auth-social-grid">
-            <button
-              type="button"
-              className="auth-social-btn"
-              onClick={() => toast('Google estara disponible proximamente.')}
-            >
-              <span>google</span>
-              <strong>G</strong>
-            </button>
-
-            <button
-              type="button"
-              className="auth-social-btn"
-              onClick={() => toast('Apple estara disponible proximamente.')}
-            >
-              <span>iOS</span>
-              <strong>Apple</strong>
-            </button>
-          </div>
+          <SocialAuthButtons
+            onGoogleSuccess={handleGoogleSuccess}
+            onAppleSuccess={handleAppleSuccess}
+            googleText="signup_with"
+          />
 
           <div className="auth-bottom-text">
             <span>¿Ya eres miembro?</span>

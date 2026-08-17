@@ -1,7 +1,10 @@
 import bcrypt from "bcryptjs";
-import jsonwebtoken from "jsonwebtoken";
 import customerModel from "../Model/customer.js";
-import { config } from "../config.js";
+import {
+  createSessionToken,
+  publicCustomer,
+  setSessionCookie,
+} from "../utils/sessionToken.js";
 
 const loginCustomerController = {};
 
@@ -19,6 +22,13 @@ loginCustomerController.login = async (req, res) => {
     // Si la cuenta está bloqueada por intentos fallidos, no deja entrar
     if (userFound.timeOut && userFound.timeOut > Date.now()) {
       return res.status(403).json({ message: "Cuenta bloqueada temporalmente" });
+    }
+
+    // Cuenta creada únicamente con Google: no tiene contraseña local que comparar
+    if (!userFound.password) {
+      return res.status(400).json({
+        message: "Esta cuenta fue creada con Google. Usa 'Continuar con Google' para iniciar sesión.",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, userFound.password);
@@ -45,33 +55,16 @@ loginCustomerController.login = async (req, res) => {
     userFound.timeOut = null;
     await userFound.save();
 
-    // Crear token con datos básicos del cliente
-    const token = jsonwebtoken.sign(
-      {
-        id: userFound._id,
-        userType: "Customer",
-        customerType: userFound.customer_type,
-      },
-      config.JWT.secret,
-      { expiresIn: "30d" }
-    );
-
-    // Guardar token en cookie segura para sesión
-    res.cookie("authCookie", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    // Crear token con datos básicos del cliente y guardarlo en cookie segura
+    const token = createSessionToken(userFound);
+    setSessionCookie(res, token);
 
     return res.status(200).json({
       message: "Login exitoso",
-      user: {
-        id: userFound._id,
-        full_name: userFound.full_name,
-        email: userFound.email,
-        customer_type: userFound.customer_type,
-      },
+      // La web usa la cookie e ignora este token; la app móvil lo guarda en
+      // SecureStore porque React Native no persiste cookies de forma confiable.
+      token,
+      user: publicCustomer(userFound),
     });
   } catch (error) {
     console.log("error: " + error);

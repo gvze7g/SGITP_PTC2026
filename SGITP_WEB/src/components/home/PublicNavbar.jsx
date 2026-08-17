@@ -1,6 +1,8 @@
-import { Menu, Moon, ShoppingBag, Sun, UserRound, X } from 'lucide-react';
+import { LogOut, Menu, Moon, ShoppingBag, Sun, UserRound, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
 const NAV_ITEMS = [
@@ -14,6 +16,7 @@ function PublicNavbar({ activeItem = '' }) {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, logout } = useAuth();
   const isDark = theme === 'dark';
 
   const closeMenu = () => {
@@ -29,6 +32,18 @@ function PublicNavbar({ activeItem = '' }) {
     }
 
     navigate(path);
+  };
+
+  const handleLogout = async () => {
+    closeMenu();
+
+    try {
+      await logout();
+      toast.success('Sesion cerrada correctamente.');
+      navigate('/login', { replace: true });
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo cerrar sesion.');
+    }
   };
 
   return (
@@ -79,24 +94,27 @@ function PublicNavbar({ activeItem = '' }) {
           <strong>PEQUES</strong>
         </div>
 
-        <button
-          type="button"
-          className="public-drawer-theme"
-          onClick={toggleTheme}
-        >
-          {isDark ? 'Modo claro' : 'Modo oscuro'}
-        </button>
+        <div className="public-nav-links-items">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={activeItem === item.key ? 'public-nav-link-active' : ''}
+              onClick={() => handleNavigate(item.path)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
 
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            className={activeItem === item.key ? 'public-nav-link-active' : ''}
-            onClick={() => handleNavigate(item.path)}
-          >
-            {item.label}
-          </button>
-        ))}
+        <div className="public-nav-footer">
+          {isAuthenticated ? (
+            <button type="button" className="public-nav-logout" onClick={handleLogout}>
+              <LogOut size={16} strokeWidth={1.8} />
+              Cerrar sesion
+            </button>
+          ) : null}
+        </div>
           </nav>
 
           <div className="public-nav-actions">

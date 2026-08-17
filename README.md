@@ -251,23 +251,34 @@ Pendiente de implementación.
 
 ## Backend
 
-Crear un archivo `.env` dentro del proyecto Backend.
+Crear un archivo `.env` dentro del proyecto Backend, copiando la plantilla:
+
+```bash
+cd SGITP_BACKEND
+cp .env.example .env
+```
+
+Estos son los nombres que realmente lee `src/config.js`:
 
 ```env
-SERVER_PORT=
+PORT=4000
 
-MONGODB_URI=
+DB_URI=
 
-JWT_SECRET=
-JWT_EXPIRES_IN=
+JWT_SECRET_KEY=
 
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 
-EMAIL_USER=
-EMAIL_PASSWORD=
+USER_EMAIL=
+USER_PASSWORD=
 ```
+
+`SGITP_WEB` y `SGITP_MOVIL` también tienen su propio `.env.example`.
+
+> Para configurar Cloudinary y el login con Google / Apple paso a paso, ver
+> **[GUIA_LOGIN_SOCIAL.md](./GUIA_LOGIN_SOCIAL.md)**.
 
 ---
 
