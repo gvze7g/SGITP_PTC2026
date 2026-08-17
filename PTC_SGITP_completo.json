@@ -1,0 +1,383 @@
+{
+  "pointsales": [],
+  "spents": [],
+  "carts": [
+    {
+      "_id": "6a7be1add13fe35cf45dfb2d",
+      "customerId": "6a47530ad7fc30b7697f3542",
+      "products": [
+        {
+          "productId": "6a7929a483f9d14ebddadd02",
+          "quantity": 1,
+          "subtotal": 24,
+          "_id": "6a7be1add13fe35cf45dfb31"
+        }
+      ],
+      "total": 24,
+      "status": "Completed",
+      "createdAt": "2026-08-12T02:59:57.504Z",
+      "updatedAt": "2026-08-12T03:13:18.522Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a7be715155fcdf8eed8f108",
+      "customerId": "6a47530ad7fc30b7697f3542",
+      "products": [
+        {
+          "productId": "6a7929a483f9d14ebddadd02",
+          "quantity": 16,
+          "subtotal": 384,
+          "_id": "6a7d0fc306c1c7a2c10361ec"
+        }
+      ],
+      "total": 384,
+      "status": "Completed",
+      "createdAt": "2026-08-12T03:23:01.574Z",
+      "updatedAt": "2026-08-13T00:29:18.371Z",
+      "__v": 32
+    },
+    {
+      "_id": "6a7d10ec21e3c54dd987f2a8",
+      "customerId": "6a47530ad7fc30b7697f3542",
+      "products": [
+        {
+          "productId": "6a7929a483f9d14ebddadd02",
+          "quantity": 1,
+          "subtotal": 24,
+          "_id": "6a7d10ec21e3c54dd987f2ac"
+        }
+      ],
+      "total": 24,
+      "status": "Active",
+      "createdAt": "2026-08-13T00:33:48.087Z",
+      "updatedAt": "2026-08-13T00:33:48.087Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a8122cf6dd04a2ad8d11667",
+      "customerId": "6a79199a6a8ea1dc425752ae",
+      "products": [],
+      "total": 0,
+      "status": "Active",
+      "createdAt": "2026-08-16T02:39:11.756Z",
+      "updatedAt": "2026-08-16T02:41:30.278Z",
+      "__v": 2
+    }
+  ],
+  "employees": [
+    {
+      "_id": "6a47530ad7fc30b7697f3542",
+      "full_name": "Administrador Principal",
+      "main_phone": "7777-7977",
+      "email": "edujogb7@gmail.com",
+      "password": "$2b$10$NgLijP.TzIu6ATAoet5XiOYNWyDHn/Iqb7YyGFKHuZ/X2uDw2hhCy",
+      "branch_id": null,
+      "addresses": [],
+      "phone_numbers": [
+        {
+          "number": "7777-7977",
+          "type": "Personal",
+          "isPrimary": true,
+          "_id": "6a482a5a4ded1dd02daea40c"
+        }
+      ],
+      "birth_date": null,
+      "hire_date": null,
+      "role": "Administrator",
+      "isVerified": true,
+      "loginAttempts": 0,
+      "timeOut": null,
+      "createdAt": "2026-07-03T00:00:00.000Z",
+      "updatedAt": "2026-08-12T02:57:31.172Z",
+      "base_salary": 0
+    }
+  ],
+  "favorites": [],
+  "products": [
+    {
+      "_id": "6a7929a483f9d14ebddadd02",
+      "name": "Prueba",
+      "description": "dasdasd",
+      "category": "Camisa",
+      "images": [
+        {
+          "image": "https://res.cloudinary.com/dhhxt7an6/image/upload/v1786325412/SGITP_BACKEND/products/ufkdxa0j1rizujlqgubo.jpg",
+          "public_id": "SGITP_BACKEND/products/ufkdxa0j1rizujlqgubo",
+          "_id": "6a7929a483f9d14ebddadd03"
+        }
+      ],
+      "variants": [
+        {
+          "size": "09-12 Meses",
+          "color": "Rojo",
+          "colorHex": "#ff0000",
+          "design": "verde",
+          "fabric": "123",
+          "stock": "123",
+          "_id": "6a824be2ce6a578324b2cf4a",
+          "embroidery": "123"
+        },
+        {
+          "size": "06-9 Meses",
+          "color": "Negro",
+          "colorHex": "#000000",
+          "design": "verde",
+          "fabric": "67",
+          "stock": "123",
+          "_id": "6a824be2ce6a578324b2cf4b",
+          "embroidery": "67"
+        }
+      ],
+      "price": 24,
+      "cost": 2,
+      "createdAt": "2026-08-10T01:30:12.527Z",
+      "updatedAt": "2026-08-16T23:46:42.970Z",
+      "__v": 0,
+      "offers": [
+        {
+          "value": 30,
+          "startDate": null,
+          "endDate": null,
+          "active": true,
+          "_id": "6a824be2ce6a578324b2cf4c"
+        }
+      ]
+    },
+    {
+      "_id": "6a824d03ce6a578324b2cf63",
+      "name": "dfa",
+      "description": "asdfasdf",
+      "category": "asdf",
+      "images": [
+        {
+          "image": "https://res.cloudinary.com/dhhxt7an6/image/upload/v1786924294/SGITP_BACKEND/products/w2xoljubkhoqhdekvea0.png",
+          "public_id": "SGITP_BACKEND/products/w2xoljubkhoqhdekvea0",
+          "_id": "6a824d03ce6a578324b2cf64"
+        }
+      ],
+      "variants": [
+        {
+          "size": "12",
+          "color": "asdf",
+          "colorHex": "#000000",
+          "design": "asdf",
+          "fabric": "asdf",
+          "stock": "12",
+          "_id": "6a824d03ce6a578324b2cf65",
+          "embroidery": "asdf"
+        }
+      ],
+      "price": 23,
+      "cost": 123,
+      "offers": [
+        {
+          "value": 12,
+          "startDate": "2026-08-05T00:00:00.000Z",
+          "endDate": "2026-08-20T00:00:00.000Z",
+          "active": true,
+          "_id": "6a824d03ce6a578324b2cf66"
+        }
+      ],
+      "createdAt": "2026-08-16T23:51:31.920Z",
+      "updatedAt": "2026-08-16T23:51:31.920Z",
+      "__v": 0
+    }
+  ],
+  "payments": [],
+  "sales": [
+    {
+      "_id": "6a7be4ce155fcdf8eed8f0fb",
+      "sales_date": "2026-08-12T03:13:18.426Z",
+      "employee_id": "6a47530ad7fc30b7697f3542",
+      "cart_id": "6a7be1add13fe35cf45dfb2d",
+      "origin": "Web",
+      "applied_price_type": "Retail",
+      "payment_method": "Card",
+      "payment_status": "Pending",
+      "shipping_address": "av232332323sdafaf===), San Salvador, 1101, El Salvador",
+      "shipping_phone": "",
+      "item_details": [
+        {
+          "product_id": "6a7929a483f9d14ebddadd02",
+          "name": "Prueba",
+          "selected_variant": "09-12 Meses / Rojo",
+          "quantity": 1,
+          "unit_price": 24,
+          "_id": "6a7be4ce155fcdf8eed8f0fc"
+        }
+      ],
+      "createdAt": "2026-08-12T03:13:18.433Z",
+      "updatedAt": "2026-08-12T03:13:18.433Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a7d0fde38b8497c30ad6883",
+      "sales_date": "2026-08-13T00:29:18.289Z",
+      "employee_id": "6a47530ad7fc30b7697f3542",
+      "cart_id": "6a7be715155fcdf8eed8f108",
+      "origin": "Web",
+      "applied_price_type": "Retail",
+      "payment_method": "Card",
+      "payment_status": "Pending",
+      "shipping_address": "av232332323sdafaf===), San Salvador, 1101, El Salvador",
+      "shipping_phone": "",
+      "item_details": [
+        {
+          "product_id": "6a7929a483f9d14ebddadd02",
+          "name": "Prueba",
+          "selected_variant": "09-12 Meses / Rojo",
+          "quantity": 16,
+          "unit_price": 24,
+          "_id": "6a7d0fde38b8497c30ad6884"
+        }
+      ],
+      "createdAt": "2026-08-13T00:29:18.295Z",
+      "updatedAt": "2026-08-13T00:29:18.295Z",
+      "__v": 0
+    }
+  ],
+  "paymentmethods": [],
+  "payrolls": [],
+  "customers": [
+    {
+      "_id": "6a47e30d0c467382a4fdedee",
+      "customer_type": "Client",
+      "full_name": "Palacios",
+      "email": "pauul@gmail.com",
+      "password": "$2b$10$ebuHjoHsJCykhDRpMJZNc.kHkaFXIwf.aFQAflZa0r6ikwDQv7HGy",
+      "addresses": [
+        {
+          "label": "Soya City",
+          "street_and_number": "",
+          "city": "",
+          "reference": "",
+          "isPrimary": true,
+          "_id": "6a48183804567aea7e2c9ee8"
+        }
+      ],
+      "phone_numbers": [
+        {
+          "number": "+503",
+          "isPrimary": true,
+          "_id": "6a48183804567aea7e2c9ee9"
+        }
+      ],
+      "isVerified": false,
+      "createdAt": "2026-07-03T16:27:57.148Z",
+      "updatedAt": "2026-08-09T23:55:48.251Z",
+      "__v": 0,
+      "main_phone": "+503",
+      "loginAttempts": 0,
+      "timeOut": null
+    },
+    {
+      "_id": "6a47e6583befbce3c5ab8b3d",
+      "customer_type": "Client",
+      "full_name": "paul",
+      "email": "pauwl@gmail.com",
+      "password": "$2b$10$0YySIunqSDnYHh4bNHkECOBmJsHhT6wV.ukniuiBpQydY.MXIBh3W",
+      "addresses": [
+        {
+          "label": "New Mariona York",
+          "street_and_number": "",
+          "city": "",
+          "reference": "",
+          "isPrimary": true,
+          "_id": "6a480bd004567aea7e2c9e39"
+        }
+      ],
+      "phone_numbers": [
+        {
+          "number": "+503",
+          "isPrimary": true,
+          "_id": "6a480bd004567aea7e2c9e3a"
+        }
+      ],
+      "isVerified": false,
+      "createdAt": "2026-07-03T16:42:00.014Z",
+      "updatedAt": "2026-07-03T19:21:52.731Z",
+      "__v": 0,
+      "loginAttempts": 0,
+      "timeOut": null,
+      "main_phone": "+503"
+    },
+    {
+      "_id": "6a79199a6a8ea1dc425752ae",
+      "customer_type": "Client",
+      "full_name": "Eduardo Gálvez",
+      "email": "20230315@ricaldone.edu.sv",
+      "password": "$2b$10$nNjuf/M.KI8do3cl08DmLeoDCp..tEiNsWhrIlg6u5XdD2JarFpcO",
+      "addresses": [],
+      "phone_numbers": [],
+      "isVerified": true,
+      "createdAt": "2026-08-10T00:21:46.522Z",
+      "updatedAt": "2026-08-10T00:24:16.383Z",
+      "__v": 0,
+      "loginAttempts": 0,
+      "timeOut": null
+    },
+    {
+      "_id": "6a821b2ecff0424fe07888b6",
+      "customer_type": "Client",
+      "full_name": "Paul Melquisedec Cañas Palacios",
+      "email": "paulcanas7@gmail.com",
+      "password": "$2b$10$1hUtyBfn4Ni0RAhzgxfZh.XqibbZFDuRu9mR3UxWaEYK7AfLjlk.i",
+      "addresses": [],
+      "phone_numbers": [],
+      "isVerified": false,
+      "createdAt": "2026-08-16T20:18:54.148Z",
+      "updatedAt": "2026-08-16T20:18:54.148Z",
+      "__v": 0
+    }
+  ],
+  "promotions": [
+    {
+      "_id": "6a7bddb33c826a493e08d3aa",
+      "coupon_code": "asdfasdfag232",
+      "descriptions": "asdf",
+      "discount_percentage": 12,
+      "start_date": "2026-08-20T00:00:00.000Z",
+      "end_date": "2026-08-21T00:00:00.000Z",
+      "isActive": false,
+      "createdAt": "2026-08-12T02:42:59.986Z",
+      "updatedAt": "2026-08-12T02:42:59.986Z",
+      "__v": 0
+    }
+  ],
+  "branches": [
+    {
+      "_id": "6a46cd6da663f16c568ff0f4",
+      "name": "Sucursal Centroo",
+      "address": "Calle 10 #15-20, San Salvador",
+      "phone": "+503 7123-4567",
+      "email": "sucursal.centro@empresa.com",
+      "isActive": true,
+      "opening_date": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-03T17:13:03.167Z"
+    },
+    {
+      "_id": "6a47edde3befbce3c5ab8b47",
+      "name": "SoyaYork",
+      "address": "Las margaritas",
+      "phone": "2102-2012",
+      "email": "sucursal@peques.com",
+      "isActive": true,
+      "opening_date": "2026-07-03T00:00:00.000Z",
+      "createdAt": "2026-07-03T17:14:06.681Z",
+      "updatedAt": "2026-07-03T17:14:17.462Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a5133ec8b455be23af61f28",
+      "name": "ApopaXas",
+      "address": "Apopa calle 2",
+      "phone": "256277777",
+      "email": "ivan69@gmail.com",
+      "isActive": true,
+      "opening_date": "2026-02-09T00:00:00.000Z",
+      "createdAt": "2026-07-10T18:03:24.680Z",
+      "updatedAt": "2026-07-10T18:04:24.392Z",
+      "__v": 0
+    }
+  ]
+}

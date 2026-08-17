@@ -27,6 +27,7 @@ export function Accordion({ title, children }) {
   );
 }
 
+//Estilos
 const styles = StyleSheet.create({
   container: {
     borderTopWidth: 1,

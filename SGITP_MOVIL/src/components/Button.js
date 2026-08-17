@@ -46,6 +46,8 @@ export function Button({
   );
 }
 
+
+//Estilos del boton
 const styles = StyleSheet.create({
   base: {
     height: 54,
