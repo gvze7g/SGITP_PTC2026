@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 //URL de la api
-const API_URL = "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
 //Hook personalizado del login
 function useEmployeeLogin() {
@@ -14,7 +14,7 @@ function useEmployeeLogin() {
       setLoading(true);
 
       //Llamada a la API mediante fetch
-      const response = await fetch(`${API_URL}/api/loginEmployee`, {
+      const response = await fetch(`${API_URL}/loginEmployee`, {
         //Cuerpo de la llamada
         method: "POST",
         headers: {

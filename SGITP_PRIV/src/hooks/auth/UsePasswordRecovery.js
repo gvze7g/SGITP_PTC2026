@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 //URL de la api
-const API_URL = "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
 //Hook personalizado de la recuperación de contraseña
 function usePasswordRecovery() {
@@ -12,7 +12,7 @@ function usePasswordRecovery() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_URL}/api/recoveryPassword/requestCode`, {
+      const response = await fetch(`${API_URL}/recoveryPassword/requestCode`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,7 +55,7 @@ function usePasswordRecovery() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_URL}/api/recoveryPassword/verifyCode`, {
+      const response = await fetch(`${API_URL}/recoveryPassword/verifyCode`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -96,7 +96,7 @@ function usePasswordRecovery() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_URL}/api/recoveryPassword/newPassword`, {
+      const response = await fetch(`${API_URL}/recoveryPassword/newPassword`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
