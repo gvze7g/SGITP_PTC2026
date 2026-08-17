@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { authService } from '../services/authService';
+import { request } from '../services/apiClient';
 import { useToast } from '../context/ToastContext';
 
 const CODE_LENGTH = 6;
@@ -29,9 +29,15 @@ export function useVerifyCodeForm({ mode, email, onSuccess }) {
     setIsSubmitting(true);
     try {
       if (mode === 'register') {
-        await authService.verifyRegistrationCode(code);
+        await request('/registerCustomer/verifyCodeEmail', {
+          method: 'POST',
+          body: JSON.stringify({ verificationCodeRequest: code }),
+        });
       } else {
-        await authService.verifyRecoveryCode(code);
+        await request('/recoveryPassword/verifyCode', {
+          method: 'POST',
+          body: JSON.stringify({ code }),
+        });
       }
       // Mensaje propio en español (el backend a veces contesta en inglés).
       showToast(SUCCESS_MESSAGE[mode], 'success');
@@ -50,7 +56,10 @@ export function useVerifyCodeForm({ mode, email, onSuccess }) {
 
     setIsResending(true);
     try {
-      await authService.requestRecoveryCode(email);
+      await request('/recoveryPassword/requestCode', {
+        method: 'POST',
+        body: JSON.stringify({ email, userType: 'Customer' }),
+      });
       showToast('Código reenviado a tu correo', 'success');
     } catch (error) {
       showToast(error.message, 'error');

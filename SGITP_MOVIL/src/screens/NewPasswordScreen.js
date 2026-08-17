@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Controller } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 import { Info } from 'lucide-react-native';
@@ -8,12 +9,14 @@ import { Button } from '../components/Button';
 import { KeyboardAvoidingScreen } from '../components/KeyboardAvoidingScreen';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextField } from '../components/TextField';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { useNewPasswordForm } from '../hooks/useNewPasswordForm';
 
 // Última pantalla del flujo de recuperación: el usuario ya verificó el
 // código y ahora define su nueva contraseña.
 export function NewPasswordScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { control, errors, onSubmit, isSubmitting } = useNewPasswordForm(() =>
     navigation.replace('Login')
   );
@@ -81,30 +84,32 @@ export function NewPasswordScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    paddingTop: 28,
-  },
-  title: {
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 28,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    marginBottom: 24,
-    marginTop: 4,
-  },
-  infoIcon: {
-    marginTop: 2,
-    marginRight: 8,
-  },
-  infoText: {
-    flex: 1,
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    content: {
+      paddingTop: 28,
+    },
+    title: {
+      textAlign: 'center',
+      textTransform: 'uppercase',
+      letterSpacing: 2,
+    },
+    subtitle: {
+      textAlign: 'center',
+      marginTop: 10,
+      marginBottom: 28,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      marginBottom: 24,
+      marginTop: 4,
+    },
+    infoIcon: {
+      marginTop: 2,
+      marginRight: 8,
+    },
+    infoText: {
+      flex: 1,
+    },
+  });
+}

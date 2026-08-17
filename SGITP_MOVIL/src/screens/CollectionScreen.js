@@ -9,10 +9,15 @@ import { FilterChip } from '../components/FilterChip';
 import { ProductCard } from '../components/ProductCard';
 import { SearchInput } from '../components/SearchInput';
 import { StoreHeader } from '../components/StoreHeader';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { useProducts } from '../hooks/useProducts';
+import { getActiveOffer } from '../utils/offers';
 
 const PAGE_SIZE = 6;
+
+// Chip especial que no es una categoría real: filtra los productos que
+// tienen una oferta activa hoy (ver utils/offers.js).
+const OFFERS_FILTER = 'Ofertas';
 
 // Las 3 formas de ordenar la lista. Cada vez que se toca "Ordenar" se pasa
 // a la siguiente de este array.
@@ -27,6 +32,8 @@ const SORT_MODES = [
 // tenemos todos los productos descargados (no son tantos como para que
 // haga falta pedirle esto al backend).
 export function CollectionScreen({ route, navigation }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: products, isLoading, isError } = useProducts();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
@@ -41,9 +48,9 @@ export function CollectionScreen({ route, navigation }) {
   }, [route.params?.category]);
 
   const categories = useMemo(() => {
-    if (!products) return ['Todos'];
+    if (!products) return ['Todos', OFFERS_FILTER];
     const unique = [...new Set(products.map((product) => product.category).filter(Boolean))];
-    return ['Todos', ...unique];
+    return ['Todos', OFFERS_FILTER, ...unique];
   }, [products]);
 
   const filteredProducts = useMemo(() => {
@@ -51,7 +58,9 @@ export function CollectionScreen({ route, navigation }) {
 
     let result = products;
 
-    if (selectedCategory !== 'Todos') {
+    if (selectedCategory === OFFERS_FILTER) {
+      result = result.filter((product) => Boolean(getActiveOffer(product)));
+    } else if (selectedCategory !== 'Todos') {
       result = result.filter((product) => product.category === selectedCategory);
     }
 
@@ -170,56 +179,58 @@ export function CollectionScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
-  },
-  searchWrapper: {
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  chipsRow: {
-    paddingBottom: 16,
-  },
-  toolbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  toolbarActions: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  toolbarButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  toolbarLabel: {
-    fontSize: 12,
-    letterSpacing: 0.5,
-  },
-  loading: {
-    marginTop: 24,
-  },
-  emptyState: {
-    textAlign: 'center',
-    marginTop: 40,
-  },
-  row: {
-    gap: 16,
-  },
-  gridCard: {
-    flex: 1,
-    marginBottom: 24,
-  },
-  loadMoreWrapper: {
-    marginTop: 8,
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    listContent: {
+      paddingHorizontal: 20,
+      paddingBottom: 32,
+    },
+    searchWrapper: {
+      marginTop: 4,
+      marginBottom: 16,
+    },
+    chipsRow: {
+      paddingBottom: 16,
+    },
+    toolbar: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    toolbarActions: {
+      flexDirection: 'row',
+      gap: 16,
+    },
+    toolbarButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    toolbarLabel: {
+      fontSize: 12,
+      letterSpacing: 0.5,
+    },
+    loading: {
+      marginTop: 24,
+    },
+    emptyState: {
+      textAlign: 'center',
+      marginTop: 40,
+    },
+    row: {
+      gap: 16,
+    },
+    gridCard: {
+      flex: 1,
+      marginBottom: 24,
+    },
+    loadMoreWrapper: {
+      marginTop: 8,
+    },
+  });
+}

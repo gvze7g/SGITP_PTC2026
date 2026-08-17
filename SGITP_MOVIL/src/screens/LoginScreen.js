@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Controller } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Globe, Monitor } from 'lucide-react-native';
@@ -8,12 +9,14 @@ import { Checkbox } from '../components/Checkbox';
 import { Divider } from '../components/Divider';
 import { KeyboardAvoidingScreen } from '../components/KeyboardAvoidingScreen';
 import { TextField } from '../components/TextField';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { useLoginForm } from '../hooks/useLoginForm';
 
 // Pantalla de inicio de sesión. Toda la lógica (validación, llamada al
 // backend, mensajes) vive en useLoginForm; aquí solo armamos la vista.
 export function LoginScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { control, errors, onSubmit, isSubmitting, rememberMe, toggleRememberMe } =
     useLoginForm(() => navigation.replace('MainTabs'));
 
@@ -101,39 +104,41 @@ export function LoginScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    paddingTop: 32,
-  },
-  wordmark: {
-    textAlign: 'center',
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 32,
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  divider: {
-    marginVertical: 24,
-  },
-  socialGroup: {
-    marginBottom: 8,
-  },
-  socialGap: {
-    height: 14,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 28,
-  },
-  footerLink: {
-    textDecorationLine: 'underline',
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    content: {
+      paddingTop: 32,
+    },
+    wordmark: {
+      textAlign: 'center',
+    },
+    subtitle: {
+      textAlign: 'center',
+      marginTop: 8,
+      marginBottom: 32,
+    },
+    optionsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 24,
+    },
+    divider: {
+      marginVertical: 24,
+    },
+    socialGroup: {
+      marginBottom: 8,
+    },
+    socialGap: {
+      height: 14,
+    },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 28,
+    },
+    footerLink: {
+      textDecorationLine: 'underline',
+    },
+  });
+}

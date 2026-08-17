@@ -224,8 +224,7 @@ productController.insertProducts = async (req, res) => {
 
     const parsedVariants =
       typeof variants === "string" ? JSON.parse(variants) : variants;
-    const parsedOffers =
-      typeof offers === "string" ? JSON.parse(offers) : offers;
+    const parsedOffers = typeof offers === "string" ? JSON.parse(offers) : offers;
 
     const newProduct = new productsModel({
       name,
@@ -284,8 +283,7 @@ productController.updateProducts = async (req, res) => {
 
     const parsedVariants =
       typeof variants === "string" ? JSON.parse(variants) : variants;
-    const parsedOffers =
-      typeof offers === "string" ? JSON.parse(offers) : offers;
+    const parsedOffers = typeof offers === "string" ? JSON.parse(offers) : offers;
 
     const updatedProduct = await productsModel.findByIdAndUpdate(
       req.params.id,

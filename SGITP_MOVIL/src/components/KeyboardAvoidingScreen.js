@@ -1,13 +1,17 @@
+import { useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 
 // Envoltorio para pantallas con formularios.
 // Se encarga de que el teclado NUNCA tape los inputs: en iOS empuja el
 // contenido hacia arriba (padding) y en Android achica la pantalla (height).
 // Así este arreglo queda hecho una sola vez y no hay que repetirlo en cada pantalla nueva.
 export function KeyboardAvoidingScreen({ header, children, contentStyle }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {header}
@@ -26,16 +30,18 @@ export function KeyboardAvoidingScreen({ header, children, contentStyle }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 24,
-    paddingVertical: 24,
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    flex: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: 24,
+      paddingVertical: 24,
+    },
+  });
+}

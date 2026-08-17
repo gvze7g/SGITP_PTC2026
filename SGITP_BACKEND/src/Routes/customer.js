@@ -4,6 +4,9 @@ import { validateAuthCookie } from "../Middlewares/authMiddleware.js";
 
 const router = express.Router();
 
+router.route("/me")
+    .put(validateAuthCookie(["Customer"]), customerController.updateMyProfile);
+
 router.route("/me/addresses")
     .get(validateAuthCookie(["Customer"]), customerController.getMyAddresses)
     .post(validateAuthCookie(["Customer"]), customerController.addMyAddress);

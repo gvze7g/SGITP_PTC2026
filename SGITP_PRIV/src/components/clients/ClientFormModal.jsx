@@ -58,6 +58,7 @@ function ClientFormModal({
 
   const lastNameWarningRef = useRef(0);
   const lastPhoneWarningRef = useRef(0);
+  const lastAddressWarningRef = useRef(0);
 
   useEffect(() => {
     if (!open) return;
@@ -76,6 +77,7 @@ function ClientFormModal({
 
     lastNameWarningRef.current = 0;
     lastPhoneWarningRef.current = 0;
+    lastAddressWarningRef.current = 0;
   }, [open, clientData]);
 
   const showRateLimitedWarning = (ref, message) => {
@@ -112,11 +114,27 @@ function ClientFormModal({
       return;
     }
 
+    if (value.length > 15) return;
+
     setFormData((prev) => {
       const updated = [...prev.phones];
       updated[index] = value;
       return { ...prev, phones: updated };
     });
+  };
+
+  const updateAddressField = (index, field, value) => {
+    const textRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]*$/;
+
+    if (!textRegex.test(value)) {
+      showRateLimitedWarning(
+        lastAddressWarningRef,
+        "Ese campo solo puede contener letras y numeros."
+      );
+      return;
+    }
+
+    updateAddress(index, field, value);
   };
 
   const addPhone = () => {
@@ -250,6 +268,7 @@ function ClientFormModal({
                     className="form-editable-input"
                     placeholder="Ej. Lucia Mendez"
                     value={formData.fullName}
+                    maxLength={50}
                     onChange={(event) => handleFullNameChange(event.target.value)}
                   />
                 </div>
@@ -289,6 +308,7 @@ function ClientFormModal({
                         type="text"
                         className="form-editable-input"
                         value={phone}
+                        maxLength={15}
                         onChange={(event) => updatePhone(index, event.target.value)}
                       />
 
@@ -328,7 +348,10 @@ function ClientFormModal({
                           type="text"
                           className="form-editable-input"
                           value={address.label}
-                          onChange={(event) => updateAddress(index, "label", event.target.value)}
+                          maxLength={30}
+                          onChange={(event) =>
+                            updateAddressField(index, "label", event.target.value)
+                          }
                         />
                       </div>
 
@@ -338,7 +361,10 @@ function ClientFormModal({
                           type="text"
                           className="form-editable-input"
                           value={address.street}
-                          onChange={(event) => updateAddress(index, "street", event.target.value)}
+                          maxLength={80}
+                          onChange={(event) =>
+                            updateAddressField(index, "street", event.target.value)
+                          }
                         />
                       </div>
 
@@ -349,7 +375,10 @@ function ClientFormModal({
                             type="text"
                             className="form-editable-input"
                             value={address.city}
-                            onChange={(event) => updateAddress(index, "city", event.target.value)}
+                            maxLength={40}
+                            onChange={(event) =>
+                              updateAddressField(index, "city", event.target.value)
+                            }
                           />
                         </div>
 
@@ -359,8 +388,9 @@ function ClientFormModal({
                             type="text"
                             className="form-editable-input"
                             value={address.reference}
+                            maxLength={80}
                             onChange={(event) =>
-                              updateAddress(index, "reference", event.target.value)
+                              updateAddressField(index, "reference", event.target.value)
                             }
                           />
                         </div>

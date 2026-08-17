@@ -131,6 +131,8 @@ function CreateEmployeeModal({
       return;
     }
 
+    if (value.length > 12) return;
+
     handleChange("phone", value);
   };
 
@@ -320,6 +322,7 @@ function CreateEmployeeModal({
                     <input
                       type="text"
                       value={formData.fullName}
+                      maxLength={50}
                       onChange={(event) => handleNameChange(event.target.value)}
                     />
                   </div>
@@ -339,6 +342,7 @@ function CreateEmployeeModal({
                       <input
                         type="text"
                         value={formData.phone}
+                        maxLength={12}
                         onChange={(event) => handlePhoneChange(event.target.value)}
                       />
                     </div>
