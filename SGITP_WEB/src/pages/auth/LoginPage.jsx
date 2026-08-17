@@ -8,10 +8,12 @@ import PequesBeeIcon from '../../components/auth/PequesBeeIcon';
 import PequesBrandPanel from '../../components/auth/PequesBrandPanel';
 import SocialAuthButtons from '../../components/auth/SocialAuthButtons';
 import ThemeToggle from '../../components/auth/ThemeToggle';
+import { useAuth } from '../../context/AuthContext';
 import { loginWebUser } from '../../services/customerAuthService';
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -60,6 +62,12 @@ function LoginPage() {
         password: formData.password,
       });
 
+      // El backend ya dejo la cookie de sesion en la respuesta anterior; sin
+      // este refresh, el AuthContext se entera de la sesion nueva hasta que
+      // se recarga la pagina (por eso Perfil/Carrito decian "sin sesion"
+      // justo despues de iniciar sesion).
+      await refreshUser();
+
       toast.success('Inicio de sesion exitoso.');
       navigate('/home', { replace: true });
     } catch (error) {
@@ -69,7 +77,8 @@ function LoginPage() {
     }
   };
 
-  const handleGoogleSuccess = () => {
+  const handleGoogleSuccess = async () => {
+    await refreshUser();
     toast.success('Inicio de sesion con Google exitoso.');
     navigate('/home', { replace: true });
   };
@@ -97,6 +106,7 @@ function LoginPage() {
               value={formData.email}
               onChange={handleChange}
               autoComplete="email"
+              maxLength={100}
             />
 
             <div>
@@ -108,6 +118,7 @@ function LoginPage() {
                 value={formData.password}
                 onChange={handleChange}
                 autoComplete="current-password"
+                maxLength={72}
               />
 
               <button
@@ -134,7 +145,7 @@ function LoginPage() {
             <AuthButton
               type="button"
               className="auth-button-secondary"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/register')}
             >
               Crear cuenta
             </AuthButton>

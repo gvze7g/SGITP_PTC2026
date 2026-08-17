@@ -1,11 +1,33 @@
 import cartModel from "../Model/shopping_cart.js";
 import productsModel from "../Model/products.js";
 import salesModel from "../Model/sales.js";
+import promotionsModel from "../Model/promotions.js";
+import { discountVariantsStock } from "../utils/inventory.js";
 
 //Array de funciones
 const cartController = {};
 
 const CART_STATUS = "Active";
+
+// Revisa que el cupón exista, esté activo y dentro de su rango de fechas.
+// Nunca se confía en un porcentaje que mande el cliente: el descuento real
+// siempre sale de lo que hay guardado en Promotions.
+const findActiveCoupon = async (couponCode) => {
+  if (!couponCode?.trim()) return null;
+
+  const promotion = await promotionsModel.findOne({
+    coupon_code: couponCode.trim(),
+    isActive: true,
+  });
+
+  if (!promotion) return null;
+
+  const now = new Date();
+  if (promotion.start_date && now < promotion.start_date) return null;
+  if (promotion.end_date && now > promotion.end_date) return null;
+
+  return promotion;
+};
 
 const populateCart = (query) => {
   return query.populate(
@@ -173,6 +195,7 @@ cartController.checkoutMyCart = async (req, res) => {
       shipping_method = "Standard",
       shipping_cost = 0,
       payment_method = "Card",
+      coupon_code,
     } = req.body;
 
     // payment_status nunca se toma del cliente: hoy no hay una confirmacion
@@ -191,16 +214,26 @@ cartController.checkoutMyCart = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
+    // El porcentaje real sale de Promotions, nunca del body: si el cupón no
+    // existe, no está activo o ya venció, se ignora en vez de fallar todo el
+    // pedido (así el cliente no se queda sin poder pagar por un código viejo).
+    const coupon = await findActiveCoupon(coupon_code);
+    const discountPercentage = coupon ? Number(coupon.discount_percentage || 0) : 0;
+
     const itemDetails = cart.products.map((item) => {
       const product = item.productId || {};
       const variant = product.variants?.[0] || {};
+      const basePrice = Number(product.price || 0);
+      const finalPrice = discountPercentage > 0
+        ? Number((basePrice * (1 - discountPercentage / 100)).toFixed(2))
+        : basePrice;
 
       return {
         product_id: product._id,
         name: product.name,
         selected_variant: [variant.size, variant.color].filter(Boolean).join(" / "),
         quantity: item.quantity,
-        unit_price: Number(product.price || 0),
+        unit_price: finalPrice,
       };
     });
 
@@ -217,7 +250,13 @@ cartController.checkoutMyCart = async (req, res) => {
       shipping_method,
       shipping_cost,
       item_details: itemDetails,
+      coupon_code: coupon ? coupon.coupon_code : undefined,
+      discount_percentage: discountPercentage || undefined,
     });
+
+    // El pedido ya quedo registrado; ahora se descuenta el stock vendido
+    // (antes solo lo hacia una venta creada desde el POS).
+    await discountVariantsStock(itemDetails);
 
     cart.status = "Completed";
     await cart.save();

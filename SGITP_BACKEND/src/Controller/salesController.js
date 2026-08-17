@@ -4,30 +4,7 @@ const salesController = {};
 //importo la colección que voy a ocupar
 import salesModel from "../Model/sales.js";
 import cartModel from "../Model/shopping_cart.js";
-import productsModel from "../Model/products.js";
-
-// Descuenta el stock de la variante vendida (usado por ventas creadas en el POS)
-const discountVariantsStock = async (itemDetails = []) => {
-  for (const item of itemDetails) {
-    if (!item?.product_id) continue;
-
-    const product = await productsModel.findById(item.product_id);
-    if (!product || !Array.isArray(product.variants)) continue;
-
-    const variant =
-      product.variants.find(
-        (v) => v.size === item.variant_size && v.color === item.variant_color
-      ) || product.variants[0];
-
-    if (!variant) continue;
-
-    const currentStock = Number(variant.stock || 0);
-    const soldQty = Number(item.quantity || 0);
-    variant.stock = String(Math.max(0, currentStock - soldQty));
-
-    await product.save();
-  }
-};
+import { discountVariantsStock } from "../utils/inventory.js";
 
 //SELECT
 salesController.getSales = async (req, res) => {

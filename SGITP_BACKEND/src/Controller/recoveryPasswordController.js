@@ -7,6 +7,7 @@ import customerModel from "../Model/customer.js";
 import { config } from "../config.js";
 import { sendEmail } from "../utils/sendMailjet.js";
 import HTMLRecoveryEmail from "../utils/sendMailRecoveryPassword.js";
+import { getAuthCookieOptions, getClearCookieOptions } from "../utils/cookieOptions.js";
 
 const recoveryPasswordController = {};
 
@@ -39,12 +40,7 @@ recoveryPasswordController.sendRecoveryCode = async (req, res) => {
       { expiresIn: "15m" }
     );
 
-    res.cookie("recoveryCookie", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie("recoveryCookie", token, getAuthCookieOptions(15 * 60 * 1000));
 
     // Enviar correo con el código
     const htmlContent = HTMLRecoveryEmail(randomCode);
@@ -82,12 +78,7 @@ recoveryPasswordController.verifyCode = async (req, res) => {
       { expiresIn: "15m" }
     );
 
-    res.cookie("recoveryCookie", newToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie("recoveryCookie", newToken, getAuthCookieOptions(15 * 60 * 1000));
 
     return res.status(200).json({ message: "Code verified successfully" });
   } catch (error) {
@@ -144,7 +135,7 @@ recoveryPasswordController.newPassword = async (req, res) => {
     }
 
     // Limpia cookie de recuperación al finalizar
-    res.clearCookie("recoveryCookie");
+    res.clearCookie("recoveryCookie", getClearCookieOptions());
 
     return res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {

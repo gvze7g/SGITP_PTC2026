@@ -8,10 +8,13 @@ import PequesBeeIcon from '../../components/auth/PequesBeeIcon';
 import PequesBrandPanel from '../../components/auth/PequesBrandPanel';
 import SocialAuthButtons from '../../components/auth/SocialAuthButtons';
 import ThemeToggle from '../../components/auth/ThemeToggle';
+import { useAuth } from '../../context/AuthContext';
 import { registerCustomer } from '../../services/customerAuthService';
+import { lettersOnly } from '../../utils/inputFilters';
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -79,7 +82,8 @@ function RegisterPage() {
     }
   };
 
-  const handleGoogleSuccess = () => {
+  const handleGoogleSuccess = async () => {
+    await refreshUser();
     toast.success('Cuenta creada e inicio de sesion con Google exitoso.');
     navigate('/home', { replace: true });
   };
@@ -113,6 +117,8 @@ function RegisterPage() {
               value={formData.fullName}
               onChange={handleChange}
               autoComplete="name"
+              filter={lettersOnly}
+              maxLength={50}
             />
 
             <AuthInput
@@ -123,6 +129,7 @@ function RegisterPage() {
               value={formData.email}
               onChange={handleChange}
               autoComplete="email"
+              maxLength={100}
             />
 
             <AuthInput
@@ -132,6 +139,7 @@ function RegisterPage() {
               placeholder="Minimo 8 caracteres"
               value={formData.password}
               onChange={handleChange}
+              maxLength={72}
               autoComplete="new-password"
             />
 

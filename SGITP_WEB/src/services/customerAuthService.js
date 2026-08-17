@@ -173,6 +173,23 @@ async function parseCustomerResponse(response, fallbackMessage) {
   return data;
 }
 
+export async function updateCustomerProfile(profile) {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/customer/me`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(profile),
+    });
+  } catch (error) {
+    throw new Error('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
+  }
+
+  return parseCustomerResponse(response, 'No se pudo actualizar el perfil.');
+}
+
 export async function addCustomerAddress(address) {
   let response;
 

@@ -63,6 +63,7 @@ function ForgotPasswordPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
+              maxLength={100}
             />
           </div>
 

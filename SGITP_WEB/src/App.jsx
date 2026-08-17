@@ -25,7 +25,8 @@ import NotFoundPage from './pages/NotFoundPage';
 import usePageTitle from './hooks/usePageTitle';
 
 const PAGE_TITLES = {
-  '/': 'Crear cuenta',
+  '/': 'Inicio',
+  '/register': 'Crear cuenta',
   '/verify-code': 'Verificar cuenta',
   '/login': 'Iniciar sesión',
   '/forgot-password': 'Recuperar contraseña',
@@ -58,7 +59,8 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<RegisterPage />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-code" element={<VerifyRegisterCodePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

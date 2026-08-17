@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jsonwebtoken from "jsonwebtoken";
 import customerModel from "../Model/customer.js";
 import { config } from "../config.js";
+import { getAuthCookieOptions } from "../utils/cookieOptions.js";
 
 const loginCustomerController = {};
 
@@ -64,12 +65,7 @@ loginCustomerController.login = async (req, res) => {
     );
 
     // Guardar token en cookie segura para sesión
-    res.cookie("authCookie", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("authCookie", token, getAuthCookieOptions(30 * 24 * 60 * 60 * 1000));
 
     return res.status(200).json({
       message: "Login exitoso",

@@ -2,6 +2,45 @@ import promotionsModel from "../Model/promotions.js";
 
 const promotionsController = {};
 
+// GET para el carrito del cliente: revisa si un código existe, está activo
+// y dentro de su rango de fechas, y devuelve el porcentaje si es válido.
+// Nunca expone la lista completa de cupones, solo si ESE código funciona.
+promotionsController.validateCoupon = async (req, res) => {
+  try {
+    const code = req.params.code?.trim();
+
+    if (!code) {
+      return res.status(400).json({ message: "Coupon code is required" });
+    }
+
+    const promotion = await promotionsModel.findOne({
+      coupon_code: code,
+      isActive: true,
+    });
+
+    if (!promotion) {
+      return res.status(404).json({ message: "Invalid or inactive coupon code" });
+    }
+
+    const now = new Date();
+    if (
+      (promotion.start_date && now < promotion.start_date) ||
+      (promotion.end_date && now > promotion.end_date)
+    ) {
+      return res.status(404).json({ message: "This coupon has expired" });
+    }
+
+    return res.status(200).json({
+      coupon_code: promotion.coupon_code,
+      discount_percentage: promotion.discount_percentage,
+      descriptions: promotion.descriptions,
+    });
+  } catch (error) {
+    console.log("validateCoupon error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // GET ALL
 promotionsController.getPromotions = async (req, res) => {
   try {

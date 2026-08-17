@@ -8,9 +8,11 @@ import {
   addCustomerAddress,
   deleteCustomerAddress,
   updateCustomerAddress,
+  updateCustomerProfile,
 } from '../../services/customerAuthService';
 import { getMyOrders } from '../../services/cartService';
 import { formatProductPrice, getProductImage } from '../../services/catalogService';
+import { digitsOnly, lettersOnly } from '../../utils/inputFilters';
 
 const CITY_OPTIONS = [
   'San Salvador',
@@ -76,6 +78,9 @@ function ProfilePage() {
   const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM);
   const [orders, setOrders] = useState([]);
   const [ordersError, setOrdersError] = useState('');
+  const [showDetailsForm, setShowDetailsForm] = useState(false);
+  const [detailsForm, setDetailsForm] = useState({ full_name: '', main_phone: '' });
+  const [savingDetails, setSavingDetails] = useState(false);
 
   useEffect(() => {
     if (!customer || customer.userType !== 'Customer') {
@@ -210,6 +215,46 @@ function ProfilePage() {
     }
   };
 
+  const handleOpenDetailsForm = () => {
+    setDetailsForm({
+      full_name: customer?.full_name || '',
+      main_phone: customer?.main_phone || '',
+    });
+    setShowDetailsForm(true);
+  };
+
+  const handleDetailsInputChange = (event) => {
+    const { name, value } = event.target;
+    const nextValue = name === 'full_name' ? lettersOnly(value) : digitsOnly(value);
+
+    setDetailsForm((prev) => ({ ...prev, [name]: nextValue }));
+  };
+
+  const handleSaveDetails = async (event) => {
+    event.preventDefault();
+
+    if (detailsForm.full_name.trim().length < 3) {
+      toast.error('El nombre debe tener al menos 3 caracteres.');
+      return;
+    }
+
+    setSavingDetails(true);
+
+    try {
+      await updateCustomerProfile({
+        full_name: detailsForm.full_name.trim(),
+        main_phone: detailsForm.main_phone.trim(),
+      });
+      await refreshUser();
+      toast.success('Datos actualizados.');
+      setShowDetailsForm(false);
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo actualizar tus datos.');
+    } finally {
+      setSavingDetails(false);
+    }
+  };
+
   const customerName = customer?.full_name || customer?.name || 'usuario';
 
   return (
@@ -257,27 +302,67 @@ function ProfilePage() {
             <section className="profile-section">
               <div className="profile-section-heading">
                 <h2>Detalles Personales</h2>
-                <button type="button">Editar detalles</button>
+                {!showDetailsForm ? (
+                  <button type="button" onClick={handleOpenDetailsForm}>
+                    Editar detalles
+                  </button>
+                ) : null}
               </div>
 
-              <div className="personal-grid">
-                <p>
-                  <span>Nombre legal</span>
-                  {customerName}
-                </p>
-                <p>
-                  <span>Correo electronico</span>
-                  {customer.email || 'No disponible'}
-                </p>
-                <p>
-                  <span>Telefono principal</span>
-                  {customer.main_phone || 'No disponible'}
-                </p>
-                <p>
-                  <span>Miembro desde</span>
-                  {formatMemberSince(customer.createdAt)}
-                </p>
-              </div>
+              {showDetailsForm ? (
+                <form className="address-form" onSubmit={handleSaveDetails}>
+                  <label>
+                    <span>Nombre legal</span>
+                    <input
+                      type="text"
+                      name="full_name"
+                      value={detailsForm.full_name}
+                      onChange={handleDetailsInputChange}
+                      maxLength={50}
+                      placeholder="Tu nombre completo"
+                    />
+                  </label>
+                  <label>
+                    <span>Telefono principal</span>
+                    <input
+                      type="tel"
+                      name="main_phone"
+                      inputMode="numeric"
+                      value={detailsForm.main_phone}
+                      onChange={handleDetailsInputChange}
+                      maxLength={12}
+                      placeholder="00000000"
+                    />
+                  </label>
+                  <div className="address-form-actions">
+                    <button type="submit" disabled={savingDetails}>
+                      {savingDetails ? 'Guardando...' : 'Guardar cambios'}
+                    </button>
+                    <button type="button" onClick={() => setShowDetailsForm(false)}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="personal-grid">
+                  <p>
+                    <span>Nombre legal</span>
+                    {customerName}
+                  </p>
+                  <p>
+                    <span>Correo electronico</span>
+                    {customer.email || 'No disponible'}
+                  </p>
+                  <p>
+                    <span>Telefono principal</span>
+                    {customer.main_phone || 'No disponible'}
+                  </p>
+                  <p>
+                    <span>Miembro desde</span>
+                    {formatMemberSince(customer.createdAt)}
+                  </p>
+                </div>
+              )}
             </section>
 
             <section className="profile-section">

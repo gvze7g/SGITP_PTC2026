@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
 import { getCurrentCustomer } from '../../services/customerAuthService';
+import { digitsOnly, lettersOnly } from '../../utils/inputFilters';
 
 const SERVICES = [
   {
@@ -57,7 +58,10 @@ function ConciergePage() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const nextValue =
+      name === 'fullName' ? lettersOnly(value) : name === 'phone' ? digitsOnly(value) : value;
+
+    setFormData((prev) => ({ ...prev, [name]: nextValue }));
   };
 
   const handleSubmit = (event) => {
@@ -154,6 +158,7 @@ function ConciergePage() {
                 placeholder="Juan Perez"
                 value={formData.fullName}
                 onChange={handleChange}
+                maxLength={50}
               />
             </label>
             <label>
@@ -161,9 +166,11 @@ function ConciergePage() {
               <input
                 type="tel"
                 name="phone"
-                placeholder="+503 0000 0000"
+                inputMode="numeric"
+                placeholder="00000000"
                 value={formData.phone}
                 onChange={handleChange}
+                maxLength={12}
               />
             </label>
             <label>
@@ -184,6 +191,7 @@ function ConciergePage() {
                 placeholder="Cuentenos sobre sus necesidades..."
                 value={formData.message}
                 onChange={handleChange}
+                maxLength={500}
               />
             </label>
 

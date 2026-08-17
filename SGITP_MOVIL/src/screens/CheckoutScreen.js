@@ -13,6 +13,7 @@ import { useAddresses } from '../hooks/useAddresses';
 import { useCart } from '../hooks/useCart';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
 import { digitsOnly } from '../utils/inputFilters';
+import { request } from '../services/apiClient';
 
 // Envío fijo (el backend no tiene tarifas de envío configurables todavía).
 const SHIPPING_METHODS = [
@@ -25,7 +26,7 @@ const SHIPPING_METHODS = [
 // "sales"), pero no cobra nada de verdad — payment_status queda marcado
 // como simulado a propósito, porque este proyecto no integra un
 // procesador de pagos.
-export function CheckoutScreen({ navigation }) {
+export function CheckoutScreen({ navigation, route }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { showToast } = useToast();
@@ -33,12 +34,29 @@ export function CheckoutScreen({ navigation }) {
   const { items, total, checkout } = useCart();
   const { addresses, isLoading: addressesLoading } = useAddresses();
   const { cards, isLoading: cardsLoading } = usePaymentMethods();
+  const couponCodeFromCart = route?.params?.couponCode;
 
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [phone, setPhone] = useState(user?.main_phone ?? '');
   const [shippingKey, setShippingKey] = useState(SHIPPING_METHODS[0].key);
   const [paymentSelection, setPaymentSelection] = useState(null); // { type: 'card', id } | { type: 'applePay' }
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+
+  useEffect(() => {
+    if (!couponCodeFromCart) return;
+
+    let isCancelled = false;
+    request(`/promotions/validate/${encodeURIComponent(couponCodeFromCart)}`, { method: 'GET' })
+      .then((coupon) => {
+        if (!isCancelled) setAppliedCoupon(coupon);
+      })
+      .catch(() => {});
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [couponCodeFromCart]);
 
   useEffect(() => {
     if (!selectedAddressId && addresses.length > 0) {
@@ -54,7 +72,10 @@ export function CheckoutScreen({ navigation }) {
   }, [cards, paymentSelection]);
 
   const selectedShipping = SHIPPING_METHODS.find((method) => method.key === shippingKey);
-  const total_with_shipping = Number(total) + Number(selectedShipping?.cost ?? 0);
+  const discountAmount = appliedCoupon
+    ? Number((Number(total) * (appliedCoupon.discount_percentage / 100)).toFixed(2))
+    : 0;
+  const total_with_shipping = Math.max(0, Number(total) - discountAmount) + Number(selectedShipping?.cost ?? 0);
 
   async function handleFinishOrder() {
     const address = addresses.find((item) => item._id === selectedAddressId);
@@ -89,6 +110,7 @@ export function CheckoutScreen({ navigation }) {
         shipping_cost: selectedShipping.cost,
         payment_method: paymentMethodLabel,
         payment_status: 'Simulado (sin cobro real)',
+        coupon_code: appliedCoupon?.coupon_code || undefined,
       });
 
       navigation.replace('OrderConfirmation', {
@@ -272,6 +294,12 @@ export function CheckoutScreen({ navigation }) {
             <AppText variant="muted">Subtotal</AppText>
             <AppText variant="bodySemiBold">${Number(total).toFixed(2)} USD</AppText>
           </View>
+          {appliedCoupon ? (
+            <View style={styles.summaryRow}>
+              <AppText variant="muted">Descuento ({appliedCoupon.coupon_code})</AppText>
+              <AppText variant="bodySemiBold">-${discountAmount.toFixed(2)} USD</AppText>
+            </View>
+          ) : null}
           <View style={styles.summaryRow}>
             <AppText variant="muted">Envío</AppText>
             <AppText variant="bodySemiBold">

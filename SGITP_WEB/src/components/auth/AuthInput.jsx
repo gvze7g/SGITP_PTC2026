@@ -10,6 +10,8 @@ function AuthInput({
   className = '',
   name = '',
   autoComplete = 'off',
+  maxLength,
+  filter,
 }) {
   const isControlled = value !== undefined;
   const [internalValue, setInternalValue] = useState(value ?? '');
@@ -25,7 +27,13 @@ function AuthInput({
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
   const inputValue = isControlled ? value : internalValue;
 
+  // "filter" (letras/numeros/etc, ver paginas que lo usan) limpia lo que no
+  // corresponde a ese campo apenas se escribe, antes de que llegue a onChange.
   const handleChange = (event) => {
+    if (filter) {
+      event.target.value = filter(event.target.value);
+    }
+
     if (!isControlled) {
       setInternalValue(event.target.value);
     }
@@ -47,6 +55,7 @@ function AuthInput({
           value={inputValue}
           onChange={handleChange}
           autoComplete={autoComplete}
+          maxLength={maxLength}
           className="auth-input"
         />
 

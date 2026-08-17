@@ -12,7 +12,7 @@ function ProductDetailView({
   sizeOptions,
   selectedSize,
   onSelectSize,
-  colorsForSelectedSize,
+  colorOptions,
   selectedColor,
   onSelectColor,
   isFavorite,
@@ -24,7 +24,6 @@ function ProductDetailView({
 }) {
   const [activeImage, setActiveImage] = useState(0);
   const images = product.images?.length ? product.images : [];
-  const activeVariant = colorsForSelectedSize.find((v) => v.color === selectedColor);
 
   return (
     <main className="product-detail-page">
@@ -71,13 +70,13 @@ function ProductDetailView({
 
         <p className="product-description">{product.description}</p>
 
-        {colorsForSelectedSize.length ? (
+        {colorOptions.length ? (
           <div className="product-color-block">
             <span className="product-block-label">
-              Color: <strong>{activeVariant?.color || selectedColor || '—'}</strong>
+              Color: <strong>{selectedColor || '—'}</strong>
             </span>
             <div className="product-color-grid">
-              {colorsForSelectedSize.map((variant) => (
+              {colorOptions.map((variant) => (
                 <button
                   key={variant.color}
                   type="button"

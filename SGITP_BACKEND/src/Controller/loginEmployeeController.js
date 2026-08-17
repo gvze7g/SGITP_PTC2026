@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jsonwebtoken from "jsonwebtoken";
 import employeeModel from "../Model/employee.js";
 import { config } from "../config.js";
+import { getAuthCookieOptions } from "../utils/cookieOptions.js";
 
 const loginEmployeeController = {};
 
@@ -57,12 +58,7 @@ loginEmployeeController.login = async (req, res) => {
     );
 
     // Guardar sesión en cookie
-    res.cookie("authCookie", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("authCookie", token, getAuthCookieOptions(30 * 24 * 60 * 60 * 1000));
 
     return res.status(200).json({
       message: "Login exitoso",
