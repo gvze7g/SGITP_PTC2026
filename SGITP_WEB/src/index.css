@@ -2301,6 +2301,11 @@ button {
   padding: 0 24px;
 }
 
+.catalog-scroll-sentinel {
+  width: 100%;
+  height: 1px;
+}
+
 .collection-product-card button {
   display: block;
   width: 100%;
@@ -2986,7 +2991,8 @@ button {
   letter-spacing: 0;
 }
 
-.profile-section-heading button {
+.profile-section-heading button,
+.profile-orders-sort-label {
   border: 0;
   color: #9b918b;
   background: transparent;

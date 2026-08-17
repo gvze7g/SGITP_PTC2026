@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
+import { useInfiniteReveal } from '../../hooks/useInfiniteReveal';
 import {
   formatProductPrice,
   getCatalogProducts,
@@ -10,11 +11,15 @@ import {
   getProductMaterial,
 } from '../../services/catalogService';
 
+const PAGE_SIZE = 12;
+
 function ClothesPage() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { visibleCount, sentinelRef } = useInfiniteReveal(products.length, PAGE_SIZE);
+  const visibleProducts = products.slice(0, visibleCount);
 
   useEffect(() => {
     let isMounted = true;
@@ -50,7 +55,7 @@ function ClothesPage() {
             <p className="catalog-status-text">No hay productos disponibles.</p>
           ) : null}
 
-          {products.map((product) => (
+          {visibleProducts.map((product) => (
             <article key={product._id} className="clothes-card">
               <button type="button" onClick={() => navigate(`/product-detail/${product._id}`)}>
                 {product.badge ? <span>{product.badge}</span> : null}
@@ -67,6 +72,10 @@ function ClothesPage() {
             </article>
           ))}
         </section>
+
+        {visibleCount < products.length ? (
+          <div ref={sentinelRef} className="catalog-scroll-sentinel" aria-hidden="true" />
+        ) : null}
       </main>
 
       <PublicFooter />

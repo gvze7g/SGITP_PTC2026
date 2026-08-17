@@ -20,6 +20,17 @@ const PRICE_TYPE_LABELS = {
   Wholesale: 'Mayorista',
 };
 
+// El pedido nace "Pending" cuando lo hace el cliente desde la web o la app
+// movil (no hay pasarela de pago real conectada); un Employee lo completa
+// desde aqui una vez confirma el cobro. El POS ya guarda la venta como
+// "Pagado" desde que se crea.
+const PAYMENT_STATUS_LABELS = {
+  Pending: 'Pendiente de pago',
+  Paid: 'Pagado',
+  Pagado: 'Pagado',
+  Cancelado: 'Cancelado',
+};
+
 const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
 
 function formatSale(sale) {
@@ -44,6 +55,9 @@ function formatSale(sale) {
     origin: ORIGIN_LABELS[sale.origin] || sale.origin || '—',
     branch: branch?.name || 'Sin sucursal asignada',
     priceType: PRICE_TYPE_LABELS[sale.applied_price_type] || sale.applied_price_type || '—',
+    paymentStatus: sale.payment_status,
+    paymentStatusLabel: PAYMENT_STATUS_LABELS[sale.payment_status] || sale.payment_status || '—',
+    isPending: sale.payment_status === 'Pending',
     total: formatMoney(totalValue),
     subtotal: formatMoney(subtotalValue),
     shipping: formatMoney(shippingValue),
@@ -96,6 +110,21 @@ function SalesHistoryPage({ theme, onToggleTheme }) {
     await loadSales();
   };
 
+  const handleCompleteSale = async (sale) => {
+    if (!sale?._id) return;
+
+    const result = await updateSale(sale._id, { payment_status: 'Paid' });
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success('Venta marcada como pagada.');
+    setSelectedSale(null);
+    await loadSales();
+  };
+
   return (
     <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="page-title-row">
@@ -127,6 +156,7 @@ function SalesHistoryPage({ theme, onToggleTheme }) {
         sale={selectedSale}
         onClose={() => setSelectedSale(null)}
         onVoidSale={handleVoidSale}
+        onCompleteSale={handleCompleteSale}
       />
 
       <ConfirmDeleteModal
