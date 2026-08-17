@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 
 //URL de la API
-const API_URL = "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
 //Hook personalizado de Productos
 function useProducts() {
@@ -36,7 +36,7 @@ function useProducts() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/products`, {
+      const response = await fetch(`${API_URL}/products`, {
         method: "GET",
         credentials: "include",
       });
@@ -69,7 +69,7 @@ function useProducts() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/products/${id}`, {
+      const response = await fetch(`${API_URL}/products/${id}`, {
         method: "GET",
         credentials: "include",
       });
@@ -103,7 +103,7 @@ function useProducts() {
       setError("");
 
       const response = await fetch(
-        `${API_URL}/api/products/status/low-stock?threshold=${threshold}`,
+        `${API_URL}/products/status/low-stock?threshold=${threshold}`,
         {
           method: "GET",
           credentials: "include",
@@ -138,7 +138,7 @@ function useProducts() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/products/search`, {
+      const response = await fetch(`${API_URL}/products/search`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -175,7 +175,7 @@ function useProducts() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/products/price-range`, {
+      const response = await fetch(`${API_URL}/products/price-range`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -211,7 +211,7 @@ function useProducts() {
     try {
       setError("");
 
-      const response = await fetch(`${API_URL}/api/products/status/count`, {
+      const response = await fetch(`${API_URL}/products/status/count`, {
         method: "GET",
         credentials: "include",
       });
@@ -238,7 +238,7 @@ function useProducts() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/products`, {
+      const response = await fetch(`${API_URL}/products`, {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -265,7 +265,7 @@ function useProducts() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/products/${id}`, {
+      const response = await fetch(`${API_URL}/products/${id}`, {
         method: "PUT",
         credentials: "include",
         body: formData,
@@ -294,7 +294,7 @@ function useProducts() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/products/${id}`, {
+      const response = await fetch(`${API_URL}/products/${id}`, {
         method: "DELETE",
         credentials: "include",
       });

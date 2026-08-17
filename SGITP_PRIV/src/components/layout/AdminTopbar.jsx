@@ -2,7 +2,7 @@ import { Bell, Menu, Moon, Search, Settings, Sun, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-const API_URL = 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
 
 function AdminTopbar({
   theme,
@@ -27,7 +27,7 @@ function AdminTopbar({
 
   const handleLogout = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/logout`, {
+      const response = await fetch(`${API_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
       });

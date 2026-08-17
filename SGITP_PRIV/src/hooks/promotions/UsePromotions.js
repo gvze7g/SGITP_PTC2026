@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 
 //URL de la API
-const API_URL = "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
 //Hook personalizado de promociones
 function usePromotions() {
@@ -20,7 +20,7 @@ function usePromotions() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/promotions`, {
+      const response = await fetch(`${API_URL}/promotions`, {
         method: "GET",
         credentials: "include",
       });
@@ -60,7 +60,7 @@ function usePromotions() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/promotions/${id}`, {
+      const response = await fetch(`${API_URL}/promotions/${id}`, {
         method: "GET",
         credentials: "include",
       });
@@ -98,7 +98,7 @@ function usePromotions() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/promotions`, {
+      const response = await fetch(`${API_URL}/promotions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -140,7 +140,7 @@ function usePromotions() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/promotions/${id}`, {
+      const response = await fetch(`${API_URL}/promotions/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -182,7 +182,7 @@ function usePromotions() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/promotions/${id}`, {
+      const response = await fetch(`${API_URL}/promotions/${id}`, {
         method: "DELETE",
         credentials: "include",
       });

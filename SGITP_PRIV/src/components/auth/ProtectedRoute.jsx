@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-const API_URL = "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
 function ProtectedRoute({ children }) {
   const [status, setStatus] = useState("checking");
@@ -13,7 +13,7 @@ function ProtectedRoute({ children }) {
       try {
         // La ruta privada se habilita solo si el backend confirma una sesion
         // activa de empleado administrador.
-        const response = await fetch(`${API_URL}/api/auth/me`, {
+        const response = await fetch(`${API_URL}/auth/me`, {
           method: "GET",
           credentials: "include",
         });

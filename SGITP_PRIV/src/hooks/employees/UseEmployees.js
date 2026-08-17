@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 
 //URL de la API
-const API_URL = "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
 
 function useEmployees() {
   // lista de empleados
@@ -19,7 +19,7 @@ function useEmployees() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/employee`, {
+      const response = await fetch(`${API_URL}/employee`, {
         method: "GET",
         credentials: "include",
       });
@@ -59,7 +59,7 @@ function useEmployees() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/employee/${id}`, {
+      const response = await fetch(`${API_URL}/employee/${id}`, {
         method: "GET",
         credentials: "include",
       });
@@ -97,7 +97,7 @@ function useEmployees() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/employee`, {
+      const response = await fetch(`${API_URL}/employee`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -139,7 +139,7 @@ function useEmployees() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/employee/${id}`, {
+      const response = await fetch(`${API_URL}/employee/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -181,7 +181,7 @@ function useEmployees() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/employee/${id}`, {
+      const response = await fetch(`${API_URL}/employee/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
