@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
+import { useAuth } from '../../context/AuthContext';
 import { getCurrentCustomer } from '../../services/customerAuthService';
 import { getMyCart, placeCartOrder } from '../../services/cartService';
 import { getProductImage } from '../../services/catalogService';
@@ -58,6 +59,7 @@ const getPrimaryAddress = (user) => {
 function CheckoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated, isLoading: loadingSession } = useAuth();
   const couponCodeFromCart = location.state?.couponCode || '';
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [formData, setFormData] = useState({
@@ -79,6 +81,8 @@ function CheckoutPage() {
   const [shippingType, setShippingType] = useState('standard');
 
   useEffect(() => {
+    if (loadingSession || !isAuthenticated) return undefined;
+
     let isMounted = true;
 
     async function loadCheckoutData() {
@@ -135,7 +139,7 @@ function CheckoutPage() {
       isMounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadingSession, isAuthenticated]);
 
   const checkoutItems = useMemo(() => cart?.products || [], [cart]);
   const subtotal = Number(cart?.total || 0);
@@ -228,6 +232,37 @@ function CheckoutPage() {
       setIsPlacingOrder(false);
     }
   };
+
+  if (loadingSession) {
+    return (
+      <div className="commerce-page checkout-shell">
+        <PublicNavbar />
+        <main className="checkout-page">
+          <p className="catalog-status-text">Verificando sesion...</p>
+        </main>
+        <PublicFooter />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="commerce-page checkout-shell">
+        <PublicNavbar />
+        <main className="checkout-page">
+          <div className="profile-guest-card">
+            <span>Modo invitado</span>
+            <h2>No hay una sesion iniciada</h2>
+            <p>Inicia sesion para completar tu pedido.</p>
+            <button type="button" onClick={() => navigate('/login')}>
+              Iniciar sesion
+            </button>
+          </div>
+        </main>
+        <PublicFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="commerce-page checkout-shell">
