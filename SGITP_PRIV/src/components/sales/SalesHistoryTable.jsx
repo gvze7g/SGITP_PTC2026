@@ -1,6 +1,20 @@
+import { useMemo, useState } from "react";
 import { ChevronDown, Eye } from "lucide-react";
 
+const PAGE_SIZE = 10;
+
 function SalesHistoryTable({ sales = [], loading, onViewSale }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(sales.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * PAGE_SIZE;
+  const pagedSales = useMemo(
+    () => sales.slice(startIndex, startIndex + PAGE_SIZE),
+    [sales, startIndex]
+  );
+  const showingFrom = sales.length === 0 ? 0 : startIndex + 1;
+  const showingTo = Math.min(startIndex + pagedSales.length, sales.length);
+
   return (
     <section className="sales-history-panel">
       <div className="sales-filters-card">
@@ -38,6 +52,7 @@ function SalesHistoryTable({ sales = [], loading, onViewSale }) {
           <span>CLIENTE</span>
           <span>ORIGEN</span>
           <span>TIPO DE PRECIO</span>
+          <span>ESTADO</span>
           <span>TOTAL</span>
           <span>ACCIONES</span>
         </div>
@@ -47,7 +62,7 @@ function SalesHistoryTable({ sales = [], loading, onViewSale }) {
         ) : sales.length === 0 ? (
           <div style={{ padding: "20px" }}>No hay ventas registradas.</div>
         ) : (
-          sales.map((sale) => (
+          pagedSales.map((sale) => (
             <article key={sale._id} className="sales-row">
               <div className="sales-id-cell">{sale.id}</div>
               <div className="sales-date-cell">{sale.date}</div>
@@ -56,6 +71,13 @@ function SalesHistoryTable({ sales = [], loading, onViewSale }) {
                 <span className="sales-origin-badge">{sale.origin}</span>
               </div>
               <div className="sales-price-type-cell">{sale.priceType}</div>
+              <div className="sales-status-cell">
+                <span
+                  className={`sales-origin-badge${sale.isPending ? " sales-status-pending" : ""}`}
+                >
+                  {sale.paymentStatusLabel || sale.payment_status}
+                </span>
+              </div>
               <div className="sales-total-cell">{sale.total}</div>
               <div className="sales-actions-cell">
                 <button
@@ -74,19 +96,36 @@ function SalesHistoryTable({ sales = [], loading, onViewSale }) {
 
       <div className="sales-footer">
         <p>
-          Mostrando {sales.length === 0 ? 0 : 1} a {sales.length} de {sales.length} ventas
+          Mostrando {showingFrom} a {showingTo} de {sales.length} ventas
         </p>
 
         <div className="sales-pagination">
-          <button type="button" aria-label="Pagina anterior">
+          <button
+            type="button"
+            aria-label="Pagina anterior"
+            disabled={safePage === 1}
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+          >
             {"<"}
           </button>
-          <button type="button" className="sales-page-active">
-            1
-          </button>
-          <button type="button">2</button>
-          <button type="button">3</button>
-          <button type="button" aria-label="Pagina siguiente">
+
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index + 1}
+              type="button"
+              className={safePage === index + 1 ? "sales-page-active" : ""}
+              onClick={() => setCurrentPage(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            aria-label="Pagina siguiente"
+            disabled={safePage === totalPages}
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+          >
             {">"}
           </button>
         </div>

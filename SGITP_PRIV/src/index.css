@@ -1897,9 +1897,9 @@ body.theme-dark {
 .sales-head-row,
 .sales-row {
   display: grid;
-  grid-template-columns: 160px 220px 1.5fr 180px 180px 140px 100px;
+  grid-template-columns: 160px 220px 1.5fr 180px 180px 170px 140px 100px;
   column-gap: 24px;
-  min-width: 1180px;
+  min-width: 1360px;
 }
 
 .sales-head-row {
@@ -1932,6 +1932,11 @@ body.theme-dark {
   background: color-mix(in srgb, var(--admin-surface-2) 70%, transparent);
   color: var(--admin-text);
   font-size: 14px;
+}
+
+.sales-status-pending {
+  background: color-mix(in srgb, #f5a623 22%, transparent);
+  color: #b8730f;
 }
 
 .sales-actions-cell {

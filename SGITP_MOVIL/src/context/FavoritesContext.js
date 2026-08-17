@@ -22,9 +22,17 @@ export function FavoritesProvider({ children }) {
   });
 
   // Si cierra sesión, se ignora cualquier dato viejo en caché y se muestra vacío.
+  // GET /favorite/mine devuelve product_id ya populado (objeto completo del
+  // producto, no el id plano), así que hay que sacar el _id de adentro: si
+  // no, el Set queda lleno de objetos y favoriteIds.has(productId) (un
+  // string) nunca da true, y el corazón nunca se marca como favorito.
   const favoriteIds = useMemo(() => {
     if (!user) return new Set();
-    return new Set((favorites ?? []).map((favorite) => favorite.product_id));
+    return new Set(
+      (favorites ?? [])
+        .map((favorite) => favorite.product_id?._id ?? favorite.product_id)
+        .filter(Boolean)
+    );
   }, [favorites, user]);
 
   const invalidateFavorites = useCallback(

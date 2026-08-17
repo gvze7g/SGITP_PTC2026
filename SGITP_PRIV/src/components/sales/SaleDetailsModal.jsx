@@ -1,7 +1,8 @@
-function SaleDetailsModal({ open, onClose, sale, onVoidSale }) {
+function SaleDetailsModal({ open, onClose, sale, onVoidSale, onCompleteSale }) {
   if (!open || !sale) return null;
 
   const isVoided = sale.payment_status === "Cancelado";
+  const isPending = sale.payment_status === "Pending";
 
   return (
     <div className="app-modal-overlay app-modal-overlay-dark">
@@ -51,6 +52,11 @@ function SaleDetailsModal({ open, onClose, sale, onVoidSale }) {
             <div className="sale-detail-block">
               <span>Total</span>
               <strong>{sale.total}</strong>
+            </div>
+
+            <div className="sale-detail-block">
+              <span>Estado de pago</span>
+              <strong>{sale.paymentStatusLabel || sale.payment_status}</strong>
             </div>
           </div>
 
@@ -106,13 +112,24 @@ function SaleDetailsModal({ open, onClose, sale, onVoidSale }) {
           </button>
 
           {!isVoided ? (
-            <button
-              type="button"
-              className="admin-secondary-btn"
-              onClick={() => onVoidSale?.(sale)}
-            >
-              Anular venta
-            </button>
+            <>
+              {isPending ? (
+                <button
+                  type="button"
+                  className="admin-primary-btn"
+                  onClick={() => onCompleteSale?.(sale)}
+                >
+                  Completar venta
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="admin-secondary-btn"
+                onClick={() => onVoidSale?.(sale)}
+              >
+                Anular venta
+              </button>
+            </>
           ) : (
             <span className="sales-origin-badge">VENTA ANULADA</span>
           )}

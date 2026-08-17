@@ -78,6 +78,7 @@ function ProfilePage() {
   const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM);
   const [orders, setOrders] = useState([]);
   const [ordersError, setOrdersError] = useState('');
+  const [showAllOrders, setShowAllOrders] = useState(false);
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [detailsForm, setDetailsForm] = useState({ full_name: '', main_phone: '' });
   const [savingDetails, setSavingDetails] = useState(false);
@@ -368,14 +369,14 @@ function ProfilePage() {
             <section className="profile-section">
               <div className="profile-section-heading">
                 <h2>Historial de Pedidos</h2>
-                <button type="button">Mostrando recientes</button>
+                <span className="profile-orders-sort-label">Mostrando recientes</span>
               </div>
 
               <div className="order-list">
                 {ordersError ? <p className="profile-empty-text">{ordersError}</p> : null}
 
                 {orders.length > 0 ? (
-                  orders.map((order) => {
+                  (showAllOrders ? orders : orders.slice(0, 5)).map((order) => {
                     const firstItem = order.item_details?.[0] || {};
                     const product = firstItem.product_id || {};
                     const extraItems = Math.max((order.item_details?.length || 0) - 1, 0);
@@ -403,9 +404,13 @@ function ProfilePage() {
                 )}
               </div>
 
-              {orders.length > 0 ? (
-                <button type="button" className="profile-archive">
-                  Ver archivo completo
+              {orders.length > 5 ? (
+                <button
+                  type="button"
+                  className="profile-archive"
+                  onClick={() => setShowAllOrders((value) => !value)}
+                >
+                  {showAllOrders ? 'Ver menos' : 'Ver archivo completo'}
                 </button>
               ) : null}
             </section>

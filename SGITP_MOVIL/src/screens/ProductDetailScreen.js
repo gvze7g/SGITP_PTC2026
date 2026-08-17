@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { ArrowLeft, Heart } from 'lucide-react-native';
@@ -15,6 +15,25 @@ import { useCart } from '../hooks/useCart';
 import { useProduct } from '../hooks/useProduct';
 import { useProducts } from '../hooks/useProducts';
 import { getActiveOffer, getDiscountedPrice } from '../utils/offers';
+
+// Aislado con memo() para que un tap en UNA miniatura no vuelva a renderizar
+// a las demás: si no, cada tap cambia activeImageIndex, re-renderiza toda
+// la pantalla, y eso recrea el objeto `source` de TODAS las miniaturas
+// (aunque su uri no cambió) — expo-image lo toma como "imagen nueva" y
+// reinicia la transición, haciendo que parpadeen/desaparezcan un instante.
+const Thumbnail = memo(function Thumbnail({ uri, isActive, index, onSelect, styles }) {
+  return (
+    <Pressable onPress={() => onSelect(index)}>
+      <Image
+        source={{ uri }}
+        style={[styles.thumbnail, isActive && styles.thumbnailActive]}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        transition={150}
+      />
+    </Pressable>
+  );
+});
 
 // Pantalla de detalle de un producto: fotos, variantes (color/talla),
 // botón de agregar al carrito y productos relacionados.
@@ -35,6 +54,8 @@ export function ProductDetailScreen({ route, navigation }) {
   const [imageWidth, setImageWidth] = useState(0);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+
+  const handleSelectImage = useCallback((index) => setActiveImageIndex(index), []);
 
   const colorsAvailable = useMemo(() => {
     const seen = new Map();
@@ -114,8 +135,10 @@ export function ProductDetailScreen({ route, navigation }) {
           {imageWidth > 0 && images[activeImageIndex]?.image ? (
             <Image
               source={{ uri: images[activeImageIndex].image }}
-              style={{ width: imageWidth, height: imageWidth }}
+              style={{ width: imageWidth, height: imageWidth, backgroundColor: colors.surface }}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={150}
             />
           ) : (
             <View style={[styles.imagePlaceholder, { width: imageWidth, height: imageWidth }]} />
@@ -125,13 +148,14 @@ export function ProductDetailScreen({ route, navigation }) {
         {images.length > 1 ? (
           <View style={styles.thumbnailRow}>
             {images.map((image, index) => (
-              <Pressable key={image.public_id ?? index} onPress={() => setActiveImageIndex(index)}>
-                <Image
-                  source={{ uri: image.image }}
-                  style={[styles.thumbnail, index === activeImageIndex && styles.thumbnailActive]}
-                  contentFit="cover"
-                />
-              </Pressable>
+              <Thumbnail
+                key={image.public_id ?? index}
+                uri={image.image}
+                isActive={index === activeImageIndex}
+                index={index}
+                onSelect={handleSelectImage}
+                styles={styles}
+              />
             ))}
           </View>
         ) : null}
@@ -322,6 +346,7 @@ function createStyles(colors) {
       height: 64,
       borderRadius: 10,
       opacity: 0.6,
+      backgroundColor: colors.surface,
     },
     thumbnailActive: {
       opacity: 1,

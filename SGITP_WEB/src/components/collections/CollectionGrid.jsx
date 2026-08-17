@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useInfiniteReveal } from '../../hooks/useInfiniteReveal';
 import {
   formatProductPrice,
   getCatalogProducts,
   getProductImage,
   getProductMaterial,
 } from '../../services/catalogService';
+
+const PAGE_SIZE = 12;
 
 function CollectionGrid() {
   const navigate = useNavigate();
@@ -48,6 +51,13 @@ function CollectionGrid() {
     return products.filter((product) => product.category === selectedCategory);
   }, [products, selectedCategory]);
 
+  const { visibleCount, sentinelRef } = useInfiniteReveal(
+    filteredProducts.length,
+    PAGE_SIZE,
+    selectedCategory
+  );
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+
   return (
     <section className="collection-products-section">
       {loading ? <p className="catalog-status-text">Cargando productos...</p> : null}
@@ -77,7 +87,7 @@ function CollectionGrid() {
           <p className="catalog-status-text">No hay productos en esta categoria.</p>
         ) : null}
 
-        {filteredProducts.map((product) => (
+        {visibleProducts.map((product) => (
           <article key={product._id} className="collection-product-card">
             <button type="button" onClick={() => navigate(`/product-detail/${product._id}`)}>
               <img src={getProductImage(product, 800)} alt={product.name} />
@@ -93,6 +103,10 @@ function CollectionGrid() {
           </article>
         ))}
       </section>
+
+      {visibleCount < filteredProducts.length ? (
+        <div ref={sentinelRef} className="catalog-scroll-sentinel" aria-hidden="true" />
+      ) : null}
     </section>
   );
 }
