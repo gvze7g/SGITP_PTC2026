@@ -71,13 +71,22 @@ const decorateWithOfferPricing = (productDoc) => {
 
 // GET ALL
 productController.getProducts = async (req, res) => {
-  try {
-    const products = await productsModel.find();
-    return res.status(200).json(products);
+    try {
+    //Solicitar en que página estamos
+    //y cual es el limite de datos a mostrar
+    const page = parseInt(req.body.page) || 1;
+    const limit = parseInt(req.body.limit) || 20;
+
+    const skip = (page - 1) * limit;
+
+    const events = await eventModel.find().skip(skip).limit(limit);
+
+    return res.status(200).json({ events });
   } catch (error) {
-    console.log("Error: " + error);
+    console.log("error" + error);
     return res.status(500).json({ message: "Internal server error" });
   }
+  
 };
 
 // GET BY ID

@@ -9,23 +9,43 @@ import { discountVariantsStock } from "../utils/inventory.js";
 //SELECT
 salesController.getSales = async (req, res) => {
   try {
-    const sales = await salesModel
-      .find()
-      .populate({
-        path: "cart_id",
-        select: "customerId",
-        populate: { path: "customerId", select: "full_name customer_type email" },
-      })
-      .populate({
-        path: "employee_id",
-        select: "full_name branch_id",
-        populate: { path: "branch_id", select: "name" },
-      })
-      .sort({ createdAt: -1 });
+    const page = parseInt(req.body.page) || 1;
+    const limit = parseInt(req.body.limit) || 20;
+    const skip = (page - 1) * limit;
 
-    return res.status(200).json(sales);
+    // Ejecutamos la consulta con popula/sort y el conteo total en paralelo
+    const [sales, totalSales] = await Promise.all([
+      salesModel
+        .find()
+        .populate({
+          path: "cart_id",
+          select: "customerId",
+          populate: { path: "customerId", select: "full_name customer_type email" },
+        })
+        .populate({
+          path: "employee_id",
+          select: "full_name branch_id",
+          populate: { path: "branch_id", select: "name" },
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      salesModel.countDocuments()
+    ]);
+
+    const totalPages = Math.ceil(totalSales / limit);
+
+    return res.status(200).json({
+      sales,
+      pagination: {
+        totalSales,
+        totalPages,
+        currentPage: page,
+        limit
+      }
+    });
   } catch (error) {
-    console.log("Error" + error);
+    console.log("Error " + error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
