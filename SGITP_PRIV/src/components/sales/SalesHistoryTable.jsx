@@ -3,8 +3,34 @@ import { ChevronDown, Eye } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
-function SalesHistoryTable({ sales = [], loading, onViewSale }) {
+function SalesHistoryTable({
+  sales = [],
+  loading,
+  onViewSale,
+  filters = { origin: "all", branch: "all", date: "all" },
+  onFilterChange,
+  originOptions = {},
+  branchOptions = [],
+  dateOptions = {},
+}) {
   const [currentPage, setCurrentPage] = useState(1);
+  const filterFields = [
+    { name: "origin", label: "Origen", options: { all: "Todos", ...originOptions } },
+    {
+      name: "branch",
+      label: "Sucursal",
+      options: {
+        all: "Todas las sucursales",
+        ...Object.fromEntries(branchOptions.map((branch) => [branch, branch])),
+      },
+    },
+    { name: "date", label: "Fecha", options: dateOptions },
+  ];
+
+  const handleFilterChange = (name, value) => {
+    setCurrentPage(1);
+    onFilterChange?.(name, value);
+  };
   const totalPages = Math.max(1, Math.ceil(sales.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
   const startIndex = (safePage - 1) * PAGE_SIZE;
@@ -19,29 +45,29 @@ function SalesHistoryTable({ sales = [], loading, onViewSale }) {
     <section className="sales-history-panel">
       <div className="sales-filters-card">
         <div className="sales-filters-grid">
-          <div className="sales-filter-block">
-            <label>Origen</label>
-            <button type="button" className="sales-filter-select">
-              <span>Todos</span>
-              <ChevronDown size={20} strokeWidth={1.8} />
-            </button>
-          </div>
-
-          <div className="sales-filter-block">
-            <label>Sucursal</label>
-            <button type="button" className="sales-filter-select">
-              <span>Todas las sucursales</span>
-              <ChevronDown size={20} strokeWidth={1.8} />
-            </button>
-          </div>
-
-          <div className="sales-filter-block">
-            <label>Fecha</label>
-            <button type="button" className="sales-filter-select">
-              <span>Este mes</span>
-              <ChevronDown size={20} strokeWidth={1.8} />
-            </button>
-          </div>
+          {filterFields.map((field) => (
+            <div key={field.name} className="sales-filter-block">
+              <label htmlFor={`sales-filter-${field.name}`}>{field.label}</label>
+              <div style={{ position: "relative" }}>
+                <button type="button" className="sales-filter-select" tabIndex={-1} aria-hidden="true">
+                  <span>{field.options[filters[field.name]] ?? field.options.all}</span>
+                  <ChevronDown size={20} strokeWidth={1.8} />
+                </button>
+                <select
+                  id={`sales-filter-${field.name}`}
+                  value={filters[field.name]}
+                  onChange={(event) => handleFilterChange(field.name, event.target.value)}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
+                >
+                  {Object.entries(field.options).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

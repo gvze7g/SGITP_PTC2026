@@ -6,6 +6,7 @@ import SalesHistoryTable from '../../components/sales/SalesHistoryTable';
 import SaleDetailsModal from '../../components/sales/SaleDetailsModal';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import useSales from '../../hooks/sales/UseSales';
+import { downloadSalesPdf } from './salesPdf';
 
 const ORIGIN_LABELS = {
   Store: 'Tienda Física',
@@ -33,6 +34,33 @@ const PAYMENT_STATUS_LABELS = {
 
 const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
 
+const DATE_FILTER_LABELS = {
+  all: 'Todas las fechas',
+  today: 'Hoy',
+  week: 'Últimos 7 días',
+  month: 'Este mes',
+  year: 'Este año',
+};
+
+function matchesDateFilter(rawDate, dateFilter) {
+  if (dateFilter === 'all') return true;
+  if (!rawDate) return false;
+
+  const date = new Date(rawDate);
+  const now = new Date();
+
+  if (dateFilter === 'today') return date.toDateString() === now.toDateString();
+  if (dateFilter === 'week') {
+    const weekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+    return date >= weekAgo;
+  }
+  if (dateFilter === 'month') {
+    return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+  }
+  if (dateFilter === 'year') return date.getFullYear() === now.getFullYear();
+  return true;
+}
+
 function formatSale(sale) {
   const items = Array.isArray(sale.item_details) ? sale.item_details : [];
   const subtotalValue = items.reduce(
@@ -59,6 +87,7 @@ function formatSale(sale) {
     paymentStatusLabel: PAYMENT_STATUS_LABELS[sale.payment_status] || sale.payment_status || '—',
     isPending: sale.payment_status === 'Pending',
     total: formatMoney(totalValue),
+    totalValue,
     subtotal: formatMoney(subtotalValue),
     shipping: formatMoney(shippingValue),
     items: items.map((item) => ({
@@ -75,6 +104,7 @@ function SalesHistoryPage({ theme, onToggleTheme }) {
   const { sales, loading, getSales, updateSale } = useSales();
   const [selectedSale, setSelectedSale] = useState(null);
   const [saleToVoid, setSaleToVoid] = useState(null);
+  const [filters, setFilters] = useState({ origin: 'all', branch: 'all', date: 'month' });
   const navigate = useNavigate();
 
   const loadSales = useCallback(async () => {
@@ -89,6 +119,42 @@ function SalesHistoryPage({ theme, onToggleTheme }) {
   }, [loadSales]);
 
   const formattedSales = sales.map(formatSale);
+
+  const branchOptions = [...new Set(formattedSales.map((sale) => sale.branch))].sort();
+
+  const filteredSales = formattedSales.filter(
+    (sale) =>
+      (filters.origin === 'all' || sale.origin === (ORIGIN_LABELS[filters.origin] || filters.origin)) &&
+      (filters.branch === 'all' || sale.branch === filters.branch) &&
+      matchesDateFilter(sale.sales_date || sale.createdAt, filters.date)
+  );
+
+  const handleFilterChange = (name, value) => {
+    setFilters((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleExportPdf = () => {
+    const totalAmount = filteredSales.reduce(
+      (sum, sale) => sum + sale.totalValue,
+      0
+    );
+    const filtersSummary = [
+      `Origen: ${filters.origin === 'all' ? 'Todos' : ORIGIN_LABELS[filters.origin] || filters.origin}`,
+      `Sucursal: ${filters.branch === 'all' ? 'Todas las sucursales' : filters.branch}`,
+      `Fecha: ${DATE_FILTER_LABELS[filters.date]}`,
+    ].join('  |  ');
+
+    try {
+      downloadSalesPdf({
+        sales: filteredSales,
+        filtersSummary,
+        totalAmount: formatMoney(totalAmount),
+      });
+      toast.success('PDF descargado correctamente.');
+    } catch {
+      toast.error('No se pudo generar el PDF.');
+    }
+  };
 
   const handleVoidSale = (sale) => {
     setSaleToVoid(sale);
@@ -134,7 +200,7 @@ function SalesHistoryPage({ theme, onToggleTheme }) {
           <button
             type="button"
             className="admin-secondary-btn"
-            onClick={() => toast.success('Exportación iniciada correctamente.')}
+            onClick={handleExportPdf}
           >
             ↓ Exportar
           </button>
@@ -149,7 +215,16 @@ function SalesHistoryPage({ theme, onToggleTheme }) {
         </div>
       </div>
 
-      <SalesHistoryTable sales={formattedSales} loading={loading} onViewSale={setSelectedSale} />
+      <SalesHistoryTable
+        sales={filteredSales}
+        loading={loading}
+        onViewSale={setSelectedSale}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        originOptions={ORIGIN_LABELS}
+        branchOptions={branchOptions}
+        dateOptions={DATE_FILTER_LABELS}
+      />
 
       <SaleDetailsModal
         open={Boolean(selectedSale)}
