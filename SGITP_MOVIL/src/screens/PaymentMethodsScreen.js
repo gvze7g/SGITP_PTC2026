@@ -11,6 +11,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { getCardBrand, getCardLast4, usePaymentMethods } from '../hooks/usePaymentMethods';
 import { cardExpiry, cardNumber as filterCardNumber, lettersOnly } from '../utils/inputFilters';
+import { isValidCardExpiry, isValidCardNumber, isValidName } from '../utils/validators';
 
 const EMPTY_FORM = { cardNumber: '', expiry: '', holderName: '' };
 
@@ -31,18 +32,22 @@ export function PaymentMethodsScreen({ navigation }) {
 
   async function handleSubmit() {
     const digits = form.cardNumber.replace(/\D/g, '');
-    const [month, year] = form.expiry.split('/').map((part) => part?.trim());
+    const [month, year] = form.expiry.split('/');
 
-    if (digits.length < 12) {
-      showToast('Número de tarjeta inválido', 'error');
+    if (!digits || !form.expiry || !form.holderName.trim()) {
+      showToast('Completa número, vencimiento y titular', 'error');
       return;
     }
-    if (!month || !year) {
-      showToast('Ingresa el vencimiento como MM/AA', 'error');
+    if (!isValidCardNumber(digits)) {
+      showToast('El número de tarjeta debe tener entre 13 y 19 dígitos', 'error');
       return;
     }
-    if (!form.holderName.trim()) {
-      showToast('Ingresa el nombre del titular', 'error');
+    if (!isValidCardExpiry(form.expiry)) {
+      showToast('Vencimiento inválido: usa MM/AA con un mes válido y sin vencer', 'error');
+      return;
+    }
+    if (!isValidName(form.holderName)) {
+      showToast('El titular solo puede tener letras (mínimo 3)', 'error');
       return;
     }
 

@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext';
 
 // Solo pedimos el correo en esta pantalla.
 const forgotPasswordSchema = z.object({
-  email: z.string().min(1, 'El correo es requerido').email('Correo inválido'),
+  email: z.string().trim().min(1, 'El correo es requerido').email('Correo inválido'),
 });
 
 // Lógica de la pantalla "Recuperar Acceso": valida el correo, le pide al

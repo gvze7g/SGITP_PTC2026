@@ -20,7 +20,8 @@
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#FFF8F4"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.gvz.e7g.peques"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,6 +38,11 @@
           "backgroundColor": "#FFF8F4"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4b2d1daa-1e8e-49ac-91a9-9a93b8f8c67d"
+      }
+    }
   }
 }

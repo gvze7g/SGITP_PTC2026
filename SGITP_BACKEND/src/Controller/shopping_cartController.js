@@ -3,6 +3,7 @@ import productsModel from "../Model/products.js";
 import salesModel from "../Model/sales.js";
 import promotionsModel from "../Model/promotions.js";
 import { discountVariantsStock } from "../utils/inventory.js";
+import { isValidPhone } from "../utils/validators.js";
 
 //Array de funciones
 const cartController = {};
@@ -205,6 +206,16 @@ cartController.checkoutMyCart = async (req, res) => {
     // cualquiera podria mandar payment_status:"Paid" y aparecer en tendencias
     // sin haber pagado.
     const payment_status = "Pending";
+
+    if (!String(shipping_address ?? "").trim() || String(shipping_address).length > 200) {
+      return res.status(400).json({ message: "La dirección de envío es obligatoria" });
+    }
+
+    if (!isValidPhone(shipping_phone)) {
+      return res
+        .status(400)
+        .json({ message: "El teléfono de contacto debe tener entre 8 y 12 dígitos" });
+    }
 
     const cart = await populateCart(
       cartModel.findOne({ customerId: req.user.id, status: CART_STATUS })

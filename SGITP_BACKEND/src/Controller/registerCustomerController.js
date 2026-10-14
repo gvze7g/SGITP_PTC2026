@@ -7,6 +7,7 @@ import { config } from "../config.js";
 import { sendEmail } from "../utils/sendMailjet.js";
 import HTMLVerificationEmail from "../utils/sendMailVerification.js";
 import { getAuthCookieOptions, getClearCookieOptions } from "../utils/cookieOptions.js";
+import { PASSWORD_MIN_LENGTH, isValidEmail, isValidName } from "../utils/validators.js";
 
 const registerCustomerController = {};
 
@@ -37,6 +38,26 @@ registerCustomerController.register = async (req, res) => {
 
     if (!ALLOWED_CUSTOMER_TYPES.includes(customer_type)) {
       return res.status(400).json({ message: "Invalid customer type" });
+    }
+
+    if (!full_name || !email || !password) {
+      return res.status(400).json({ message: "Nombre, correo y contraseña son obligatorios" });
+    }
+
+    if (!isValidName(full_name)) {
+      return res
+        .status(400)
+        .json({ message: "El nombre debe tener entre 3 y 50 letras, sin números ni símbolos" });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: "Correo electrónico inválido" });
+    }
+
+    if (String(password).length < PASSWORD_MIN_LENGTH) {
+      return res
+        .status(400)
+        .json({ message: `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres` });
     }
 
     // Evita registrar correos repetidos

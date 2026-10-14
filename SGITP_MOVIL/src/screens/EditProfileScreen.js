@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { digitsOnly, lettersOnly } from '../utils/inputFilters';
+import { isValidName, isValidPhone } from '../utils/validators';
 
 // Pantalla "Mis Datos" / "Editar Perfil" (las dos entradas del menú de
 // Perfil llevan aquí: no tenía sentido tener dos pantallas casi iguales).
@@ -22,12 +23,20 @@ export function EditProfileScreen({ navigation }) {
   const { showToast } = useToast();
 
   const [fullName, setFullName] = useState(user?.full_name ?? '');
-  const [mainPhone, setMainPhone] = useState(user?.main_phone ?? '');
+  const [mainPhone, setMainPhone] = useState(digitsOnly(user?.main_phone ?? ''));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSave() {
-    if (fullName.trim().length < 3) {
-      showToast('El nombre debe tener al menos 3 caracteres', 'error');
+    if (!isValidName(fullName)) {
+      showToast('El nombre debe tener al menos 3 letras, sin números ni símbolos', 'error');
+      return;
+    }
+    if (!mainPhone.trim()) {
+      showToast('El teléfono es obligatorio', 'error');
+      return;
+    }
+    if (!isValidPhone(mainPhone)) {
+      showToast('El teléfono debe tener entre 8 y 12 dígitos', 'error');
       return;
     }
 

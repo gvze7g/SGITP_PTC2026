@@ -171,7 +171,7 @@ export function CartScreen({ navigation }) {
                     placeholder="Código de descuento"
                     placeholderTextColor={colors.textMuted}
                     value={couponInput}
-                    onChangeText={(value) => setCouponInput(value.toUpperCase())}
+                    onChangeText={(value) => setCouponInput(value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
                     maxLength={20}
                     autoCapitalize="characters"
                     editable={!appliedCoupon}

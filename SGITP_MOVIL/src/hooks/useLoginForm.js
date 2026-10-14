@@ -7,8 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'El correo es requerido').email('Correo inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  email: z.string().trim().min(1, 'El correo es requerido').email('Correo inválido'),
+  password: z.string().min(1, 'La contraseña es requerida'),
 });
 
 // Toda la lógica de la pantalla de Login: validación, llamada al backend,

@@ -1,4 +1,5 @@
 import { ClipboardList, PackageCheck, Truck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
@@ -42,7 +43,11 @@ const FAQS = [
   },
 ];
 
+const SUPPORT_EMAIL = 'consejeria@peques.com';
+
 function ReturnsPage() {
+  const navigate = useNavigate();
+
   return (
     <div className="returns-page">
       <PublicNavbar />
@@ -68,7 +73,9 @@ function ReturnsPage() {
               encuentre sin usar, en su estado original y dentro del empaque artesanal en el que fue
               entregada.
             </p>
-            <button type="button">Escribenos</button>
+            <button type="button" onClick={() => navigate('/concierge')}>
+              Escribenos
+            </button>
           </div>
 
           <img
@@ -106,8 +113,17 @@ function ReturnsPage() {
               del proceso de devolucion.
             </p>
             <div>
-              <button type="button">Correo electronico</button>
-              <button type="button">Chat en vivo</button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Consulta sobre devolucion')}`;
+                }}
+              >
+                Correo electronico
+              </button>
+              <button type="button" onClick={() => navigate('/concierge')}>
+                Formulario de contacto
+              </button>
             </div>
           </div>
         </section>

@@ -31,6 +31,11 @@ function AddPayrollEntryModal({ open, onClose, onSubmit, employees = [], default
       return;
     }
 
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( de)? \d{4}$/i.test(period.trim())) {
+      toast.error("Escribe el periodo como mes y año, por ejemplo: Noviembre de 2025.");
+      return;
+    }
+
     await onSubmit?.({ employee_id: employeeId, period: period.trim() });
   };
 
@@ -75,7 +80,10 @@ function AddPayrollEntryModal({ open, onClose, onSubmit, employees = [], default
                   type="text"
                   className="modal-line-input"
                   value={period}
-                  onChange={(event) => setPeriod(event.target.value)}
+                  maxLength={20}
+                  onChange={(event) =>
+                    setPeriod(event.target.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]/g, ""))
+                  }
                   placeholder="Ej: Noviembre 2025"
                 />
               </div>

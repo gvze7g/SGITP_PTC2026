@@ -154,14 +154,15 @@ function CreateProductModal({
   };
 
   const handleVariantChange = (index, field, value) => {
-    const decimalFields = ["stock"];
-
-    if (decimalFields.includes(field)) {
-      if (value !== "") {
-        const decimalRegex = /^\d*\.?\d*$/;
-        if (!decimalRegex.test(value)) return;
-        if (Number(value) < 0) return;
-      }
+    // Stock: solo enteros. Talla: letras, numeros, espacios y guion (ej. 0-3M).
+    // Color, diseño, bordado y tela: letras, numeros y espacios.
+    if (field === "stock" && !/^\d*$/.test(value)) return;
+    if (field === "size" && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 -]*$/.test(value)) return;
+    if (
+      ["color", "design", "embroidery", "fabric"].includes(field) &&
+      !/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]*$/.test(value)
+    ) {
+      return;
     }
 
     setFormData((prev) => {
@@ -227,6 +228,11 @@ function CreateProductModal({
       return false;
     }
 
+    if (formData.name.trim().length < 3) {
+      toast.error("El nombre del producto debe tener al menos 3 caracteres.");
+      return false;
+    }
+
     if (!formData.description.trim()) {
       toast.error("La descripción del producto es obligatoria.");
       return false;
@@ -237,23 +243,30 @@ function CreateProductModal({
       return false;
     }
 
-    if (formData.price !== "" && Number(formData.price) < 0) {
-      toast.error("El precio no puede ser menor que 0.");
+    if (String(formData.price).trim() === "" || !(Number(formData.price) > 0)) {
+      toast.error("El precio para cliente regular es obligatorio y debe ser mayor que 0.");
       return false;
     }
 
-    if (formData.cost !== "" && Number(formData.cost) < 0) {
-      toast.error("El precio mayorista no puede ser menor que 0.");
+    if (String(formData.cost).trim() === "" || !(Number(formData.cost) > 0)) {
+      toast.error("El precio mayorista es obligatorio y debe ser mayor que 0.");
+      return false;
+    }
+
+    const variantWithoutSize = formData.variants.some((variant) => !String(variant.size ?? "").trim());
+
+    if (variantWithoutSize) {
+      toast.error("Cada variante debe tener una talla.");
       return false;
     }
 
     const invalidVariant = formData.variants.some((variant) => {
-      const value = variant.stock;
-      return value !== "" && (Number.isNaN(Number(value)) || Number(value) < 0);
+      const value = String(variant.stock ?? "").trim();
+      return value === "" || !/^\d+$/.test(value);
     });
 
     if (invalidVariant) {
-      toast.error("Las variantes solo aceptan numeros positivos en el stock.");
+      toast.error("Cada variante debe tener un stock (numero entero, 0 o mayor).");
       return false;
     }
 
@@ -533,7 +546,13 @@ function CreateProductModal({
                       placeholder="Ej: Body manga larga"
                       className="modal-line-input"
                       value={formData.name}
-                      onChange={(event) => handleChange("name", event.target.value)}
+                      maxLength={80}
+                      onChange={(event) =>
+                        handleChange(
+                          "name",
+                          event.target.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]/g, "")
+                        )
+                      }
                     />
                   </div>
 
@@ -544,7 +563,13 @@ function CreateProductModal({
                       className="modal-line-input"
                       placeholder="Ej: Ropa"
                       value={formData.category}
-                      onChange={(event) => handleChange("category", event.target.value)}
+                      maxLength={40}
+                      onChange={(event) =>
+                        handleChange(
+                          "category",
+                          event.target.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü ]/g, "")
+                        )
+                      }
                     />
                   </div>
 

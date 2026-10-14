@@ -12,7 +12,26 @@ import {
 } from '../../services/customerAuthService';
 import { getMyOrders } from '../../services/cartService';
 import { formatProductPrice, getProductImage } from '../../services/catalogService';
-import { digitsOnly, lettersOnly } from '../../utils/inputFilters';
+import { getMyFavorites, removeFavorite } from '../../services/favoriteService';
+import {
+  addMyCard,
+  getMyCards,
+  removeMyCard,
+  setPrimaryCard,
+} from '../../services/paymentMethodService';
+import {
+  cardExpiry,
+  cardNumber as filterCardNumber,
+  digitsOnly,
+  lettersOnly,
+} from '../../utils/inputFilters';
+import {
+  ALPHANUMERIC_PATTERN,
+  isValidCardExpiry,
+  isValidCardNumber,
+  isValidName,
+  isValidPhone,
+} from '../../utils/validators';
 
 const CITY_OPTIONS = [
   'San Salvador',
@@ -41,7 +60,13 @@ const EMPTY_ADDRESS_FORM = {
   isPrimary: false,
 };
 
+const EMPTY_CARD_FORM = { cardNumber: '', expiry: '', holderName: '' };
+
 const cleanAddressText = (value) => value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]/g, '');
+
+const scrollToSection = (sectionId) => {
+  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
 
 function formatMemberSince(date) {
   if (!date) return 'No disponible';
@@ -82,6 +107,13 @@ function ProfilePage() {
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [detailsForm, setDetailsForm] = useState({ full_name: '', main_phone: '' });
   const [savingDetails, setSavingDetails] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesError, setFavoritesError] = useState('');
+  const [cards, setCards] = useState([]);
+  const [cardsError, setCardsError] = useState('');
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [cardForm, setCardForm] = useState(EMPTY_CARD_FORM);
+  const [savingCard, setSavingCard] = useState(false);
 
   useEffect(() => {
     if (!customer || customer.userType !== 'Customer') {
@@ -104,7 +136,42 @@ function ProfilePage() {
       }
     }
 
+    async function loadFavorites() {
+      try {
+        const customerFavorites = await getMyFavorites();
+
+        if (isMounted) {
+          // Un favorito cuyo producto se borro queda con product_id null.
+          setFavorites(
+            (Array.isArray(customerFavorites) ? customerFavorites : []).filter(
+              (favorite) => favorite.product_id
+            )
+          );
+        }
+      } catch (favoritesRequestError) {
+        if (isMounted) {
+          setFavoritesError(favoritesRequestError.message);
+        }
+      }
+    }
+
+    async function loadCards() {
+      try {
+        const customerCards = await getMyCards();
+
+        if (isMounted) {
+          setCards(Array.isArray(customerCards) ? customerCards : []);
+        }
+      } catch (cardsRequestError) {
+        if (isMounted) {
+          setCardsError(cardsRequestError.message);
+        }
+      }
+    }
+
     loadOrders();
+    loadFavorites();
+    loadCards();
 
     return () => {
       isMounted = false;
@@ -171,17 +238,17 @@ function ProfilePage() {
       return;
     }
 
-    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]+$/.test(addressForm.street_and_number.trim())) {
+    if (!ALPHANUMERIC_PATTERN.test(addressForm.street_and_number.trim())) {
       toast.error('La direccion solo puede tener letras y numeros.');
       return;
     }
 
-    if (addressForm.label.trim() && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]+$/.test(addressForm.label.trim())) {
+    if (addressForm.label.trim() && !ALPHANUMERIC_PATTERN.test(addressForm.label.trim())) {
       toast.error('La etiqueta solo puede tener letras y numeros.');
       return;
     }
 
-    if (addressForm.reference.trim() && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]+$/.test(addressForm.reference.trim())) {
+    if (addressForm.reference.trim() && !ALPHANUMERIC_PATTERN.test(addressForm.reference.trim())) {
       toast.error('La referencia solo puede tener letras y numeros.');
       return;
     }
@@ -207,6 +274,8 @@ function ProfilePage() {
   };
 
   const handleDeleteAddress = async (addressId) => {
+    if (!window.confirm('¿Seguro que quieres eliminar esta direccion?')) return;
+
     try {
       await deleteCustomerAddress(addressId);
       await refreshUser();
@@ -219,7 +288,7 @@ function ProfilePage() {
   const handleOpenDetailsForm = () => {
     setDetailsForm({
       full_name: customer?.full_name || '',
-      main_phone: customer?.main_phone || '',
+      main_phone: digitsOnly(customer?.main_phone || ''),
     });
     setShowDetailsForm(true);
   };
@@ -234,8 +303,23 @@ function ProfilePage() {
   const handleSaveDetails = async (event) => {
     event.preventDefault();
 
-    if (detailsForm.full_name.trim().length < 3) {
-      toast.error('El nombre debe tener al menos 3 caracteres.');
+    if (!detailsForm.full_name.trim()) {
+      toast.error('El nombre es obligatorio.');
+      return;
+    }
+
+    if (!isValidName(detailsForm.full_name)) {
+      toast.error('El nombre debe tener al menos 3 letras y no puede llevar numeros ni simbolos.');
+      return;
+    }
+
+    if (!detailsForm.main_phone.trim()) {
+      toast.error('El telefono es obligatorio.');
+      return;
+    }
+
+    if (!isValidPhone(detailsForm.main_phone)) {
+      toast.error('El telefono debe tener entre 8 y 12 digitos.');
       return;
     }
 
@@ -253,6 +337,92 @@ function ProfilePage() {
       toast.error(error.message ?? 'No se pudo actualizar tus datos.');
     } finally {
       setSavingDetails(false);
+    }
+  };
+
+  const handleRemoveFavorite = async (productId) => {
+    try {
+      await removeFavorite(productId);
+      setFavorites((current) => current.filter((favorite) => favorite.product_id._id !== productId));
+      toast.success('Se quito de tus favoritos.');
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo quitar de favoritos.');
+    }
+  };
+
+  const handleCardInputChange = (event) => {
+    const { name, value } = event.target;
+    const nextValue =
+      name === 'cardNumber'
+        ? filterCardNumber(value)
+        : name === 'expiry'
+          ? cardExpiry(value)
+          : lettersOnly(value);
+
+    setCardForm((prev) => ({ ...prev, [name]: nextValue }));
+  };
+
+  const handleCancelCard = () => {
+    setShowCardForm(false);
+    setCardForm(EMPTY_CARD_FORM);
+  };
+
+  const handleSaveCard = async (event) => {
+    event.preventDefault();
+
+    if (!cardForm.cardNumber || !cardForm.expiry || !cardForm.holderName.trim()) {
+      toast.error('Completa numero de tarjeta, vencimiento y titular.');
+      return;
+    }
+
+    if (!isValidCardNumber(cardForm.cardNumber)) {
+      toast.error('El numero de tarjeta debe tener entre 13 y 19 digitos.');
+      return;
+    }
+
+    if (!isValidCardExpiry(cardForm.expiry)) {
+      toast.error('El vencimiento debe ser MM/YY, con un mes valido y sin estar vencida.');
+      return;
+    }
+
+    if (!isValidName(cardForm.holderName)) {
+      toast.error('El nombre del titular solo puede tener letras (minimo 3).');
+      return;
+    }
+
+    setSavingCard(true);
+
+    try {
+      await addMyCard({ ...cardForm, isPrimary: cards.length === 0 });
+      setCards(await getMyCards());
+      toast.success('Tarjeta guardada.');
+      handleCancelCard();
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo guardar la tarjeta.');
+    } finally {
+      setSavingCard(false);
+    }
+  };
+
+  const handleSetPrimaryCard = async (cardId) => {
+    try {
+      await setPrimaryCard(cardId);
+      setCards(await getMyCards());
+      toast.success('Tarjeta principal actualizada.');
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo actualizar la tarjeta.');
+    }
+  };
+
+  const handleRemoveCard = async (card) => {
+    if (!window.confirm(`¿Eliminar la tarjeta terminada en ${card.last4}?`)) return;
+
+    try {
+      await removeMyCard(card._id);
+      setCards(await getMyCards());
+      toast.success('Tarjeta eliminada.');
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo eliminar la tarjeta.');
     }
   };
 
@@ -290,9 +460,21 @@ function ProfilePage() {
         <div className="profile-layout">
           <aside className="profile-sidebar">
             <h2>Gestion de cuenta</h2>
-            <button type="button">Detalles Personales</button>
-            <button type="button">Historial de Pedidos</button>
-            <button type="button">Direcciones Guardadas</button>
+            <button type="button" onClick={() => scrollToSection('profile-details')}>
+              Detalles Personales
+            </button>
+            <button type="button" onClick={() => scrollToSection('profile-orders')}>
+              Historial de Pedidos
+            </button>
+            <button type="button" onClick={() => scrollToSection('profile-favorites')}>
+              Favoritos
+            </button>
+            <button type="button" onClick={() => scrollToSection('profile-addresses')}>
+              Direcciones Guardadas
+            </button>
+            <button type="button" onClick={() => scrollToSection('profile-cards')}>
+              Tarjetas Guardadas
+            </button>
 
             <button type="button" className="profile-logout" onClick={handleLogout}>
               Cerrar sesion
@@ -300,7 +482,7 @@ function ProfilePage() {
           </aside>
 
           <section className="profile-content">
-            <section className="profile-section">
+            <section className="profile-section" id="profile-details">
               <div className="profile-section-heading">
                 <h2>Detalles Personales</h2>
                 {!showDetailsForm ? (
@@ -326,7 +508,7 @@ function ProfilePage() {
                   <label>
                     <span>Telefono principal</span>
                     <input
-                      type="tel"
+                      type="text"
                       name="main_phone"
                       inputMode="numeric"
                       value={detailsForm.main_phone}
@@ -366,7 +548,7 @@ function ProfilePage() {
               )}
             </section>
 
-            <section className="profile-section">
+            <section className="profile-section" id="profile-orders">
               <div className="profile-section-heading">
                 <h2>Historial de Pedidos</h2>
                 <span className="profile-orders-sort-label">Mostrando recientes</span>
@@ -415,7 +597,54 @@ function ProfilePage() {
               ) : null}
             </section>
 
-            <section className="profile-section">
+            <section className="profile-section" id="profile-favorites">
+              <div className="profile-section-heading">
+                <h2>Favoritos</h2>
+                <button type="button" onClick={() => navigate('/clothes')}>
+                  Explorar catalogo
+                </button>
+              </div>
+
+              <div className="order-list">
+                {favoritesError ? <p className="profile-empty-text">{favoritesError}</p> : null}
+
+                {favorites.length > 0 ? (
+                  favorites.map((favorite) => {
+                    const product = favorite.product_id;
+
+                    return (
+                      <article key={favorite._id} className="profile-order">
+                        <img src={getProductImage(product, 320)} alt={product.name || 'Producto'} />
+                        <div>
+                          <span>{product.category || 'Producto'}</span>
+                          <h3>{product.name || 'Producto'}</h3>
+                          <p>
+                            <strong>{formatProductPrice(Number(product.price || 0))}</strong>
+                          </p>
+                        </div>
+                        <div className="profile-favorite-actions">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/product-detail/${product._id}`)}
+                          >
+                            Ver
+                          </button>
+                          <button type="button" onClick={() => handleRemoveFavorite(product._id)}>
+                            Quitar
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })
+                ) : !favoritesError ? (
+                  <p className="profile-empty-text">
+                    Aun no tienes favoritos. Guarda prendas desde el detalle de cada producto.
+                  </p>
+                ) : null}
+              </div>
+            </section>
+
+            <section className="profile-section" id="profile-addresses">
               <div className="profile-section-heading">
                 <h2>Direcciones Guardadas</h2>
                 <button type="button" onClick={handleNewAddress}>Anadir nueva</button>
@@ -514,6 +743,102 @@ function ProfilePage() {
                     <p>Aun no tienes direcciones guardadas.</p>
                   </article>
                 )}
+              </div>
+            </section>
+
+            <section className="profile-section" id="profile-cards">
+              <div className="profile-section-heading">
+                <h2>Tarjetas Guardadas</h2>
+                <button type="button" onClick={() => setShowCardForm(true)}>
+                  Anadir tarjeta
+                </button>
+              </div>
+
+              {showCardForm ? (
+                <form className="address-form" onSubmit={handleSaveCard}>
+                  <label>
+                    <span>Numero de tarjeta</span>
+                    <input
+                      type="text"
+                      name="cardNumber"
+                      inputMode="numeric"
+                      autoComplete="cc-number"
+                      value={cardForm.cardNumber}
+                      onChange={handleCardInputChange}
+                      maxLength={19}
+                      placeholder="0000000000000000"
+                    />
+                  </label>
+                  <label>
+                    <span>Vencimiento</span>
+                    <input
+                      type="text"
+                      name="expiry"
+                      inputMode="numeric"
+                      autoComplete="cc-exp"
+                      value={cardForm.expiry}
+                      onChange={handleCardInputChange}
+                      maxLength={5}
+                      placeholder="MM/YY"
+                    />
+                  </label>
+                  <label>
+                    <span>Titular</span>
+                    <input
+                      type="text"
+                      name="holderName"
+                      autoComplete="cc-name"
+                      value={cardForm.holderName}
+                      onChange={handleCardInputChange}
+                      maxLength={50}
+                      placeholder="Como aparece en la tarjeta"
+                    />
+                  </label>
+                  <p className="profile-empty-text address-primary-check">
+                    Solo guardamos la marca y los ultimos 4 digitos. El CVV se pide al pagar.
+                  </p>
+                  <div className="address-form-actions">
+                    <button type="submit" disabled={savingCard}>
+                      {savingCard ? 'Guardando...' : 'Guardar tarjeta'}
+                    </button>
+                    <button type="button" onClick={handleCancelCard}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
+              {cardsError ? <p className="profile-empty-text">{cardsError}</p> : null}
+
+              <div className="address-grid">
+                {cards.length > 0 ? (
+                  cards.map((card) => (
+                    <article key={card._id}>
+                      <span>{card.isPrimary ? 'Tarjeta principal' : card.brand}</span>
+                      <h3>
+                        {card.brand} •••• {card.last4}
+                      </h3>
+                      <p>{card.holder_name || customerName}</p>
+                      <p>
+                        Vence {card.expiry_month}/{card.expiry_year}
+                      </p>
+                      {!card.isPrimary ? (
+                        <button type="button" onClick={() => handleSetPrimaryCard(card._id)}>
+                          Hacer principal
+                        </button>
+                      ) : null}
+                      <button type="button" onClick={() => handleRemoveCard(card)}>
+                        Eliminar
+                      </button>
+                    </article>
+                  ))
+                ) : !cardsError ? (
+                  <article>
+                    <span>Sin tarjetas</span>
+                    <h3>{customerName}</h3>
+                    <p>Aun no tienes tarjetas guardadas.</p>
+                  </article>
+                ) : null}
               </div>
             </section>
           </section>

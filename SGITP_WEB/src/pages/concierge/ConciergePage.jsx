@@ -7,6 +7,9 @@ import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
 import { getCurrentCustomer } from '../../services/customerAuthService';
 import { digitsOnly, lettersOnly } from '../../utils/inputFilters';
+import { isValidName, isValidPhone } from '../../utils/validators';
+
+const CONCIERGE_EMAIL = 'consejeria@peques.com';
 
 const SERVICES = [
   {
@@ -46,7 +49,7 @@ function ConciergePage() {
         setFormData((prev) => ({
           ...prev,
           fullName: user.full_name || user.name || '',
-          phone: user.main_phone || user.phone_numbers?.find((phone) => phone.isPrimary)?.number || '',
+          phone: digitsOnly(user.main_phone || user.phone_numbers?.find((phone) => phone.isPrimary)?.number || ''),
         }));
       })
       .catch(() => {});
@@ -73,10 +76,31 @@ function ConciergePage() {
       return;
     }
 
+    if (!isValidName(formData.fullName)) {
+      toast.error('El nombre debe tener al menos 3 letras, sin numeros ni simbolos.');
+      return;
+    }
+
+    if (!isValidPhone(formData.phone)) {
+      toast.error('El telefono debe tener entre 8 y 12 digitos.');
+      return;
+    }
+
+    const body = [
+      `Nombre: ${formData.fullName.trim()}`,
+      `Telefono: ${formData.phone}`,
+      `Servicio: ${formData.service}`,
+      '',
+      formData.message.trim(),
+    ].join('\n');
+
+    window.location.href = `mailto:${CONCIERGE_EMAIL}?subject=${encodeURIComponent(
+      `Solicitud de ${formData.service}`
+    )}&body=${encodeURIComponent(body)}`;
+
     setSuccessMessage(
-      'Solicitud enviada correctamente. Un asesor se pondra en contacto contigo en un plazo maximo de 24 horas.'
+      'Abrimos tu aplicacion de correo con la solicitud lista. Solo falta presionar enviar.'
     );
-    toast.success('Solicitud enviada correctamente.');
     setFormData((prev) => ({
       ...prev,
       service: '',
@@ -164,7 +188,7 @@ function ConciergePage() {
             <label>
               <span>Telefono</span>
               <input
-                type="tel"
+                type="text"
                 name="phone"
                 inputMode="numeric"
                 placeholder="00000000"

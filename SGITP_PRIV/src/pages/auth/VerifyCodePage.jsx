@@ -22,8 +22,8 @@ function VerifyCodePage() {
       return false;
     }
 
-    if (cleanCode.length < 4) {
-      toast.error("El código ingresado no es válido.");
+    if (!/^[a-f0-9]{6}$/.test(cleanCode)) {
+      toast.error("El código debe tener 6 caracteres (números y letras de la a a la f).");
       return false;
     }
 
@@ -86,7 +86,7 @@ function VerifyCodePage() {
                 type="text"
                 placeholder="Ingresa el código"
                 value={code}
-                onChange={(event) => setCode(event.target.value)}
+                onChange={(event) => setCode(event.target.value.toLowerCase().replace(/[^a-f0-9]/g, "").slice(0, 6))}
                 autoComplete="one-time-code"
               />
             </div>

@@ -9,8 +9,20 @@ import { useAuth } from '../../context/AuthContext';
 import { getCurrentCustomer } from '../../services/customerAuthService';
 import { getMyCart, placeCartOrder } from '../../services/cartService';
 import { getProductImage } from '../../services/catalogService';
+import { getCardBrand, getMyCards } from '../../services/paymentMethodService';
 import { validateCoupon } from '../../services/promotionsService';
 import { cardExpiry, cardNumber as filterCardNumber, digitsOnly } from '../../utils/inputFilters';
+import {
+  ALPHANUMERIC_PATTERN,
+  NAME_PATTERN,
+  getCvvLength,
+  isValidCardExpiry,
+  isValidCardNumber,
+  isValidCvv,
+  isValidEmail,
+  isValidName,
+  isValidPhone,
+} from '../../utils/validators';
 
 const CITY_OPTIONS = [
   { city: 'San Salvador', postal: '1101' },
@@ -39,6 +51,10 @@ const SHIPPING_OPTIONS = {
 };
 
 const formatPrice = (value) => `$${value.toFixed(2)}`;
+
+// Valor del selector de direccion/tarjeta cuando el cliente quiere escribir
+// una nueva en vez de usar una guardada.
+const NEW_OPTION = 'new';
 
 const cleanNameValue = (value) => value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ ]/g, '');
 const cleanAddressValue = (value) => value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]/g, '');
@@ -70,6 +86,7 @@ function CheckoutPage() {
     city: CITY_OPTIONS[0].city,
     postalCode: CITY_OPTIONS[0].postal,
     country: 'El Salvador',
+    phone: '',
     cardNumber: '',
     cardExpiry: '',
     cardCvv: '',
@@ -79,6 +96,10 @@ function CheckoutPage() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderMessage, setOrderMessage] = useState('');
   const [shippingType, setShippingType] = useState('standard');
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(NEW_OPTION);
+  const [savedCards, setSavedCards] = useState([]);
+  const [selectedCardId, setSelectedCardId] = useState(NEW_OPTION);
 
   useEffect(() => {
     if (loadingSession || !isAuthenticated) return undefined;
@@ -87,20 +108,31 @@ function CheckoutPage() {
 
     async function loadCheckoutData() {
       try {
-        const [user, currentCart] = await Promise.all([
+        const [user, currentCart, cards] = await Promise.all([
           getCurrentCustomer(),
           getMyCart(),
+          // Sin tarjetas guardadas el checkout sigue funcionando con una nueva.
+          getMyCards().catch(() => []),
         ]);
 
         if (!isMounted) return;
 
         setCart(currentCart);
 
+        const cardList = Array.isArray(cards) ? cards : [];
+        setSavedCards(cardList);
+        if (cardList.length > 0) {
+          setSelectedCardId((cardList.find((card) => card.isPrimary) || cardList[0])._id);
+        }
+
         if (user) {
           const names = splitFullName(user.full_name || user.name);
           const address = getPrimaryAddress(user);
           const cityMatch = CITY_OPTIONS.find((option) => option.city === address.city);
           const defaultCity = cityMatch || CITY_OPTIONS[0];
+
+          setSavedAddresses(user.addresses || []);
+          setSelectedAddressId(address._id || NEW_OPTION);
 
           // Merge, no reemplazo: si se reemplaza el objeto completo se
           // pierden los campos de tarjeta que el usuario ya haya escrito.
@@ -113,6 +145,7 @@ function CheckoutPage() {
             city: defaultCity.city,
             postalCode: defaultCity.postal,
             country: 'El Salvador',
+            phone: digitsOnly(user.main_phone || ''),
           }));
         }
       } catch (error) {
@@ -150,8 +183,41 @@ function CheckoutPage() {
   const shippingCost = shippingOption.price;
   const orderTotal = Math.max(0, subtotal - discountAmount) + shippingCost;
 
+  const selectedCard = savedCards.find((card) => card._id === selectedCardId) || null;
+  const cvvLength = getCvvLength(
+    selectedCard ? selectedCard.brand : getCardBrand(formData.cardNumber)
+  );
+
+  // Elegir una direccion guardada rellena direccion y ciudad; "Otra
+  // direccion" las deja vacias para escribir una nueva.
+  const handleSavedAddressChange = (event) => {
+    const addressId = event.target.value;
+    setSelectedAddressId(addressId);
+
+    const address = savedAddresses.find((item) => item._id === addressId);
+    const cityMatch =
+      CITY_OPTIONS.find((option) => option.city === address?.city) || CITY_OPTIONS[0];
+
+    setFormData((prev) => ({
+      ...prev,
+      address: address ? address.street_and_number || '' : '',
+      city: cityMatch.city,
+      postalCode: cityMatch.postal,
+    }));
+  };
+
+  const handleSavedCardChange = (event) => {
+    setSelectedCardId(event.target.value);
+    setFormData((prev) => ({ ...prev, cardNumber: '', cardExpiry: '', cardCvv: '' }));
+  };
+
   const handleFieldChange = (event) => {
     const { name, value } = event.target;
+
+    // Si edita la direccion a mano, ya no es la guardada que eligio.
+    if (['address', 'city', 'postalCode'].includes(name)) {
+      setSelectedAddressId(NEW_OPTION);
+    }
 
     if (name === 'city' || name === 'postalCode') {
       const selectedCity =
@@ -170,6 +236,8 @@ function CheckoutPage() {
         ? cleanNameValue(value)
         : name === 'address'
           ? cleanAddressValue(value)
+          : name === 'phone'
+            ? digitsOnly(value)
           : name === 'cardNumber'
             ? filterCardNumber(value)
             : name === 'cardExpiry'
@@ -189,25 +257,77 @@ function CheckoutPage() {
       return;
     }
 
-    if (!formData.firstName.trim() || !formData.email.trim() || !formData.address.trim()) {
-      toast.error('Completa nombre, correo y direccion antes de realizar el pedido.');
+    if (
+      !formData.firstName.trim() ||
+      !formData.email.trim() ||
+      !formData.address.trim() ||
+      !formData.phone.trim()
+    ) {
+      toast.error('Completa nombre, correo, telefono y direccion antes de realizar el pedido.');
       return;
     }
 
-    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/.test(formData.firstName.trim())) {
-      toast.error('El primer nombre solo puede tener letras.');
+    if (!isValidName(formData.firstName, 2)) {
+      toast.error('El primer nombre solo puede tener letras (minimo 2).');
       return;
     }
 
-    if (formData.secondName.trim() && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/.test(formData.secondName.trim())) {
+    if (formData.secondName.trim() && !NAME_PATTERN.test(formData.secondName.trim())) {
       toast.error('El segundo nombre solo puede tener letras.');
       return;
     }
 
-    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]+$/.test(formData.address.trim())) {
-      toast.error('La direccion solo puede tener letras y numeros.');
+    if (!isValidEmail(formData.email)) {
+      toast.error('Ingresa un correo electronico valido.');
       return;
     }
+
+    if (!isValidPhone(formData.phone)) {
+      toast.error('El telefono debe tener entre 8 y 12 digitos.');
+      return;
+    }
+
+    if (!ALPHANUMERIC_PATTERN.test(formData.address.trim()) || formData.address.trim().length < 5) {
+      toast.error('La direccion debe tener al menos 5 caracteres, solo letras y numeros.');
+      return;
+    }
+
+    // Las tarjetas son de prueba: solo se valida el formato (no que exista)
+    // y nada de esto se manda al backend.
+    if (!selectedCard) {
+      if (!formData.cardNumber || !formData.cardExpiry) {
+        toast.error('Completa el numero de tarjeta y la fecha de vencimiento.');
+        return;
+      }
+
+      if (!isValidCardNumber(formData.cardNumber)) {
+        toast.error('El numero de tarjeta debe tener entre 13 y 19 digitos.');
+        return;
+      }
+
+      if (!isValidCardExpiry(formData.cardExpiry)) {
+        toast.error('La fecha de vencimiento no es valida o la tarjeta ya vencio.');
+        return;
+      }
+    }
+
+    if (!formData.cardCvv) {
+      toast.error('Ingresa el CVV de tu tarjeta.');
+      return;
+    }
+
+    if (!isValidCvv(formData.cardCvv, selectedCard?.brand ?? getCardBrand(formData.cardNumber))) {
+      toast.error(
+        cvvLength.min === cvvLength.max
+          ? `El CVV debe tener ${cvvLength.max} digitos.`
+          : `El CVV debe tener ${cvvLength.min} o ${cvvLength.max} digitos.`
+      );
+      return;
+    }
+
+    const paymentMethodLabel = selectedCard
+      ? `${selectedCard.brand} terminada en ${selectedCard.last4}`
+      : `${getCardBrand(formData.cardNumber)} terminada en ${formData.cardNumber.slice(-4)}`;
 
     setIsPlacingOrder(true);
     setOrderMessage('');
@@ -215,15 +335,16 @@ function CheckoutPage() {
     try {
       await placeCartOrder({
         shipping_address: `${formData.address}, ${formData.city}, ${formData.postalCode}, ${formData.country}`,
-        shipping_phone: '',
+        shipping_phone: formData.phone,
         shipping_method: shippingOption.label,
         shipping_cost: shippingCost,
-        payment_method: 'Card',
+        payment_method: paymentMethodLabel,
         payment_status: 'Pending',
         coupon_code: appliedCoupon?.coupon_code || undefined,
       });
 
       setCart((prev) => ({ ...prev, products: [], total: 0 }));
+      setFormData((prev) => ({ ...prev, cardNumber: '', cardExpiry: '', cardCvv: '' }));
       setOrderMessage('Pedido realizado correctamente. Tu carrito quedo cerrado.');
       toast.success('Pedido realizado correctamente.');
     } catch (error) {
@@ -311,6 +432,31 @@ function CheckoutPage() {
                 />
               </label>
               <label className="checkout-field-full">
+                <span>Telefono de contacto</span>
+                <input
+                  type="text"
+                  name="phone"
+                  inputMode="numeric"
+                  placeholder="00000000"
+                  value={formData.phone}
+                  onChange={handleFieldChange}
+                  maxLength={12}
+                />
+              </label>
+              {savedAddresses.length > 0 ? (
+                <label className="checkout-field-full">
+                  <span>Direccion guardada</span>
+                  <select value={selectedAddressId} onChange={handleSavedAddressChange}>
+                    {savedAddresses.map((address) => (
+                      <option key={address._id} value={address._id}>
+                        {address.label || 'Direccion'} - {address.street_and_number}, {address.city}
+                      </option>
+                    ))}
+                    <option value={NEW_OPTION}>Otra direccion</option>
+                  </select>
+                </label>
+              ) : null}
+              <label className="checkout-field-full">
                 <span>Direccion</span>
                 <input
                   type="text"
@@ -386,40 +532,58 @@ function CheckoutPage() {
             <h2>Detalles de Pago</h2>
 
             <div className="checkout-form-grid">
-              <label className="checkout-field-full payment-card-field">
-                <span>Numero de tarjeta</span>
-                <input
-                  type="text"
-                  name="cardNumber"
-                  inputMode="numeric"
-                  placeholder="0000 0000 0000 0000"
-                  value={formData.cardNumber}
-                  onChange={handleFieldChange}
-                  maxLength={19}
-                />
-              </label>
-              <label>
-                <span>Fecha de vencimiento</span>
-                <input
-                  type="text"
-                  name="cardExpiry"
-                  inputMode="numeric"
-                  placeholder="MM/YY"
-                  value={formData.cardExpiry}
-                  onChange={handleFieldChange}
-                  maxLength={5}
-                />
-              </label>
+              {savedCards.length > 0 ? (
+                <label className="checkout-field-full">
+                  <span>Tarjeta</span>
+                  <select value={selectedCardId} onChange={handleSavedCardChange}>
+                    {savedCards.map((card) => (
+                      <option key={card._id} value={card._id}>
+                        {card.brand} •••• {card.last4} (vence {card.expiry_month}/{card.expiry_year})
+                      </option>
+                    ))}
+                    <option value={NEW_OPTION}>Usar otra tarjeta</option>
+                  </select>
+                </label>
+              ) : null}
+              {!selectedCard ? (
+                <>
+                  <label className="checkout-field-full payment-card-field">
+                    <span>Numero de tarjeta</span>
+                    <input
+                      type="text"
+                      name="cardNumber"
+                      inputMode="numeric"
+                      placeholder="0000 0000 0000 0000"
+                      value={formData.cardNumber}
+                      onChange={handleFieldChange}
+                      maxLength={19}
+                    />
+                  </label>
+                  <label>
+                    <span>Fecha de vencimiento</span>
+                    <input
+                      type="text"
+                      name="cardExpiry"
+                      inputMode="numeric"
+                      placeholder="MM/YY"
+                      value={formData.cardExpiry}
+                      onChange={handleFieldChange}
+                      maxLength={5}
+                    />
+                  </label>
+                </>
+              ) : null}
               <label>
                 <span>CVV</span>
                 <input
-                  type="text"
+                  type="password"
                   name="cardCvv"
                   inputMode="numeric"
-                  placeholder="123"
+                  placeholder={cvvLength.max === 4 ? '0000' : '000'}
+                  autoComplete="cc-csc"
                   value={formData.cardCvv}
                   onChange={handleFieldChange}
-                  maxLength={4}
+                  maxLength={cvvLength.max}
                 />
               </label>
             </div>

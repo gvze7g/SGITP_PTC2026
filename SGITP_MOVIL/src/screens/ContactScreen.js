@@ -12,6 +12,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { useBranches } from '../hooks/useBranches';
 import { lettersOnly } from '../utils/inputFilters';
+import { isValidEmail, isValidName } from '../utils/validators';
 
 const SUPPORT_EMAIL = 'hola@peques.com';
 
@@ -64,8 +65,24 @@ export function ContactScreen() {
       showToast('Completa todos los campos', 'error');
       return;
     }
+    if (!isValidName(name)) {
+      showToast('El nombre debe tener al menos 3 letras, sin números ni símbolos', 'error');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      showToast('Ingresa un correo válido', 'error');
+      return;
+    }
+    if (message.trim().length < 10) {
+      showToast('El mensaje debe tener al menos 10 caracteres', 'error');
+      return;
+    }
 
-    showToast('Mensaje enviado, te responderemos pronto', 'success');
+    const body = `Nombre: ${name.trim()}\nCorreo: ${email.trim()}\n\n${message.trim()}`;
+    Linking.openURL(
+      `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Consulta desde la app')}&body=${encodeURIComponent(body)}`,
+    );
+    showToast('Abrimos tu correo con el mensaje listo para enviar', 'success');
     setName('');
     setEmail('');
     setMessage('');
@@ -123,6 +140,7 @@ export function ContactScreen() {
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
+            maxLength={100}
           />
           <TextField
             label="Mensaje"
@@ -130,6 +148,7 @@ export function ContactScreen() {
             value={message}
             onChangeText={setMessage}
             multiline
+            maxLength={500}
           />
           <Button label="Enviar Mensaje" onPress={handleSend} />
         </View>

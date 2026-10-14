@@ -46,7 +46,7 @@ function VerifyRegisterCodePage() {
             maxLength={6}
             value={code}
             onChange={(event) =>
-              setCode(event.target.value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase())
+              setCode(event.target.value.toLowerCase().replace(/[^a-f0-9]/g, ''))
             }
             placeholder="-  -  -  -  -  -"
             autoComplete="one-time-code"

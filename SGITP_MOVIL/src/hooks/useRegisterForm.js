@@ -14,16 +14,21 @@ const registerSchema = z
   .object({
     firstName: z
       .string()
+      .trim()
       .min(1, 'El nombre es requerido')
+      .min(2, 'Mínimo 2 letras')
       .max(50, 'Máximo 50 caracteres')
       .regex(NAME_PATTERN, 'Solo se permiten letras'),
     lastName: z
       .string()
+      .trim()
       .min(1, 'El apellido es requerido')
+      .min(2, 'Mínimo 2 letras')
       .max(50, 'Máximo 50 caracteres')
       .regex(NAME_PATTERN, 'Solo se permiten letras'),
-    email: z.string().min(1, 'El correo es requerido').email('Correo inválido'),
-    password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+    email: z.string().trim().min(1, 'El correo es requerido').email('Correo inválido'),
+    // Mismo mínimo que la página web y el backend.
+    password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
     confirmPassword: z.string().min(1, 'Confirma tu contraseña'),
   })
   .refine((data) => data.password === data.confirmPassword, {

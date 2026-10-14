@@ -19,13 +19,15 @@ const EMPTY_FORM = { label: '', street_and_number: '', city: '', reference: '', 
 // Pantalla "Direcciones Guardadas": no había mockup para esta, así que el
 // diseño sigue el mismo lenguaje visual del resto de la app. CRUD real
 // contra /customer/me/addresses (ver useAddresses.js).
-export function AddressesScreen({ navigation }) {
+export function AddressesScreen({ navigation, route }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { showToast } = useToast();
   const { addresses, isLoading, addAddress, updateAddress, removeAddress } = useAddresses();
 
-  const [formVisible, setFormVisible] = useState(false);
+  // El checkout navega con openForm=true para que "Agregar dirección" abra
+  // el formulario directo, sin un toque extra.
+  const [formVisible, setFormVisible] = useState(Boolean(route?.params?.openForm));
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,6 +53,10 @@ export function AddressesScreen({ navigation }) {
   async function handleSubmit() {
     if (!form.street_and_number.trim() || !form.city) {
       showToast('Dirección y ciudad son obligatorias', 'error');
+      return;
+    }
+    if (form.street_and_number.trim().length < 5) {
+      showToast('La dirección debe tener al menos 5 caracteres', 'error');
       return;
     }
 

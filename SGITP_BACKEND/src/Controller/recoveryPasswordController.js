@@ -91,6 +91,12 @@ recoveryPasswordController.newPassword = async (req, res) => {
   try {
     const { newPassword, confirmNewPassword } = req.body;
 
+    if (!newPassword || String(newPassword).length < 8) {
+      return res
+        .status(400)
+        .json({ message: "La contraseña debe tener al menos 8 caracteres" });
+    }
+
     // Validar que ambas contraseñas coincidan
     if (newPassword !== confirmNewPassword) {
       return res.status(400).json({ message: "Passwords don't match" });

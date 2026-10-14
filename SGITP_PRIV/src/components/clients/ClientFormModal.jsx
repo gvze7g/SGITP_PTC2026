@@ -227,6 +227,15 @@ function ClientFormModal({
       return false;
     }
 
+    const shortPhone = formData.phones.some(
+      (phone) => phone.trim() && phone.replace(/\D/g, "").length < 8
+    );
+
+    if (shortPhone) {
+      toast.error("Cada telefono debe tener al menos 8 digitos.");
+      return false;
+    }
+
     return true;
   };
 

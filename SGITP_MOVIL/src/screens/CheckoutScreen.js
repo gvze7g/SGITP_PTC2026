@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, CreditCard, Lock, MapPin } from 'lucide-react-native';
+import { ArrowLeft, CreditCard, Lock, MapPin, X } from 'lucide-react-native';
 
 import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
@@ -13,6 +13,7 @@ import { useAddresses } from '../hooks/useAddresses';
 import { useCart } from '../hooks/useCart';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
 import { digitsOnly } from '../utils/inputFilters';
+import { getCvvLength, isValidCvv, isValidPhone } from '../utils/validators';
 import { request } from '../services/apiClient';
 
 // Envío fijo (el backend no tiene tarifas de envío configurables todavía).
@@ -37,11 +38,16 @@ export function CheckoutScreen({ navigation, route }) {
   const couponCodeFromCart = route?.params?.couponCode;
 
   const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [phone, setPhone] = useState(user?.main_phone ?? '');
+  const [phone, setPhone] = useState(digitsOnly(user?.main_phone ?? ''));
   const [shippingKey, setShippingKey] = useState(SHIPPING_METHODS[0].key);
   const [paymentSelection, setPaymentSelection] = useState(null); // { type: 'card', id } | { type: 'applePay' }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  // El CVV no se guarda con la tarjeta (ver Model/paymentMethod.js), así que
+  // se pide al final, justo antes de crear el pedido. Solo vive en este
+  // estado: no se manda al backend.
+  const [cvvModalVisible, setCvvModalVisible] = useState(false);
+  const [cvv, setCvv] = useState('');
 
   useEffect(() => {
     if (!couponCodeFromCart) return;
@@ -77,7 +83,13 @@ export function CheckoutScreen({ navigation, route }) {
     : 0;
   const total_with_shipping = Math.max(0, Number(total) - discountAmount) + Number(selectedShipping?.cost ?? 0);
 
-  async function handleFinishOrder() {
+  const selectedCard =
+    paymentSelection?.type === 'card'
+      ? cards.find((item) => item._id === paymentSelection.id)
+      : null;
+  const { min: cvvMinLength, max: cvvMaxLength } = getCvvLength(selectedCard?.brand);
+
+  function handleFinishOrder() {
     const address = addresses.find((item) => item._id === selectedAddressId);
 
     if (!address) {
@@ -88,18 +100,49 @@ export function CheckoutScreen({ navigation, route }) {
       showToast('Ingresa un teléfono de contacto', 'error');
       return;
     }
+    if (!isValidPhone(phone)) {
+      showToast('El teléfono debe tener entre 8 y 12 dígitos', 'error');
+      return;
+    }
     if (!paymentSelection) {
       showToast('Selecciona un método de pago', 'error');
       return;
     }
 
+    if (paymentSelection.type === 'card') {
+      setCvv('');
+      setCvvModalVisible(true);
+      return;
+    }
+
+    submitOrder(address);
+  }
+
+  // Las tarjetas son de prueba: solo se valida el formato del CVV, no que
+  // corresponda a una tarjeta real.
+  function handleConfirmCvv() {
+    if (!isValidCvv(cvv, selectedCard?.brand)) {
+      showToast(
+        cvvMinLength === cvvMaxLength
+          ? `El CVV debe tener ${cvvMaxLength} dígitos`
+          : `El CVV debe tener ${cvvMinLength} o ${cvvMaxLength} dígitos`,
+        'error',
+      );
+      return;
+    }
+
+    setCvvModalVisible(false);
+    setCvv('');
+    submitOrder(addresses.find((item) => item._id === selectedAddressId));
+  }
+
+  async function submitOrder(address) {
     const paymentMethodLabel =
       paymentSelection.type === 'applePay'
         ? 'Apple Pay'
-        : (() => {
-            const card = cards.find((item) => item._id === paymentSelection.id);
-            return card ? `${card.brand} terminada en ${card.last4}` : 'Tarjeta';
-          })();
+        : selectedCard
+          ? `${selectedCard.brand} terminada en ${selectedCard.last4}`
+          : 'Tarjeta';
 
     setIsSubmitting(true);
     try {
@@ -154,11 +197,6 @@ export function CheckoutScreen({ navigation, route }) {
               <AppText variant="muted" style={styles.emptyBoxText}>
                 Todavía no tienes direcciones guardadas.
               </AppText>
-              <Button
-                label="Agregar dirección"
-                variant="outline"
-                onPress={() => navigation.navigate('Addresses')}
-              />
             </View>
           ) : null}
 
@@ -180,6 +218,12 @@ export function CheckoutScreen({ navigation, route }) {
               </View>
             </Pressable>
           ))}
+
+          <Button
+            label="Agregar dirección"
+            variant="outline"
+            onPress={() => navigation.navigate('Addresses', { openForm: true })}
+          />
 
           <TextField
             label="Teléfono (para notificaciones de entrega)"
@@ -324,6 +368,44 @@ export function CheckoutScreen({ navigation, route }) {
           </AppText>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={cvvModalVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setCvvModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setCvvModalVisible(false)}>
+          <Pressable style={styles.modalCard} onPress={(event) => event.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <AppText variant="headingSemiBold">Confirma tu tarjeta</AppText>
+              <Pressable onPress={() => setCvvModalVisible(false)} hitSlop={12}>
+                <X size={20} color={colors.text} />
+              </Pressable>
+            </View>
+            <AppText variant="muted" style={styles.modalSubtitle}>
+              Ingresa el código de seguridad (CVV) de tu {selectedCard?.brand ?? 'tarjeta'} ••••{' '}
+              {selectedCard?.last4}. No se guarda.
+            </AppText>
+            <TextField
+              label="CVV"
+              placeholder={cvvMaxLength === 4 ? '0000' : '000'}
+              value={cvv}
+              onChangeText={setCvv}
+              keyboardType="number-pad"
+              filter={digitsOnly}
+              maxLength={cvvMaxLength}
+              secureField
+            />
+            <Button
+              label="Pagar"
+              icon={<Lock size={16} color={colors.white} />}
+              loading={isSubmitting}
+              onPress={handleConfirmCvv}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -434,6 +516,26 @@ function createStyles(colors) {
     disclaimer: {
       textAlign: 'center',
       marginTop: 4,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.45)',
+      justifyContent: 'center',
+      padding: 24,
+    },
+    modalCard: {
+      backgroundColor: colors.background,
+      borderRadius: 20,
+      padding: 22,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    modalSubtitle: {
+      marginBottom: 18,
     },
   });
 }

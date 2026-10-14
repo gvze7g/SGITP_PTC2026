@@ -213,7 +213,9 @@ function CartPage() {
                 type="text"
                 placeholder="Ej. VERANO2026"
                 value={couponInput}
-                onChange={(event) => setCouponInput(event.target.value.toUpperCase())}
+                onChange={(event) =>
+                  setCouponInput(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))
+                }
                 maxLength={20}
                 disabled={Boolean(appliedCoupon)}
               />

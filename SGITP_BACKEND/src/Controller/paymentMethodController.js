@@ -1,8 +1,10 @@
 import paymentMethodModel from "../Model/paymentMethod.js";
+import { isValidCardExpiry, isValidName } from "../utils/validators.js";
 
 const paymentMethodController = {};
 
 const LAST4_PATTERN = /^\d{4}$/;
+const CARD_BRANDS = ["Visa", "Mastercard", "Otra"];
 
 // GET de las tarjetas guardadas del cliente logueado
 paymentMethodController.getMyPaymentMethods = async (req, res) => {
@@ -25,8 +27,20 @@ paymentMethodController.addMyPaymentMethod = async (req, res) => {
   try {
     const { brand, last4, expiry_month, expiry_year, holder_name, isPrimary = false } = req.body;
 
-    if (!LAST4_PATTERN.test(last4 || "")) {
+    if (!LAST4_PATTERN.test(last4 || "") || !CARD_BRANDS.includes(brand)) {
       return res.status(400).json({ message: "Invalid card" });
+    }
+
+    if (!isValidCardExpiry(expiry_month, expiry_year)) {
+      return res
+        .status(400)
+        .json({ message: "Fecha de vencimiento inválida o tarjeta vencida" });
+    }
+
+    if (!isValidName(holder_name)) {
+      return res
+        .status(400)
+        .json({ message: "El nombre del titular solo puede tener letras (mínimo 3)" });
     }
 
     const customer_id = req.user.id;

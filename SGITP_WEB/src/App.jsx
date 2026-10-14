@@ -19,6 +19,8 @@ import StoresPage from './pages/stores/StoresPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import ReturnsPage from './pages/returns/ReturnsPage';
 import ConciergePage from './pages/concierge/ConciergePage';
+import PrivacyPage from './pages/legal/PrivacyPage';
+import TermsPage from './pages/legal/TermsPage';
 import { ThemeContext } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthProvider';
 import NotFoundPage from './pages/NotFoundPage';
@@ -41,6 +43,8 @@ const PAGE_TITLES = {
   '/profile': 'Perfil',
   '/returns': 'Devoluciones',
   '/concierge': 'Consejería',
+  '/privacy': 'Política de privacidad',
+  '/terms': 'Términos y condiciones',
   '/product-detail': 'Detalle de producto',
   '/cart': 'Carrito',
   '/checkout': 'Pago',
@@ -75,6 +79,8 @@ function AppRoutes() {
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/returns" element={<ReturnsPage />} />
       <Route path="/concierge" element={<ConciergePage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       <Route path="/product-detail" element={<ProductDetailPage />} />
       <Route path="/product-detail/:productId" element={<ProductDetailPage />} />
       <Route path="/cart" element={<CartPage />} />

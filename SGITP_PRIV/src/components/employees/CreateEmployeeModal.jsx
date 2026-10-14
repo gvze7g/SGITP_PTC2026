@@ -189,6 +189,21 @@ function CreateEmployeeModal({
       return false;
     }
 
+    if (formData.phone.replace(/\D/g, "").length < 8) {
+      toast.error("El teléfono debe tener al menos 8 dígitos.");
+      return false;
+    }
+
+    if (!formData.position.trim()) {
+      toast.error("El puesto es obligatorio.");
+      return false;
+    }
+
+    if (String(formData.baseSalary).trim() === "" || !(Number(formData.baseSalary) > 0)) {
+      toast.error("El salario base es obligatorio y debe ser mayor que 0.");
+      return false;
+    }
+
     if (!["Administrator", "Employee"].includes(formData.role)) {
       toast.error("Rol de empleado inválido.");
       return false;
@@ -396,7 +411,13 @@ function CreateEmployeeModal({
                       <input
                         type="text"
                         value={formData.position}
-                        onChange={(event) => handleChange("position", event.target.value)}
+                        maxLength={50}
+                        onChange={(event) =>
+                          handleChange(
+                            "position",
+                            event.target.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü ]/g, "")
+                          )
+                        }
                         placeholder="Ej: Cajera, Gerente, Atención al cliente"
                       />
                     </div>

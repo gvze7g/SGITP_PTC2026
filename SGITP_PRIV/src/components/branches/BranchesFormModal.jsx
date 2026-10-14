@@ -111,6 +111,11 @@ function BranchFormModal({
       return false;
     }
 
+    if (formData.phone.replace(/\D/g, "").length < 8) {
+      toast.error("El telefono de la sucursal debe tener al menos 8 digitos.");
+      return false;
+    }
+
     if (formData.email.trim() && !emailRegex.test(formData.email.trim())) {
       toast.error("Ingresa un correo valido para la sucursal.");
       return false;
