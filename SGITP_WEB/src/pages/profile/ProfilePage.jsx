@@ -28,7 +28,7 @@ import {
 import {
   ALPHANUMERIC_PATTERN,
   isValidCardExpiry,
-  isValidCardNumber,
+  getCardNumberError,
   isValidName,
   isValidPhone,
 } from '../../utils/validators';
@@ -375,8 +375,9 @@ function ProfilePage() {
       return;
     }
 
-    if (!isValidCardNumber(cardForm.cardNumber)) {
-      toast.error('El numero de tarjeta debe tener entre 13 y 19 digitos.');
+    const cardNumberError = getCardNumberError(cardForm.cardNumber);
+    if (cardNumberError) {
+      toast.error(cardNumberError);
       return;
     }
 

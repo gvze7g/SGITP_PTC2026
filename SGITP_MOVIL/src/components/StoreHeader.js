@@ -10,7 +10,9 @@ import { HamburgerMenu } from './HamburgerMenu';
 
 // Encabezado de las pantallas de la tienda (Inicio, Colección, Favoritos,
 // Tiendas, Perfil): menú a la izquierda, marca al centro, carrito a la
-// derecha con la cantidad real de artículos (ver useCart.js).
+// derecha con la cantidad real de artículos (ver useCart.js). Cada pantalla
+// lo pone fuera de su ScrollView/FlatList para que quede fijo arriba y no
+// haya que regresar al inicio para abrir el menú o el carrito.
 export function StoreHeader() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -51,6 +53,10 @@ function createStyles(colors) {
       paddingHorizontal: 20,
       paddingTop: 8,
       paddingBottom: 12,
+      backgroundColor: colors.background,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      zIndex: 10,
     },
     wordmark: {
       fontSize: 16,

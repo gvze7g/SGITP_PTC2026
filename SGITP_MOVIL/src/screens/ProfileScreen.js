@@ -95,8 +95,8 @@ export function ProfileScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <StoreHeader />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <StoreHeader />
 
         <View style={styles.profileHeader}>
           <IconBadge size={112} backgroundColor={colors.cardTan}>

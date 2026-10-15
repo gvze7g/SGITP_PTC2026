@@ -5,9 +5,7 @@ import PromotionsGrid from "../../components/promotions/PromotionsGrid";
 import PromotionFormModal from "../../components/promotions/PromotionFormModal";
 import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
 import usePromotions from "../../hooks/promotions/UsePromotions";
-import { isObjectId, validatePromotionPayload } from "../../utils/adminValidation";
-
-const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
+import { validatePromotionPayload } from "../../utils/adminValidation";
 
 function PromotionsPage({ theme, onToggleTheme }) {
   // hook con la lógica del CRUD
@@ -15,7 +13,6 @@ function PromotionsPage({ theme, onToggleTheme }) {
     promotions,
     loading,
     getPromotions,
-    getPromotionById,
     createPromotion,
     updatePromotion,
     deletePromotion,
@@ -32,46 +29,11 @@ function PromotionsPage({ theme, onToggleTheme }) {
 
   // tipo de acción de confirmación
   const [confirmAction, setConfirmAction] = useState("deactivate");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResult, setSearchResult] = useState(null);
 
   // cargar promociones
   useEffect(() => {
     getPromotions();
   }, [getPromotions]);
-
-  const handleSearchChange = (value) => {
-    setSearchTerm(value);
-
-    if (!value.trim() || !OBJECT_ID_PATTERN.test(value.trim())) {
-      setSearchResult(null);
-    }
-  };
-
-  const handleSearchSubmit = async () => {
-    const query = searchTerm.trim();
-
-    if (!query) {
-      setSearchResult(null);
-      getPromotions();
-      return;
-    }
-
-    if (!isObjectId(query)) {
-      setSearchResult(null);
-      return;
-    }
-
-    const result = await getPromotionById(query);
-
-    if (!result.success) {
-      setSearchResult([]);
-      toast.error(result.message);
-      return;
-    }
-
-    setSearchResult(result.data ? [result.data] : []);
-  };
 
   // abrir crear
   const handleCreate = () => {
@@ -186,27 +148,10 @@ function PromotionsPage({ theme, onToggleTheme }) {
     await getPromotions();
   };
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const visiblePromotions = searchResult ?? promotions.filter((promotion) => {
-    if (!normalizedSearch) return true;
-
-    return [
-      promotion._id,
-      promotion.coupon_code,
-      promotion.descriptions,
-      promotion.discount_percentage,
-      promotion.isActive ? "activo" : "inactivo",
-    ].some((value) => String(value ?? "").toLowerCase().includes(normalizedSearch));
-  });
-
   return (
     <DashboardLayout
       theme={theme}
       onToggleTheme={onToggleTheme}
-      searchValue={searchTerm}
-      onSearchChange={handleSearchChange}
-      onSearchSubmit={handleSearchSubmit}
-      searchPlaceholder="Buscar promocion por ID, codigo o estado"
     >
       <div className="promotions-page-shell">
         <div className="page-title-row">
@@ -226,7 +171,7 @@ function PromotionsPage({ theme, onToggleTheme }) {
         </div>
 
         <PromotionsGrid
-          promotions={visiblePromotions}
+          promotions={promotions}
           loading={loading}
           onEditPromotion={handleEdit}
           onDeactivatePromotion={handleOpenDeactivate}

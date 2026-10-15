@@ -56,8 +56,8 @@ export function HomeStoreScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <StoreHeader />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <StoreHeader />
 
         <Pressable
           style={styles.hero}

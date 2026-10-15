@@ -29,8 +29,8 @@ export function StoresScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <StoreHeader />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <StoreHeader />
 
         <AppText variant="heading" style={styles.title}>
           Nuestras Tiendas

@@ -1,3 +1,5 @@
+import { detectCardBrand } from '../utils/validators';
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
 
 async function parseResponse(response, fallbackMessage) {
@@ -27,13 +29,14 @@ async function send(path, options, fallbackMessage) {
   return parseResponse(response, fallbackMessage);
 }
 
-// Detecta la marca por el primer digito (misma regla que la app movil). El
-// numero completo nunca sale del navegador: al backend solo viajan la marca
-// y los ultimos 4 digitos (ver Model/paymentMethod.js).
+// Detecta la marca por sus prefijos (misma regla que la app movil, ver
+// utils/validators.js). El backend solo acepta Visa, Mastercard u Otra, asi
+// que el resto de marcas se guarda como "Otra". El numero completo nunca sale
+// del navegador: al backend solo viajan la marca y los ultimos 4 digitos (ver
+// Model/paymentMethod.js).
 export function getCardBrand(cardNumber = '') {
-  if (cardNumber.startsWith('4')) return 'Visa';
-  if (cardNumber.startsWith('5')) return 'Mastercard';
-  return 'Otra';
+  const brand = detectCardBrand(cardNumber)?.name;
+  return brand === 'Visa' || brand === 'Mastercard' ? brand : 'Otra';
 }
 
 export function getMyCards() {

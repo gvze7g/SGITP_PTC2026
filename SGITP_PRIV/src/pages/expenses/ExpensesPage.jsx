@@ -7,23 +7,18 @@ import ExpenseFormModal from '../../components/expenses/ExpensesFormModal';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import useSpent from '../../hooks/spent/UseSpent';
 import useBranches from '../../hooks/branches/UseBranches';
-import { isObjectId, validateExpensePayload } from '../../utils/adminValidation';
-
-const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
+import { validateExpensePayload } from '../../utils/adminValidation';
 
 function ExpensesPage({ theme, onToggleTheme }) {
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResult, setSearchResult] = useState(null);
   const {
     spent,
     loading,
     error,
     getSpent,
-    getSpentById,
     createSpent,
     updateSpent,
     deleteSpent,
@@ -34,39 +29,6 @@ function ExpensesPage({ theme, onToggleTheme }) {
     getSpent();
     getBranches();
   }, [getBranches, getSpent]);
-
-  const handleSearchChange = (value) => {
-    setSearchTerm(value);
-
-    if (!value.trim() || !OBJECT_ID_PATTERN.test(value.trim())) {
-      setSearchResult(null);
-    }
-  };
-
-  const handleSearchSubmit = async () => {
-    const query = searchTerm.trim();
-
-    if (!query) {
-      setSearchResult(null);
-      getSpent();
-      return;
-    }
-
-    if (!isObjectId(query)) {
-      setSearchResult(null);
-      return;
-    }
-
-    const result = await getSpentById(query);
-
-    if (!result.success) {
-      setSearchResult([]);
-      toast.error(result.message);
-      return;
-    }
-
-    setSearchResult(result.data ? [result.data] : []);
-  };
 
   const handleCreateExpense = () => {
     setSelectedExpense(null);
@@ -126,34 +88,10 @@ function ExpensesPage({ theme, onToggleTheme }) {
     getSpent();
   };
 
-  const getBranchName = (expense) => {
-    if (expense.branch_id?.name) return expense.branch_id.name;
-    const branch = branches.find((item) => item._id === expense.branch_id);
-    return branch?.name ?? '';
-  };
-
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const visibleExpenses = searchResult ?? spent.filter((expense) => {
-    if (!normalizedSearch) return true;
-
-    return [
-      expense._id,
-      expense.descriptions,
-      expense.description,
-      expense.expense_type,
-      expense.payment_method,
-      getBranchName(expense),
-    ].some((value) => String(value ?? '').toLowerCase().includes(normalizedSearch));
-  });
-
   return (
     <DashboardLayout
       theme={theme}
       onToggleTheme={onToggleTheme}
-      searchValue={searchTerm}
-      onSearchChange={handleSearchChange}
-      onSearchSubmit={handleSearchSubmit}
-      searchPlaceholder="Buscar gasto por ID, descripcion, tipo o sucursal"
     >
       <motion.div
         className="expenses-page-shell"
@@ -176,7 +114,7 @@ function ExpensesPage({ theme, onToggleTheme }) {
         </div>
 
         <ExpensesTable
-          expenses={visibleExpenses}
+          expenses={spent}
           loading={loading}
           error={error}
           onEditExpense={handleEditExpense}

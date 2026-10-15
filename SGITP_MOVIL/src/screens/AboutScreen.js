@@ -35,9 +35,9 @@ export function AboutScreen({ navigation }) {
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StoreHeader />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <StoreHeader />
 
         <AppText variant="label" style={styles.eyebrow}>
           Nuestra Historia

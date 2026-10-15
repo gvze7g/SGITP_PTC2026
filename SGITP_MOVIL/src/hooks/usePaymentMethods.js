@@ -2,17 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { request } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { detectCardBrand } from '../utils/validators';
 
-// Detecta la marca de la tarjeta por el primer dígito (regla clásica de
-// Visa/Mastercard) y separa los últimos 4 dígitos, todo en el teléfono: el
+// Detecta la marca de la tarjeta por sus prefijos (ver utils/validators.js;
+// el backend solo acepta Visa, Mastercard u Otra, así que el resto de marcas
+// se guarda como "Otra") y separa los últimos 4 dígitos, todo en el teléfono: el
 // número completo nunca sale de acá, solo viajan al backend la marca y el
 // last4 (ver Model/paymentMethod.js, que ni siquiera tiene campo para el
 // número completo).
 export function getCardBrand(cardNumber = '') {
-  const digits = cardNumber.replace(/\D/g, '');
-  if (digits.startsWith('4')) return 'Visa';
-  if (digits.startsWith('5')) return 'Mastercard';
-  return 'Otra';
+  const brand = detectCardBrand(cardNumber)?.name;
+  return brand === 'Visa' || brand === 'Mastercard' ? brand : 'Otra';
 }
 
 export function getCardLast4(cardNumber = '') {

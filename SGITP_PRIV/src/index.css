@@ -444,30 +444,6 @@ body.theme-dark {
   flex-shrink: 0;
 }
 
-.admin-search-wrap {
-  width: 100%;
-  min-width: 0;
-  max-width: none;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: var(--admin-muted);
-}
-
-.admin-search-input {
-  width: 100%;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 18px;
-  color: var(--admin-text-soft);
-}
-
-.admin-search-input::placeholder {
-  color: var(--admin-muted);
-}
-
 .admin-topbar-actions {
   display: flex;
   align-items: center;
@@ -4305,4 +4281,229 @@ body.theme-dark {
   border-radius: 10px !important;
   background: var(--admin-accent) !important;
   color: #fff !important;
+}
+
+/* =========================
+   SCROLL Y ELEMENTOS FIJOS
+========================= */
+
+/* El area principal ocupa exactamente la pantalla y solo .admin-content hace
+   scroll; asi la topbar no se mueve y los elementos sticky (filtros, panel de
+   pago) siguen al usuario mientras recorre la pagina. */
+.admin-main {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.admin-content > * {
+  flex-shrink: 0;
+}
+
+.inventory-page-shell,
+.employees-page-shell,
+.clients-page-shell,
+.promotions-page-shell,
+.expenses-page-shell,
+.branches-page-shell,
+.inventory-page-shell .inventory-panel,
+.employees-page-shell .employees-panel,
+.clients-page-shell .clients-panel,
+.promotions-page-shell .promotions-page,
+.expenses-page-shell .expenses-page,
+.branches-page-shell .branches-page {
+  flex: 1 0 auto;
+}
+
+.sales-filters-card {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* overflow: clip conserva el recorte del borde sin romper el sticky interno. */
+.inventory-panel {
+  overflow: clip;
+}
+
+.inventory-sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--admin-surface);
+  padding-bottom: 4px;
+}
+
+.inventory-filters-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto auto;
+  gap: 12px;
+  margin: 18px 0;
+  align-items: end;
+}
+
+/* POS: categorias y panel de pago fijos, catalogo paginado. */
+.pos-categories-row {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin-top: 8px;
+  margin-bottom: 24px;
+  padding: 12px 0;
+  background: var(--admin-bg);
+}
+
+.pos-panel {
+  top: 0;
+  max-height: calc(100dvh - 130px);
+}
+
+.pos-total-section {
+  position: sticky;
+  bottom: -24px;
+  margin-bottom: -24px;
+  padding: 20px 0 24px;
+  background: var(--admin-surface-2);
+  border-top: 1px solid var(--admin-border);
+}
+
+.pos-footer {
+  border-top: 1px solid var(--admin-border-soft);
+  margin-top: 24px;
+  padding-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--admin-text-soft);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pos-footer p {
+  margin: 0;
+}
+
+.pos-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pos-pagination button {
+  border: none;
+  background: transparent;
+  min-width: 32px;
+  height: 32px;
+  color: var(--admin-text);
+  cursor: pointer;
+}
+
+.pos-pagination button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.pos-page-active {
+  background: color-mix(in srgb, var(--admin-surface-2) 82%, transparent) !important;
+  border-radius: 4px;
+}
+
+@media (max-width: 1440px) {
+  .pos-page-grid {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 24px;
+  }
+
+  .pos-panel {
+    position: sticky;
+    top: 0;
+    max-height: calc(100dvh - 130px);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 1100px) {
+  .pos-page-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* En una sola columna el panel va debajo del catalogo; el total y el boton
+     de confirmar quedan pegados al borde inferior mientras el panel se ve. */
+  .pos-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .inventory-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inventory-filters-grid > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .sales-filters-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .sales-filters-card {
+    padding: 18px 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* En telefono los filtros completos ocuparian casi toda la pantalla, asi que
+     solo se mantienen fijas las categorias del POS (en una sola fila deslizable). */
+  .sales-filters-card,
+  .inventory-sticky-bar {
+    position: static;
+  }
+
+  .inventory-filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pos-categories-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .pos-category-chip {
+    flex-shrink: 0;
+    padding: 0 16px;
+  }
+
+  .pos-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .catalog-card-title {
+    font-size: 15px;
+    margin: 10px 0 6px;
+  }
+
+  .catalog-card-meta {
+    font-size: 13px;
+  }
+
+  .catalog-card-price {
+    font-size: 18px;
+    margin-top: 8px;
+  }
+
+  .pos-total-row span,
+  .pos-total-row strong {
+    font-size: 22px;
+  }
+
+  .pos-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

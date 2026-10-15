@@ -89,9 +89,9 @@ export function ContactScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StoreHeader />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <StoreHeader />
 
         <AppText variant="heading" style={styles.title}>
           Hablemos.

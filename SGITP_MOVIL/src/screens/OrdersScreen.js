@@ -27,14 +27,14 @@ export function OrdersScreen({ navigation }) {
   const { data: orders, isLoading } = useOrders();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StoreHeader />
       <FlatList
         data={orders ?? []}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
-            <StoreHeader />
             <AppText variant="heading" style={styles.title}>
               Mis Pedidos
             </AppText>

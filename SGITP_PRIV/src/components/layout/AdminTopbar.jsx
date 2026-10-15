@@ -1,4 +1,4 @@
-import { Bell, Menu, Moon, Search, Settings, Sun, LogOut } from 'lucide-react';
+import { Bell, Menu, Moon, Settings, Sun, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -8,10 +8,6 @@ function AdminTopbar({
   theme,
   onToggleTheme,
   onOpenMobileMenu,
-  searchValue = '',
-  onSearchChange,
-  onSearchSubmit,
-  searchPlaceholder = 'Buscar...',
 }) {
   const isDark = theme === 'dark';
   const navigate = useNavigate();
@@ -57,24 +53,6 @@ function AdminTopbar({
         >
           <Menu size={22} strokeWidth={1.8} />
         </button>
-
-        <form
-          className="admin-search-wrap"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSearchSubmit?.();
-          }}
-        >
-          <Search size={20} strokeWidth={1.8} />
-          <input
-            type="text"
-            placeholder={searchPlaceholder}
-            className="admin-search-input"
-            aria-label="Buscar"
-            value={searchValue}
-            onChange={(event) => onSearchChange?.(event.target.value)}
-          />
-        </form>
       </div>
 
       <div className="admin-topbar-actions">

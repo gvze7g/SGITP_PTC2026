@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Heart, House, LayoutGrid, Store, User } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fontFamily } from '../constants/typography';
 import { useTheme } from '../context/ThemeContext';
@@ -24,6 +25,11 @@ const TAB_ICONS = {
 // secciones de la tienda, siempre visibles abajo de la pantalla.
 export function MainTabNavigator() {
   const { colors } = useTheme();
+  // Alto de la barra de gestos o de los botones del sistema (0 si el
+  // telefono no tiene). Antes el alto fijo de 64 hacia que las pestañas
+  // quedaran debajo de esa barra y al tocarlas se activaba el gesto del
+  // sistema (cerrar o salir de la app).
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -34,8 +40,9 @@ export function MainTabNavigator() {
         tabBarStyle: {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
-          height: 64,
+          height: 64 + insets.bottom,
           paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
         },
         tabBarLabelStyle: {
           fontFamily: fontFamily.bodySemiBold,

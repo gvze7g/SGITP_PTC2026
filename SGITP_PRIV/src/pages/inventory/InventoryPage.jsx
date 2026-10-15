@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import InventoryTable from "../../components/inventory/InventoryTable";
 import CreateProductModal from "../../components/inventory/CreateProductModal";
 import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
 import useProducts from "../../hooks/Inventory/UseProducts";
+import useDebounce from "../../hooks/useDebounce";
 import { isObjectId, validateProductPayload } from "../../utils/adminValidation";
 
 const DEFAULT_FILTERS = {
@@ -37,6 +38,10 @@ function InventoryPage({ theme, onToggleTheme }) {
   const [activeTab, setActiveTab] = useState("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  // Los filtros se escriben en vivo, pero solo se consulta al servidor cuando
+  // el usuario deja de teclear; lastQueryKeyRef evita repetir la misma consulta.
+  const debouncedFilters = useDebounce(filters, 400);
+  const lastQueryKeyRef = useRef("");
   const [inventoryStats, setInventoryStats] = useState({
     totalProducts: 0,
     lowStockCount: 0,
@@ -53,30 +58,49 @@ function InventoryPage({ theme, onToggleTheme }) {
     }
   }, [getProductsCount]);
 
-  const applyCurrentFilters = useCallback(async () => {
-    const trimmedSearch = filters.search.trim();
-    const hasPriceFilter = filters.minPrice !== "" || filters.maxPrice !== "";
+  const fetchProducts = useCallback(async (
+    currentFilters,
+    { tab = activeTab, force = false } = {}
+  ) => {
+    const trimmedSearch = currentFilters.search.trim();
+    const hasPriceFilter =
+      currentFilters.minPrice !== "" || currentFilters.maxPrice !== "";
+
+    const queryKey = JSON.stringify([
+      tab,
+      trimmedSearch,
+      currentFilters.minPrice,
+      currentFilters.maxPrice,
+      currentFilters.lowStockThreshold,
+    ]);
+
+    if (!force && queryKey === lastQueryKeyRef.current) return;
+    lastQueryKeyRef.current = queryKey;
 
     let result;
 
-    if (activeTab === "low-stock") {
-      result = await getLowStockProducts(filters.lowStockThreshold || 5);
+    if (tab === "low-stock") {
+      result = await getLowStockProducts(currentFilters.lowStockThreshold || 5);
     } else if (trimmedSearch && isObjectId(trimmedSearch)) {
       result = await getProductById(trimmedSearch);
     } else if (trimmedSearch) {
       result = await searchProductsByName(trimmedSearch);
     } else if (hasPriceFilter) {
-      result = await getProductsByPriceRange(filters.minPrice, filters.maxPrice);
+      result = await getProductsByPriceRange(
+        currentFilters.minPrice,
+        currentFilters.maxPrice
+      );
     } else {
       result = await getProducts();
     }
 
     if (!result?.success) {
+      // Permite reintentar la misma consulta si fallo.
+      lastQueryKeyRef.current = "";
       toast.error(result?.message || "No se pudo cargar el inventario.");
     }
   }, [
     activeTab,
-    filters,
     getProductById,
     getLowStockProducts,
     searchProductsByName,
@@ -85,8 +109,8 @@ function InventoryPage({ theme, onToggleTheme }) {
   ]);
 
   useEffect(() => {
-    applyCurrentFilters();
-  }, [applyCurrentFilters]);
+    fetchProducts(debouncedFilters);
+  }, [fetchProducts, debouncedFilters]);
 
   useEffect(() => {
     loadStats();
@@ -145,7 +169,7 @@ function InventoryPage({ theme, onToggleTheme }) {
     );
 
     handleCloseCreateModal();
-    await applyCurrentFilters();
+    await fetchProducts(filters, { force: true });
     await loadStats();
   };
 
@@ -164,7 +188,7 @@ function InventoryPage({ theme, onToggleTheme }) {
 
     toast.success("Producto eliminado correctamente.");
     handleCloseDeleteModal();
-    await applyCurrentFilters();
+    await fetchProducts(filters, { force: true });
     await loadStats();
   };
 
@@ -175,29 +199,22 @@ function InventoryPage({ theme, onToggleTheme }) {
     }));
   };
 
+  // Enter o "Aplicar" consultan de inmediato sin esperar el debounce; si la
+  // consulta ya se hizo, fetchProducts la descarta.
   const handleSearchSubmit = async () => {
-    if (activeTab === "low-stock") {
-      setActiveTab("all");
-    }
-    await applyCurrentFilters();
+    setActiveTab("all");
+    await fetchProducts(filters, { tab: "all" });
   };
 
-  const handleApplyPriceFilter = async () => {
-    if (activeTab === "low-stock") {
-      setActiveTab("all");
-    }
-    await applyCurrentFilters();
-  };
+  const handleApplyPriceFilter = handleSearchSubmit;
 
   const handleResetFilters = async () => {
     setActiveTab("all");
     setFilters(DEFAULT_FILTERS);
     setFiltersOpen(false);
 
-    setTimeout(async () => {
-      await getProducts();
-      await loadStats();
-    }, 0);
+    await fetchProducts(DEFAULT_FILTERS, { tab: "all" });
+    await loadStats();
   };
 
   const handleTabChange = async (tab) => {
@@ -208,10 +225,6 @@ function InventoryPage({ theme, onToggleTheme }) {
     <DashboardLayout
       theme={theme}
       onToggleTheme={onToggleTheme}
-      searchValue={filters.search}
-      onSearchChange={(value) => handleChangeFilter("search", value)}
-      onSearchSubmit={handleSearchSubmit}
-      searchPlaceholder="Buscar producto por ID o nombre"
     >
       <div className="inventory-page-shell">
         <div className="page-title-row">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ShieldCheck, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,6 +9,7 @@ import { getProductImage } from '../../services/catalogService';
 import { validateCoupon } from '../../services/promotionsService';
 
 const formatPrice = (value) => `$${value.toFixed(2)}`;
+const QUANTITY_DEBOUNCE_MS = 500;
 
 function CartPage() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ function CartPage() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponStatus, setCouponStatus] = useState('');
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  // Un temporizador por producto: varios clics en +/- se envian como una sola peticion.
+  const quantityTimersRef = useRef({});
   const cartItems = useMemo(() => cart?.products || [], [cart]);
   const subtotal = Number(cart?.total || 0);
   const discountAmount = appliedCoupon
@@ -51,21 +54,54 @@ function CartPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadingSession, isAuthenticated]);
 
-  const handleUpdateQuantity = async (item, nextQuantity) => {
-    const productId = item.productId?._id;
-    if (!productId) return;
+  useEffect(() => {
+    const timers = quantityTimersRef.current;
+    return () => Object.values(timers).forEach(clearTimeout);
+  }, []);
 
-    try {
-      const data = await updateCartItem(productId, nextQuantity);
-      setCart(data);
-    } catch (requestError) {
-      setError(requestError.message);
-    }
+  const handleUpdateQuantity = (item, nextQuantity) => {
+    const productId = item.productId?._id;
+    if (!productId || nextQuantity < 1) return;
+
+    // Actualizacion optimista: la cantidad y los totales cambian al instante
+    // y el servidor solo recibe la cantidad final cuando el usuario deja de pulsar.
+    setCart((current) => {
+      if (!current) return current;
+
+      let totalDelta = 0;
+      const products = current.products.map((cartItem) => {
+        if (cartItem.productId?._id !== productId) return cartItem;
+
+        const quantity = Number(cartItem.quantity || 1);
+        const unitPrice = Number(cartItem.subtotal || 0) / quantity;
+        const subtotal = unitPrice * nextQuantity;
+        totalDelta = subtotal - Number(cartItem.subtotal || 0);
+        return { ...cartItem, quantity: nextQuantity, subtotal };
+      });
+
+      return { ...current, products, total: Number(current.total || 0) + totalDelta };
+    });
+
+    clearTimeout(quantityTimersRef.current[productId]);
+    quantityTimersRef.current[productId] = setTimeout(async () => {
+      delete quantityTimersRef.current[productId];
+
+      try {
+        const data = await updateCartItem(productId, nextQuantity);
+        setCart(data);
+      } catch (requestError) {
+        setError(requestError.message);
+        loadCart();
+      }
+    }, QUANTITY_DEBOUNCE_MS);
   };
 
   const handleRemove = async (item) => {
     const productId = item.productId?._id;
     if (!productId) return;
+
+    clearTimeout(quantityTimersRef.current[productId]);
+    delete quantityTimersRef.current[productId];
 
     try {
       const data = await removeCartItem(productId);

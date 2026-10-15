@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getCurrentCustomer } from '../../services/customerAuthService';
 import { getMyCart, placeCartOrder } from '../../services/cartService';
 import { getProductImage } from '../../services/catalogService';
-import { getCardBrand, getMyCards } from '../../services/paymentMethodService';
+import { getMyCards } from '../../services/paymentMethodService';
 import { validateCoupon } from '../../services/promotionsService';
 import { cardExpiry, cardNumber as filterCardNumber, digitsOnly } from '../../utils/inputFilters';
 import {
@@ -17,7 +17,8 @@ import {
   NAME_PATTERN,
   getCvvLength,
   isValidCardExpiry,
-  isValidCardNumber,
+  detectCardBrand,
+  getCardNumberError,
   isValidCvv,
   isValidEmail,
   isValidName,
@@ -184,9 +185,10 @@ function CheckoutPage() {
   const orderTotal = Math.max(0, subtotal - discountAmount) + shippingCost;
 
   const selectedCard = savedCards.find((card) => card._id === selectedCardId) || null;
-  const cvvLength = getCvvLength(
-    selectedCard ? selectedCard.brand : getCardBrand(formData.cardNumber)
-  );
+  // Con tarjeta nueva se usa la marca detectada por el numero (p. ej. American
+  // Express pide CVV de 4 digitos); con una guardada, la marca registrada.
+  const cvvBrand = selectedCard ? selectedCard.brand : detectCardBrand(formData.cardNumber)?.name;
+  const cvvLength = getCvvLength(cvvBrand);
 
   // Elegir una direccion guardada rellena direccion y ciudad; "Otra
   // direccion" las deja vacias para escribir una nueva.
@@ -292,7 +294,7 @@ function CheckoutPage() {
       return;
     }
 
-    // Las tarjetas son de prueba: solo se valida el formato (no que exista)
+    // Se valida marca, largo y digito de control (Luhn), no que la tarjeta exista;
     // y nada de esto se manda al backend.
     if (!selectedCard) {
       if (!formData.cardNumber || !formData.cardExpiry) {
@@ -300,8 +302,9 @@ function CheckoutPage() {
         return;
       }
 
-      if (!isValidCardNumber(formData.cardNumber)) {
-        toast.error('El numero de tarjeta debe tener entre 13 y 19 digitos.');
+      const cardNumberError = getCardNumberError(formData.cardNumber);
+      if (cardNumberError) {
+        toast.error(cardNumberError);
         return;
       }
 
@@ -316,7 +319,7 @@ function CheckoutPage() {
       return;
     }
 
-    if (!isValidCvv(formData.cardCvv, selectedCard?.brand ?? getCardBrand(formData.cardNumber))) {
+    if (!isValidCvv(formData.cardCvv, cvvBrand)) {
       toast.error(
         cvvLength.min === cvvLength.max
           ? `El CVV debe tener ${cvvLength.max} digitos.`
@@ -327,7 +330,7 @@ function CheckoutPage() {
 
     const paymentMethodLabel = selectedCard
       ? `${selectedCard.brand} terminada en ${selectedCard.last4}`
-      : `${getCardBrand(formData.cardNumber)} terminada en ${formData.cardNumber.slice(-4)}`;
+      : `${cvvBrand ?? 'Tarjeta'} terminada en ${formData.cardNumber.slice(-4)}`;
 
     setIsPlacingOrder(true);
     setOrderMessage('');

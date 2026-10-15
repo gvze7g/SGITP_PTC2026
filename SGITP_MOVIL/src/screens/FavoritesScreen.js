@@ -26,13 +26,13 @@ export function FavoritesScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <StoreHeader />
       <FlatList
         data={favoriteProducts}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
-            <StoreHeader />
             <AppText variant="heading" style={styles.title}>
               Tus Favoritos
             </AppText>

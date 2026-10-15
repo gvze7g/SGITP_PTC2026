@@ -13,7 +13,6 @@ function ClientsPage({ theme, onToggleTheme }) {
   const [selectedClient, setSelectedClient] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const {
     clients,
     loading,
@@ -90,31 +89,10 @@ function ClientsPage({ theme, onToggleTheme }) {
     getClients();
   };
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const visibleClients = clients.filter((client) => {
-    if (!normalizedSearch) return true;
-
-    return [
-      client._id,
-      client.full_name,
-      client.email,
-      client.main_phone,
-      client.customer_type,
-    ].some((value) => String(value ?? '').toLowerCase().includes(normalizedSearch));
-  });
-
   return (
     <DashboardLayout
       theme={theme}
       onToggleTheme={onToggleTheme}
-      searchValue={searchTerm}
-      onSearchChange={setSearchTerm}
-      onSearchSubmit={() => {
-        if (searchTerm.trim() && visibleClients.length === 0) {
-          toast.error('No se encontraron clientes con esa busqueda.');
-        }
-      }}
-      searchPlaceholder="Buscar cliente por nombre, ID, correo o telefono"
     >
       <motion.div
         className="clients-page-shell"
@@ -131,7 +109,7 @@ function ClientsPage({ theme, onToggleTheme }) {
         </div>
 
         <ClientsTable
-          clients={visibleClients}
+          clients={clients}
           loading={loading}
           error={error}
           onEditClient={handleEdit}

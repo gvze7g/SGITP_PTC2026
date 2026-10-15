@@ -84,6 +84,7 @@ export function CollectionScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <StoreHeader />
       <FlatList
         data={visibleProducts}
         keyExtractor={(item) => item._id}
@@ -92,7 +93,6 @@ export function CollectionScreen({ route, navigation }) {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
-            <StoreHeader />
             <View style={styles.searchWrapper}>
               <SearchInput
                 value={search}

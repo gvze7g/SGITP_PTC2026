@@ -11,7 +11,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { getCardBrand, getCardLast4, usePaymentMethods } from '../hooks/usePaymentMethods';
 import { cardExpiry, cardNumber as filterCardNumber, lettersOnly } from '../utils/inputFilters';
-import { isValidCardExpiry, isValidCardNumber, isValidName } from '../utils/validators';
+import { getCardNumberError, isValidCardExpiry, isValidName } from '../utils/validators';
 
 const EMPTY_FORM = { cardNumber: '', expiry: '', holderName: '' };
 
@@ -38,8 +38,9 @@ export function PaymentMethodsScreen({ navigation }) {
       showToast('Completa número, vencimiento y titular', 'error');
       return;
     }
-    if (!isValidCardNumber(digits)) {
-      showToast('El número de tarjeta debe tener entre 13 y 19 dígitos', 'error');
+    const cardNumberError = getCardNumberError(digits);
+    if (cardNumberError) {
+      showToast(cardNumberError, 'error');
       return;
     }
     if (!isValidCardExpiry(form.expiry)) {
@@ -89,7 +90,7 @@ export function PaymentMethodsScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScreenHeader onBack={() => navigation.goBack()} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>

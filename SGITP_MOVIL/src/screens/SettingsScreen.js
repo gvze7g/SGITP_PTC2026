@@ -18,7 +18,7 @@ export function SettingsScreen({ navigation }) {
   const isDark = theme === 'dark';
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScreenHeader onBack={() => navigation.goBack()} />
 
       <View style={styles.content}>

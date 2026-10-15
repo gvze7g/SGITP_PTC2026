@@ -75,6 +75,8 @@ function InventoryTable({
 
   return (
     <section className="inventory-panel">
+      {/* Pestanas y filtros quedan fijos arriba mientras se recorre la tabla. */}
+      <div className="inventory-sticky-bar">
       <div className="inventory-panel-header">
         <div className="inventory-tabs">
           <button
@@ -105,15 +107,7 @@ function InventoryTable({
       </div>
 
       {filtersOpen ? (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr auto auto",
-            gap: "12px",
-            marginBottom: "18px",
-            alignItems: "end",
-          }}
-        >
+        <div className="inventory-filters-grid">
           <div className="client-form-group">
             <label>Buscar por nombre</label>
             <div style={{ position: "relative" }}>
@@ -187,6 +181,7 @@ function InventoryTable({
           </button>
         </div>
       ) : null}
+      </div>
 
       <div className="inventory-table-wrap">
         <div className="inventory-head-row">

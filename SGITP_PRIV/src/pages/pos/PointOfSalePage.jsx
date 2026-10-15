@@ -8,6 +8,7 @@ import useClients from '../../hooks/clients/UseClients';
 import useSales from '../../hooks/sales/UseSales';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/300x300?text=Sin+imagen';
+const ITEMS_PER_PAGE = 6;
 
 function getProductImage(product) {
   return product?.images?.[0]?.image || FALLBACK_IMAGE;
@@ -30,6 +31,7 @@ function PointOfSalePage({ theme, onToggleTheme }) {
   const { createSale, loading: confirming } = useSales();
 
   const [activeCategory, setActiveCategory] = useState('TODOS');
+  const [currentPage, setCurrentPage] = useState(1);
   const [cartItems, setCartItems] = useState([]);
   const [customer, setCustomer] = useState(null);
   const [origin, setOrigin] = useState('Store');
@@ -52,6 +54,23 @@ function PointOfSalePage({ theme, onToggleTheme }) {
     if (activeCategory === 'TODOS') return products;
     return products.filter((product) => product.category === activeCategory);
   }, [products, activeCategory]);
+
+  // Paginado del catalogo para que el cajero no tenga que hacer scroll largo
+  // y el panel de pago quede siempre a la vista.
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const paginatedProducts = useMemo(
+    () => filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE),
+    [filteredProducts, startIndex]
+  );
+  const showingFrom = filteredProducts.length === 0 ? 0 : startIndex + 1;
+  const showingTo = Math.min(startIndex + paginatedProducts.length, filteredProducts.length);
+
+  const handleCategoryChange = (category) => {
+    setActiveCategory(category);
+    setCurrentPage(1);
+  };
 
   const getUnitPrice = useCallback(
     (product) => Number((clientType === 'Wholesale' ? product.cost : product.price) || 0),
@@ -189,7 +208,7 @@ function PointOfSalePage({ theme, onToggleTheme }) {
                 className={`pos-category-chip ${
                   activeCategory === category ? 'pos-category-chip-active' : ''
                 }`}
-                onClick={() => setActiveCategory(category)}
+                onClick={() => handleCategoryChange(category)}
               >
                 {category}
               </button>
@@ -197,7 +216,7 @@ function PointOfSalePage({ theme, onToggleTheme }) {
           </div>
 
           <div className="pos-products-grid">
-            {filteredProducts.map((product) => {
+            {paginatedProducts.map((product) => {
               const variant = getSellableVariant(product);
               const stock = getTotalStock(product);
               const meta = [variant.color, variant.size].filter(Boolean).join(' • ');
@@ -214,6 +233,41 @@ function PointOfSalePage({ theme, onToggleTheme }) {
                 />
               );
             })}
+          </div>
+
+          <div className="pos-footer">
+            <p>
+              Mostrando {showingFrom} a {showingTo} de {filteredProducts.length} productos
+            </p>
+
+            <div className="pos-pagination">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(Math.max(1, safePage - 1))}
+                disabled={safePage === 1}
+                aria-label="Pagina anterior"
+              >
+                {'<'}
+              </button>
+              {Array.from({ length: totalPages }, (_, index) => (
+                <button
+                  key={index + 1}
+                  type="button"
+                  className={safePage === index + 1 ? 'pos-page-active' : ''}
+                  onClick={() => setCurrentPage(index + 1)}
+                >
+                  {index + 1}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCurrentPage(Math.min(totalPages, safePage + 1))}
+                disabled={safePage === totalPages}
+                aria-label="Pagina siguiente"
+              >
+                {'>'}
+              </button>
+            </div>
           </div>
         </section>
 
