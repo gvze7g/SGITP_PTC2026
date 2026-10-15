@@ -4295,6 +4295,21 @@ body.theme-dark {
   height: 100dvh;
 }
 
+/* Los navegadores pegan los elementos sticky por DEBAJO del padding superior
+   del contenedor con scroll, y en ese hueco se veia pasar el contenido. Por
+   eso el espacio de arriba lo da un separador (::before) que se va con el
+   scroll, y los elementos sticky quedan pegados justo al borde. */
+.admin-content {
+  --admin-content-gap: 20px;
+  padding-top: 0;
+}
+
+.admin-content::before {
+  content: '';
+  display: block;
+  flex: 0 0 var(--admin-content-gap);
+}
+
 .admin-content > * {
   flex-shrink: 0;
 }
@@ -4330,6 +4345,8 @@ body.theme-dark {
   top: 0;
   z-index: 5;
   background: var(--admin-surface);
+  padding-top: 12px;
+  margin-top: -12px;
   padding-bottom: 4px;
 }
 
@@ -4423,6 +4440,11 @@ body.theme-dark {
 }
 
 @media (max-width: 1100px) {
+  .admin-content {
+    --admin-content-gap: 18px;
+    padding-top: 0;
+  }
+
   .pos-page-grid {
     grid-template-columns: 1fr;
   }
@@ -4445,6 +4467,11 @@ body.theme-dark {
 }
 
 @media (max-width: 900px) {
+  .admin-content {
+    --admin-content-gap: 14px;
+    padding-top: 0;
+  }
+
   .sales-filters-grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -4458,6 +4485,11 @@ body.theme-dark {
 @media (max-width: 640px) {
   /* En telefono los filtros completos ocuparian casi toda la pantalla, asi que
      solo se mantienen fijas las categorias del POS (en una sola fila deslizable). */
+  .admin-content {
+    --admin-content-gap: 12px;
+    padding-top: 0;
+  }
+
   .sales-filters-card,
   .inventory-sticky-bar {
     position: static;
