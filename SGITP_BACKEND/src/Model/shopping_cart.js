@@ -27,4 +27,7 @@ const cartSchema = new Schema({
     strict: false
 })
 
+// El carrito activo de un cliente se busca en casi cada petición de la tienda.
+cartSchema.index({ customerId: 1, status: 1 });
+
 export default model ("cart", cartSchema)

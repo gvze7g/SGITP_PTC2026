@@ -130,6 +130,7 @@ export function TrendingSection({ products, favoriteIds, onToggleFavorite }) {
 
   useEffect(() => {
     let isMounted = true;
+    // Solo se usan los ids: el precio sale del catálogo, así que no depende del tipo de cliente.
     getBestSellingProducts(4)
       .then((data) => {
         if (isMounted) setBestSellers(Array.isArray(data) ? data : []);

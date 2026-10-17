@@ -46,90 +46,69 @@ async function parseResponse(response, fallbackMessage) {
   return data;
 }
 
-export async function getCatalogProducts() {
+// Caché corto en el navegador para lecturas públicas: cambiar de página ya
+// no vuelve a pedir el catálogo, las categorías ni las tiendas al servidor.
+// Si dos componentes piden lo mismo a la vez, comparten una sola petición.
+const responseCache = new Map();
+const CATALOG_TTL_MS = 30 * 1000;
+const STATIC_TTL_MS = 5 * 60 * 1000;
+
+async function fetchJson(path, fallbackMessage) {
   let response;
 
   try {
-    response = await fetch(`${API_URL}/products/catalog`, {
-      credentials: 'include',
-    });
-  } catch (error) {
-    throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
-  }
-
-  return parseResponse(response, 'No se pudieron obtener los productos.');
-}
-
-export async function getBestSellingProducts(limit = 5) {
-  let response;
-
-  try {
-    response = await fetch(`${API_URL}/sales/best-sellers?limit=${limit}`, {
-      credentials: 'include',
-    });
-  } catch (error) {
-    throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
-  }
-
-  return parseResponse(response, 'No se pudieron obtener los productos mas vendidos.');
-}
-
-export async function getOfferProducts(limit = 8) {
-  let response;
-
-  try {
-    response = await fetch(`${API_URL}/products/catalog/offers?limit=${limit}`, {
-      credentials: 'include',
-    });
-  } catch (error) {
-    throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
-  }
-
-  return parseResponse(response, 'No se pudieron obtener las ofertas.');
-}
-
-export async function getCatalogProductById(productId) {
-  let response;
-
-  try {
-    response = await fetch(`${API_URL}/products/catalog/${productId}`, {
-      credentials: 'include',
-    });
-  } catch (error) {
-    throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
-  }
-
-  return parseResponse(response, 'No se pudo obtener el producto.');
-}
-
-export async function getPublicBranches() {
-  let response;
-
-  try {
-    response = await fetch(`${API_URL}/branches/public`, {
-      credentials: 'include',
-    });
-  } catch (error) {
-    throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
-  }
-
-  return parseResponse(response, 'No se pudieron obtener las tiendas.');
-}
-
-// Lista cerrada de categorias (agrupadas en Niña, Niño y Unisex), la misma
-// que usa el panel para crear productos.
-export async function getProductCategories() {
-  let response;
-
-  try {
-    response = await fetch(`${API_URL}/products/catalog/categories`, {
+    response = await fetch(`${API_URL}${path}`, {
       credentials: 'include',
     });
   } catch {
     throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
   }
 
-  return parseResponse(response, 'No se pudieron obtener las categorias.');
+  return parseResponse(response, fallbackMessage);
+}
+
+function cachedGet(path, fallbackMessage, ttlMs, variant = '') {
+  const key = `${path}|${variant}`;
+  const entry = responseCache.get(key);
+
+  if (entry && entry.expiresAt > Date.now()) return entry.promise;
+
+  const promise = fetchJson(path, fallbackMessage).catch((error) => {
+    responseCache.delete(key);
+    throw error;
+  });
+  responseCache.set(key, { promise, expiresAt: Date.now() + ttlMs });
+  return promise;
+}
+
+// variant: tipo de cliente con sesión. El mayorista recibe otros precios, así
+// que su catálogo se guarda aparte del de los demás.
+export function getCatalogProducts(variant = '') {
+  return cachedGet('/products/catalog', 'No se pudieron obtener los productos.', CATALOG_TTL_MS, variant);
+}
+
+export function getBestSellingProducts(limit = 5, variant = '') {
+  return cachedGet(
+    `/sales/best-sellers?limit=${limit}`,
+    'No se pudieron obtener los productos más vendidos.',
+    CATALOG_TTL_MS,
+    variant
+  );
+}
+
+// Sin caché: el detalle debe mostrar el stock del momento.
+export function getCatalogProductById(productId) {
+  return fetchJson(`/products/catalog/${encodeURIComponent(productId)}`, 'No se pudo obtener el producto.');
+}
+
+export function getPublicBranches() {
+  return cachedGet('/branches/public', 'No se pudieron obtener las tiendas.', STATIC_TTL_MS);
+}
+
+// Lista cerrada de categorias (agrupadas en Niña, Niño y Unisex), la misma
+// que usa el panel para crear productos.
+export function getProductCategories() {
+  return cachedGet('/products/catalog/categories', 'No se pudieron obtener las categorías.', STATIC_TTL_MS);
 }
 
 const NEW_ARRIVAL_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;

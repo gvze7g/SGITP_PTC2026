@@ -20,7 +20,7 @@ export function useStoreCatalog() {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([getCatalogProducts(), getProductCategories().catch(() => [])])
+    Promise.all([getCatalogProducts(customerType), getProductCategories().catch(() => [])])
       .then(([catalog, groups]) => {
         if (!isMounted) return;
         setProducts(Array.isArray(catalog) ? catalog : []);

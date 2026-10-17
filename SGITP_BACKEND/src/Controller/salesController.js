@@ -5,6 +5,7 @@ const salesController = {};
 import salesModel from "../Model/sales.js";
 import cartModel from "../Model/shopping_cart.js";
 import { reserveStock } from "../utils/inventory.js";
+import { CACHE_KEYS, cached, invalidateCache } from "../utils/cache.js";
 import { toCatalogProduct } from "../utils/pricing.js";
 import { isPositiveInteger, isValidObjectId } from "../utils/validators.js";
 
@@ -46,7 +47,8 @@ salesController.getBestSellers = async (req, res) => {
     const requestedLimit = Number.parseInt(req.query.limit, 10);
     const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 10) : 5;
 
-    const products = await salesModel.aggregate([
+    // El ranking cambia poco: se recalcula como mucho una vez por minuto.
+    const products = await cached(`${CACHE_KEYS.bestSellers}${limit}`, 60 * 1000, () => salesModel.aggregate([
       { $match: { payment_status: CONFIRMED_PAYMENT_STATUS } },
       { $unwind: "$item_details" },
       {
@@ -85,7 +87,7 @@ salesController.getBestSellers = async (req, res) => {
           },
         },
       },
-    ]);
+    ]));
 
     // Mismo formato que el catálogo: sin "cost" salvo para el mayorista.
     return res
@@ -183,6 +185,7 @@ salesController.insertSales = async (req, res) => {
 
     try {
       await newSales.save();
+      invalidateCache(CACHE_KEYS.bestSellers);
     } catch (saveError) {
       await stock.restore();
       throw saveError;
@@ -199,6 +202,7 @@ salesController.insertSales = async (req, res) => {
 salesController.deleteSales = async (req, res) => {
   try {
     const deleteSales = await salesModel.findByIdAndDelete(req.params.id);
+    invalidateCache(CACHE_KEYS.bestSellers);
 
     //Validación por si no fue borrada la marca
     if (!deleteSales) {
@@ -234,6 +238,7 @@ salesController.updateSales = async (req, res) => {
     }
 
     //actualizamos
+    invalidateCache(CACHE_KEYS.bestSellers);
     const updatedSales = await salesModel.findByIdAndUpdate(
       req.params.id,
       updates,

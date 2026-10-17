@@ -102,8 +102,19 @@ function useNotifications() {
 
   useEffect(() => {
     refresh();
-    const timer = setInterval(refresh, REFRESH_MS);
-    return () => clearInterval(timer);
+    // Solo se consulta con la pestaña visible: un panel abierto en segundo
+    // plano no debe seguir haciendo peticiones cada 2 minutos.
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') refresh();
+    }, REFRESH_MS);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [refresh]);
 
   const unreadCount = useMemo(

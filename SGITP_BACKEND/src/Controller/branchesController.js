@@ -1,5 +1,6 @@
 import { toDateString, toStoredDate, validatePastDate } from "../utils/dates.js";
 import branchesModel from "../Model/branches.js";
+import { CACHE_KEYS, cached, invalidateCache } from "../utils/cache.js";
 
 const branchesController = {};
 
@@ -16,10 +17,13 @@ branchesController.getBranches = async (req, res) => {
 
 branchesController.getPublicBranches = async (req, res) => {
   try {
-    const branches = await branchesModel
-      .find({ isActive: { $ne: false } })
-      .select("name address phone email opening_date isActive")
-      .sort({ createdAt: -1 });
+    const branches = await cached(`${CACHE_KEYS.branches}public`, 5 * 60 * 1000, () =>
+      branchesModel
+        .find({ isActive: { $ne: false } })
+        .select("name address phone email opening_date isActive")
+        .sort({ createdAt: -1 })
+        .lean()
+    );
 
     return res.status(200).json(branches);
   } catch (error) {
@@ -65,6 +69,7 @@ branchesController.insertBranch = async (req, res) => {
     });
 
     await newBranch.save();
+    invalidateCache(CACHE_KEYS.branches);
 
     return res.status(201).json({
       message: "Sucursal guardada correctamente",
@@ -87,6 +92,7 @@ branchesController.updateBranch = async (req, res) => {
       return res.status(400).json({ message: dateError });
     }
 
+    invalidateCache(CACHE_KEYS.branches);
     const updatedBranch = await branchesModel.findByIdAndUpdate(
       req.params.id,
       {
@@ -118,6 +124,7 @@ branchesController.updateBranch = async (req, res) => {
 branchesController.deleteBranch = async (req, res) => {
   try {
     const deletedBranch = await branchesModel.findByIdAndDelete(req.params.id);
+    invalidateCache(CACHE_KEYS.branches);
 
     if (!deletedBranch) {
       return res.status(404).json({ message: "Sucursal no encontrada" });

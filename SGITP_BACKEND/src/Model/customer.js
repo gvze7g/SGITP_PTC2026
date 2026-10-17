@@ -41,4 +41,7 @@ const customerSchema = new Schema(
   }
 );
 
+// Login, registro y recuperación buscan siempre por correo.
+customerSchema.index({ email: 1 });
+
 export default model("Customer", customerSchema);

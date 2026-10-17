@@ -25,7 +25,21 @@ SplashScreen.preventAutoHideAsync();
 
 // React Query guarda en caché lo que se pide al backend (ej. la lista de
 // productos) para no repetir la misma petición una y otra vez.
-const queryClient = new QueryClient();
+// Ajustes para no saturar el backend: los datos se consideran frescos 1
+// minuto (cambiar de pantalla no vuelve a pedirlos) y solo se reintenta ante
+// fallas de red, nunca ante una respuesta del servidor (un 429 o 400
+// reintentado solo empeora la carga).
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      retry: (failureCount, error) => !error?.status && failureCount < 2,
+    },
+    mutations: {
+      retry: false,
+    },
+  },
+});
 
 // Referencia a la navegación para que SessionGuard pueda sacar al usuario al
 // Login cuando se queda sin sesión, esté en la pantalla que esté.

@@ -1,4 +1,5 @@
 import productsModel from "../Model/products.js";
+import { CACHE_KEYS, cached, invalidateCache } from "../utils/cache.js";
 import { cloudinary } from "../utils/cloudinaryConfig.js";
 import { getTotalStock } from "../utils/inventory.js";
 import { decorateWithOfferPricing, toCatalogProduct } from "../utils/pricing.js";
@@ -201,6 +202,13 @@ const handleProductError = (res, error, label) => {
   return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
 };
 
+// Catálogo completo (documentos planos) compartido por las rutas públicas.
+// Dura poco porque el stock cambia con cada venta; igual se invalida al
+// editar productos o vender.
+const CATALOG_TTL_MS = 15 * 1000;
+const getCachedCatalog = () =>
+  cached(`${CACHE_KEYS.catalog}all`, CATALOG_TTL_MS, () => productsModel.find().lean());
+
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // ---------- Panel de administración ----------
@@ -208,7 +216,7 @@ const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$
 // GET ALL
 productController.getProducts = async (req, res) => {
   try {
-    const products = await productsModel.find();
+    const products = await productsModel.find().lean();
     return res.status(200).json(products);
   } catch (error) {
     console.log("Error: " + error);
@@ -242,7 +250,7 @@ productController.getProductById = async (req, res) => {
 
 productController.getCatalogProducts = async (req, res) => {
   try {
-    const products = await productsModel.find();
+    const products = await getCachedCatalog();
     return res.status(200).json(products.map((product) => toCatalogProduct(product, req.customerType)));
   } catch (error) {
     console.log("Error: " + error);
@@ -283,7 +291,9 @@ productController.getOfferProducts = async (req, res) => {
     // Pre-filtro barato en Mongo (cualquier oferta marcada activa); la fecha
     // exacta y el orden final se resuelven en JS con la misma logica que
     // el detalle, para que el precio mostrado nunca quede inconsistente.
-    const candidates = await productsModel.find({ "offers.active": true });
+    const candidates = (await getCachedCatalog()).filter((product) =>
+      (product.offers || []).some((offer) => offer?.active)
+    );
 
     const productsWithOffer = candidates
       .map((product) => toCatalogProduct(product, req.customerType))
@@ -354,7 +364,7 @@ productController.getLowStock = async (req, res) => {
     const requested = Number.parseInt(req.query.threshold, 10);
     const threshold = Number.isFinite(requested) && requested >= 0 ? requested : 5;
 
-    const products = await productsModel.find();
+    const products = await productsModel.find().lean();
 
     const lowStockProducts = products.filter((product) => {
       const totalStock = getTotalStock(product.variants);
@@ -373,7 +383,7 @@ productController.countProducts = async (req, res) => {
   try {
     const totalProducts = await productsModel.countDocuments();
 
-    const products = await productsModel.find();
+    const products = await productsModel.find().select("variants").lean();
 
     const lowStockCount = products.filter((product) => {
       const totalStock = getTotalStock(product.variants);
@@ -414,6 +424,8 @@ productController.insertProducts = async (req, res) => {
     });
 
     await newProduct.save();
+    invalidateCache(CACHE_KEYS.catalog);
+    invalidateCache(CACHE_KEYS.bestSellers);
 
     return res.status(201).json({
       message: "Producto guardado correctamente",
@@ -470,6 +482,8 @@ productController.updateProducts = async (req, res) => {
       },
       { new: true }
     );
+    invalidateCache(CACHE_KEYS.catalog);
+    invalidateCache(CACHE_KEYS.bestSellers);
 
     return res.status(200).json({
       message: "Producto actualizado correctamente",
@@ -502,6 +516,8 @@ productController.deleteProducts = async (req, res) => {
     }
 
     await productsModel.findByIdAndDelete(req.params.id);
+    invalidateCache(CACHE_KEYS.catalog);
+    invalidateCache(CACHE_KEYS.bestSellers);
 
     return res.status(200).json({ message: "Producto eliminado correctamente" });
   } catch (error) {

@@ -46,7 +46,7 @@ function NotificationsMenu() {
           if (!open) refresh();
         }}
       >
-        <Bell size={22} strokeWidth={1.8} />
+        <Bell size={20} strokeWidth={1.8} />
         {unreadCount ? (
           <span className="admin-notifications-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
         ) : null}

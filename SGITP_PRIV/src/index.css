@@ -516,6 +516,15 @@ body.theme-dark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Mismo tamaño para todos los íconos de la barra, así quedan alineados */
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.admin-icon-btn:hover {
+  background: var(--admin-surface-2);
 }
 
 .admin-content {
@@ -2456,13 +2465,25 @@ body.theme-dark {
 .payroll-actions-cell {
   display: flex;
   align-items: center;
+  gap: 14px;
 }
 
 .payroll-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   border: none;
+  border-radius: 10px;
   background: transparent;
   color: var(--admin-text);
   cursor: pointer;
+}
+
+.payroll-action-icon:hover {
+  background: var(--admin-surface-2);
 }
 
 .payroll-footer {
@@ -4652,6 +4673,8 @@ body.theme-dark {
 
 .admin-notifications {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .admin-notifications-trigger {

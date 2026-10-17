@@ -1,12 +1,11 @@
-import { useMemo, useState } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import CollectionFilters from '../../components/collections/CollectionFilters';
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
 import ProductCard from '../../components/products/ProductCard';
-import { useInfiniteReveal } from '../../hooks/useInfiniteReveal';
 import { useFavoriteIds, useStoreCatalog } from '../../hooks/useStoreCatalog';
 import {
   formatProductPrice,
@@ -17,6 +16,7 @@ import {
 } from '../../services/catalogService';
 
 const ALL = 'Todo';
+// 12 prendas por página: llenan filas completas con 3 o 4 columnas.
 const PAGE_SIZE = 12;
 
 const SORT_OPTIONS = [
@@ -74,6 +74,16 @@ function buildPriceRanges(products) {
     ranges.push({ key: 'high', label: `Desde ${formatProductPrice(low)}`, test: (price) => price >= low });
   }
   return ranges;
+}
+
+// Números de página a mostrar: siempre la primera, la última y las vecinas
+// de la actual; los huecos se marcan con "…".
+function getPageNumbers(current, total) {
+  const pages = new Set([1, total, current - 1, current, current + 1]);
+  const sorted = [...pages].filter((page) => page >= 1 && page <= total).sort((a, b) => a - b);
+  return sorted.flatMap((page, index) =>
+    index > 0 && page - sorted[index - 1] > 1 ? [`gap-${page}`, page] : [page]
+  );
 }
 
 function countBy(products, getValues) {
@@ -180,7 +190,19 @@ function CollectionPage() {
     sort,
     searchQuery,
   ]);
-  const { visibleCount, sentinelRef } = useInfiniteReveal(filteredProducts.length, PAGE_SIZE, resetKey);
+  // La página vuelve a 1 cuando cambia cualquier filtro, el orden o la búsqueda.
+  const [pageState, setPageState] = useState({ key: resetKey, page: 1 });
+  const resultsRef = useRef(null);
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const currentPage = pageState.key === resetKey ? Math.min(pageState.page, totalPages) : 1;
+  const pageProducts = filteredProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const showingFrom = filteredProducts.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0;
+  const showingTo = Math.min(currentPage * PAGE_SIZE, filteredProducts.length);
+
+  const goToPage = (page) => {
+    setPageState({ key: resetKey, page: Math.min(Math.max(page, 1), totalPages) });
+    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const activeCount =
     (filters.category !== ALL ? 1 : 0) +
@@ -272,7 +294,7 @@ function CollectionPage() {
             onClick={() => setFiltersOpen(false)}
           />
 
-          <section className="collection-results">
+          <section className="collection-results" ref={resultsRef}>
             <div className="collection-toolbar">
               <div className="collection-toolbar-left">
                 <button
@@ -284,7 +306,9 @@ function CollectionPage() {
                   {activeCount ? ` (${activeCount})` : ''}
                 </button>
                 <span>
-                  {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
+                  {filteredProducts.length > PAGE_SIZE
+                    ? `Mostrando ${showingFrom}–${showingTo} de ${filteredProducts.length} productos`
+                    : `${filteredProducts.length} ${filteredProducts.length === 1 ? 'producto' : 'productos'}`}
                 </span>
                 {searchQuery ? (
                   <button type="button" className="collection-search-tag" onClick={clearSearch}>
@@ -315,8 +339,8 @@ function CollectionPage() {
               </div>
             ) : null}
 
-            <div className="shop-grid shop-grid-three">
-              {filteredProducts.slice(0, visibleCount).map((product) => (
+            <div className="shop-grid collection-grid">
+              {pageProducts.map((product) => (
                 <ProductCard
                   key={product._id}
                   product={product}
@@ -326,8 +350,47 @@ function CollectionPage() {
               ))}
             </div>
 
-            {visibleCount < filteredProducts.length ? (
-              <div ref={sentinelRef} className="catalog-scroll-sentinel" aria-hidden="true" />
+            {totalPages > 1 ? (
+              <nav className="collection-pagination" aria-label="Páginas de productos">
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  aria-label="Página anterior"
+                >
+                  <ChevronLeft size={16} strokeWidth={1.8} /> Anterior
+                </button>
+
+                <div className="collection-pagination-pages">
+                  {getPageNumbers(currentPage, totalPages).map((page) =>
+                    typeof page === 'string' ? (
+                      <span key={page} aria-hidden="true">
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        type="button"
+                        className={page === currentPage ? 'collection-page-active' : ''}
+                        aria-current={page === currentPage ? 'page' : undefined}
+                        aria-label={`Página ${page}`}
+                        onClick={() => goToPage(page)}
+                      >
+                        {page}
+                      </button>
+                    )
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Página siguiente"
+                >
+                  Siguiente <ChevronRight size={16} strokeWidth={1.8} />
+                </button>
+              </nav>
             ) : null}
           </section>
         </div>

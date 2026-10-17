@@ -26,4 +26,6 @@ const payrollSchema = new Schema(
   }
 );
 
+payrollSchema.index({ period: 1, employee_id: 1 });
+
 export default model("Payroll", payrollSchema);

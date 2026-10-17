@@ -1,4 +1,5 @@
 import productsModel from "../Model/products.js";
+import { CACHE_KEYS, invalidateCache } from "./cache.js";
 
 // Inventario por variante (talla + color). Lo usan el carrito, el checkout
 // de la web/app y las ventas del POS, para que todos validen y descuenten el
@@ -61,7 +62,11 @@ const adjustVariantStock = async (productId, variantId, delta) => {
       { $set: { "variants.$.stock": String(nextStock) } }
     );
 
-    if (result.modifiedCount === 1) return true;
+    if (result.modifiedCount === 1) {
+      // El catálogo público muestra stock: se descarta la copia guardada.
+      invalidateCache(CACHE_KEYS.catalog);
+      return true;
+    }
   }
 
   return false;

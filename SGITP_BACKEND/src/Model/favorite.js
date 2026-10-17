@@ -16,4 +16,6 @@ const favoriteSchema = new Schema ({
     strict: false
 })
 
+favoriteSchema.index({ customer_id: 1, product_id: 1 });
+
 export default model ("Favorite", favoriteSchema);

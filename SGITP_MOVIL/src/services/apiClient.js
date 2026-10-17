@@ -47,11 +47,16 @@ export async function request(path, options) {
     !IGNORED_UNAUTHORIZED_PATHS.some((ignored) => path.startsWith(ignored))
   ) {
     unauthorizedHandler();
-    throw new Error('Tu sesión expiró. Inicia sesión de nuevo.');
+    const error = new Error('Tu sesión expiró. Inicia sesión de nuevo.');
+    error.status = response.status;
+    throw error;
   }
 
   if (!response.ok) {
-    throw new Error(translateBackendMessage(data.message));
+    // status permite distinguir "el servidor respondió con error" de "no hay red".
+    const error = new Error(translateBackendMessage(data.message));
+    error.status = response.status;
+    throw error;
   }
 
   return data;

@@ -38,6 +38,10 @@ const salesSchema = new Schema({
     strict: false
 })
 
+// "Mis pedidos" busca por carrito; el historial y los más vendidos, por estado y fecha.
+salesSchema.index({ cart_id: 1 });
+salesSchema.index({ payment_status: 1, createdAt: -1 });
+
 export default model ("sales", salesSchema);
    
 
