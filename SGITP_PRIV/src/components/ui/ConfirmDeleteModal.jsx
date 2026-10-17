@@ -47,7 +47,7 @@ function ConfirmDeleteModal({
             <p
               style={{
                 margin: 0,
-                fontSize: "15px",
+                fontSize: "17px",
                 lineHeight: 1.6,
                 color: "#6a5f58",
               }}

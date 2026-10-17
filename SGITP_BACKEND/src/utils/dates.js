@@ -161,3 +161,19 @@ export function validatePayrollPeriod(period) {
   if (month < "2000-01") return "El periodo no es válido";
   return null;
 }
+
+// "2026-10" -> "Octubre de 2026" (forma única con la que se guarda el periodo).
+export function formatPayrollPeriod(monthKey) {
+  const [year, month] = String(monthKey).split("-").map(Number);
+  const name = PERIOD_MONTHS[month - 1] ?? "";
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)} de ${year}`;
+}
+
+export function nextMonthKey(monthKey) {
+  const [year, month] = String(monthKey).split("-").map(Number);
+  return month === 12 ? `${year + 1}-01` : `${year}-${String(month + 1).padStart(2, "0")}`;
+}
+
+export function currentMonthKey() {
+  return todayDateString().slice(0, 7);
+}

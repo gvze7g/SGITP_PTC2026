@@ -124,3 +124,26 @@ export function getPayrollPeriodError(period) {
 
   return "";
 }
+
+// Mes "AAAA-MM" de una fecha o de un periodo escrito ("Octubre de 2026").
+export function getMonthKey(value) {
+  if (value instanceof Date) {
+    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  const match = /^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)(?: de)? (\d{4})$/i.exec(String(value ?? "").trim());
+  const monthIndex = match ? PERIOD_MONTHS.indexOf(match[1].toLowerCase()) : -1;
+  return monthIndex === -1 ? null : `${match[2]}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+// "2026-10" -> "Octubre de 2026"
+export function getMonthLabel(monthKey) {
+  const [year, month] = String(monthKey).split("-").map(Number);
+  const name = PERIOD_MONTHS[month - 1] ?? "";
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)} de ${year}`;
+}
+
+// "17 de octubre de 2026": se calcula cada vez, así siempre muestra el día real.
+export function getTodayLabel() {
+  return new Date().toLocaleDateString("es-SV", { day: "numeric", month: "long", year: "numeric" });
+}

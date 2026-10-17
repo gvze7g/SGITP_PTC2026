@@ -65,12 +65,12 @@ function SalesChartCard({ weekData = [], monthData = [], yearData = [] }) {
               dataKey="label"
               tickLine={false}
               axisLine={false}
-              tick={{ fill: '#7b6f69', fontSize: 12 }}
+              tick={{ fill: '#7b6f69', fontSize: 14 }}
             />
             <YAxis
               tickLine={false}
               axisLine={false}
-              tick={{ fill: '#7b6f69', fontSize: 12 }}
+              tick={{ fill: '#7b6f69', fontSize: 14 }}
             />
             <Tooltip
               cursor={{ stroke: '#b88e72', strokeWidth: 1 }}

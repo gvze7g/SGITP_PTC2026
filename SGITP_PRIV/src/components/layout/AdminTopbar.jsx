@@ -1,6 +1,7 @@
-import { Bell, Menu, Moon, Settings, Sun, LogOut } from 'lucide-react';
+import { Menu, Moon, Sun, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import NotificationsMenu from './NotificationsMenu';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
 
@@ -65,23 +66,7 @@ function AdminTopbar({
           {isDark ? <Sun size={20} strokeWidth={1.8} /> : <Moon size={20} strokeWidth={1.8} />}
         </button>
 
-        <button
-          type="button"
-          className="admin-icon-btn"
-          aria-label="Notificaciones"
-          onClick={() => toast('No hay notificaciones nuevas.')}
-        >
-          <Bell size={20} strokeWidth={1.8} />
-        </button>
-
-        <button
-          type="button"
-          className="admin-icon-btn"
-          aria-label="Configuración"
-          onClick={() => toast('Configuración disponible próximamente.')}
-        >
-          <Settings size={20} strokeWidth={1.8} />
-        </button>
+        <NotificationsMenu />
 
         <button
           type="button"

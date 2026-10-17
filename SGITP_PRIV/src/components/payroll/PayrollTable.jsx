@@ -9,6 +9,9 @@ function PayrollTable({
   loading,
   totalBaseSalary = 0,
   totalPaidThisMonth = 0,
+  pendingCount = 0,
+  periodLabel = "",
+  isClosed = false,
   onEditPayroll,
   onDeletePayroll,
 }) {
@@ -27,13 +30,18 @@ function PayrollTable({
     <section className="payroll-panel">
       <div className="payroll-summary-grid">
         <div className="metric-card">
-          <span className="metric-card-label">TOTAL NOMINA BASE (MES ACTUAL)</span>
+          <span className="metric-card-label">TOTAL NÓMINA BASE · {periodLabel.toUpperCase()}</span>
           <h3 className="metric-card-value">{formatMoney(totalBaseSalary)}</h3>
         </div>
 
         <div className="metric-card">
-          <span className="metric-card-label">TOTAL PAGADO ESTE MES</span>
+          <span className="metric-card-label">TOTAL PAGADO · {periodLabel.toUpperCase()}</span>
           <h3 className="metric-card-value">{formatMoney(totalPaidThisMonth)}</h3>
+        </div>
+
+        <div className="metric-card">
+          <span className="metric-card-label">PAGOS PENDIENTES</span>
+          <h3 className="metric-card-value">{isClosed ? "Mes cerrado" : pendingCount}</h3>
         </div>
       </div>
 
@@ -50,9 +58,9 @@ function PayrollTable({
         </div>
 
         {loading ? (
-          <div style={{ padding: "20px" }}>Cargando nomina...</div>
+          <div style={{ padding: "20px" }}>Cargando nómina...</div>
         ) : payrolls.length === 0 ? (
-          <div style={{ padding: "20px" }}>No hay registros de nomina todavia.</div>
+          <div style={{ padding: "20px" }}>No hay registros de nómina en {periodLabel || "este mes"}.</div>
         ) : (
           paginatedPayroll.map((item) => (
             <article key={item._id} className="payroll-row">
@@ -76,6 +84,11 @@ function PayrollTable({
               </div>
 
               <div className="payroll-actions-cell">
+                {/* Un mes cerrado queda solo para consulta */}
+                {isClosed ? (
+                  <span className="payroll-locked-label">Cerrado</span>
+                ) : (
+                <>
                 <button
                   type="button"
                   className="payroll-action-icon"
@@ -93,6 +106,8 @@ function PayrollTable({
                 >
                   <Trash2 size={20} strokeWidth={2} />
                 </button>
+                </>
+                )}
               </div>
             </article>
           ))

@@ -110,8 +110,6 @@ function PublicNavbar({ activeItem = '' }) {
 
   return (
     <>
-      <div className="store-announcement">Ropa para bebés · Visítanos en nuestras tiendas</div>
-
       <header className="store-header">
         <div className="store-header-row">
           <button

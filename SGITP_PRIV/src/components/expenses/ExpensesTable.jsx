@@ -50,6 +50,7 @@ function getTopCategory(expenses) {
 
 function ExpensesTable({
   expenses = [],
+  periodLabel = "",
   loading = false,
   error = "",
   onEditExpense,
@@ -72,12 +73,12 @@ function ExpensesTable({
     <section className="expenses-page">
       <div className="expenses-summary-grid">
         <div className="metric-card">
-          <span className="metric-card-label">TOTAL GASTOS</span>
+          <span className="metric-card-label">TOTAL GASTOS · {periodLabel.toUpperCase()}</span>
           <h3 className="metric-card-value">{formatCurrency(total)}</h3>
         </div>
 
         <div className="metric-card">
-          <span className="metric-card-label">CATEGORIA DE MAYOR GASTO</span>
+          <span className="metric-card-label">CATEGORÍA DE MAYOR GASTO</span>
           <div className="expenses-highlight-block">
             <strong>{topCategory.category}</strong>
             <p>{formatCurrency(topCategory.amount)}</p>

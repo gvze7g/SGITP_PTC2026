@@ -5,15 +5,12 @@ import PayrollTable from '../../components/payroll/PayrollTable';
 import PayrollReceiptModal from '../../components/payroll/PayrollReceiptModal';
 import AddPayrollEntryModal from '../../components/payroll/AddPayrollEntryModal';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
+import CustomDropdown from '../../components/ui/CustomDropdown';
 import usePayroll from '../../hooks/payroll/UsePayroll';
 import useEmployees from '../../hooks/employees/UseEmployees';
+import { getTodayLabel, getMonthKey, getMonthLabel } from '../../utils/dateRules';
 
 const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
-
-function getCurrentPeriod() {
-  const label = new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
 
 function formatPayroll(payroll) {
   const employee = payroll.employee_id || {};
@@ -38,6 +35,7 @@ function formatPayroll(payroll) {
           day: '2-digit',
           month: 'short',
           year: 'numeric',
+          timeZone: 'UTC',
         })
       : '--',
     paymentDateLong: payroll.payment_date || null,
@@ -46,40 +44,85 @@ function formatPayroll(payroll) {
 }
 
 function PayrollPage({ theme, onToggleTheme }) {
-  const { payrolls, loading, getPayrolls, createPayroll, generatePayroll, updatePayroll, deletePayroll } =
-    usePayroll();
+  const {
+    payrolls,
+    loading,
+    getPayrolls,
+    createPayroll,
+    generatePayroll,
+    getPeriods,
+    closePeriod,
+    updatePayroll,
+    deletePayroll,
+  } = usePayroll();
   const { employees, getEmployees } = useEmployees();
 
+  const currentMonth = useMemo(() => getMonthKey(new Date()), []);
+  const [periods, setPeriods] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
   const [payrollToDelete, setPayrollToDelete] = useState(null);
-  const currentPeriod = useMemo(() => getCurrentPeriod(), []);
 
-  const loadPayrolls = useCallback(async () => {
-    const result = await getPayrolls();
-    if (!result?.success) {
-      toast.error(result?.message || 'No se pudo cargar la nomina.');
+  const loadData = useCallback(async () => {
+    const [payrollResult, periodsResult] = await Promise.all([getPayrolls(), getPeriods()]);
+    if (!payrollResult?.success) {
+      toast.error(payrollResult?.message || 'No se pudo cargar la nómina.');
     }
-  }, [getPayrolls]);
+    if (periodsResult.success) {
+      setPeriods(periodsResult.data);
+    } else {
+      toast.error(periodsResult.message);
+    }
+  }, [getPayrolls, getPeriods]);
 
   useEffect(() => {
-    loadPayrolls();
+    loadData();
     getEmployees();
-  }, [loadPayrolls, getEmployees]);
+  }, [loadData, getEmployees]);
 
-  const formattedPayrolls = payrolls.map(formatPayroll);
-
-  const currentPeriodPayrolls = payrolls.filter((item) => item.period === currentPeriod);
-  const totalBaseSalary = currentPeriodPayrolls.reduce(
-    (sum, item) => sum + Number(item.base_salary || 0),
-    0
+  const selectedPeriod = useMemo(
+    () =>
+      periods.find((period) => period.month === selectedMonth) ?? {
+        month: selectedMonth,
+        period: getMonthLabel(selectedMonth),
+        status: 'Abierto',
+        is_future: selectedMonth > currentMonth,
+        pending_count: 0,
+      },
+    [periods, selectedMonth, currentMonth]
   );
-  const totalPaidThisMonth = currentPeriodPayrolls
+  const periodLabel = selectedPeriod.period;
+  const isClosed = selectedPeriod.status === 'Cerrado';
+  const isFuture = selectedMonth > currentMonth;
+
+  const periodOptions = useMemo(
+    () =>
+      (periods.length ? periods : [selectedPeriod]).map((period) => ({
+        value: period.month,
+        label: `${period.period}${period.status === 'Cerrado' ? ' · Cerrada' : ''}${
+          period.month === currentMonth ? ' · Mes actual' : ''
+        }`,
+      })),
+    [periods, selectedPeriod, currentMonth]
+  );
+
+  // Registros del mes elegido (se compara por mes, así "octubre 2026" y
+  // "Octubre de 2026" cuentan como el mismo).
+  const periodPayrolls = useMemo(
+    () => payrolls.filter((item) => getMonthKey(item.period) === selectedMonth),
+    [payrolls, selectedMonth]
+  );
+  const formattedPayrolls = periodPayrolls.map(formatPayroll);
+  const totalBaseSalary = periodPayrolls.reduce((sum, item) => sum + Number(item.base_salary || 0), 0);
+  const totalPaid = periodPayrolls
     .filter((item) => item.status === 'Pagado')
     .reduce((sum, item) => sum + Number(item.net_salary || 0), 0);
+  const pendingCount = periodPayrolls.filter((item) => item.status !== 'Pagado').length;
 
-  const handleCloseMonth = async () => {
-    const result = await generatePayroll(currentPeriod);
+  const handleGenerate = async () => {
+    const result = await generatePayroll(periodLabel);
 
     if (!result.success) {
       toast.error(result.message);
@@ -87,14 +130,38 @@ function PayrollPage({ theme, onToggleTheme }) {
     }
 
     const created = result.data?.created ?? 0;
-
     toast.success(
       created > 0
-        ? `Nomina de ${currentPeriod} generada para ${created} empleado(s).`
-        : `La nomina de ${currentPeriod} ya estaba generada.`
+        ? `Nómina de ${periodLabel} generada para ${created} empleado(s).`
+        : `La nómina de ${periodLabel} ya estaba generada para todos los empleados.`
     );
+    await loadData();
+  };
 
-    await loadPayrolls();
+  const handleAskClose = () => {
+    if (periodPayrolls.length === 0) {
+      toast.error(`No hay nómina registrada en ${periodLabel}. Genérala antes de cerrar el mes.`);
+      return;
+    }
+    if (pendingCount > 0) {
+      toast.error(`Faltan ${pendingCount} pago(s) pendiente(s) en ${periodLabel}. Regístralos antes de cerrar el mes.`);
+      return;
+    }
+    setCloseModalOpen(true);
+  };
+
+  const handleConfirmClose = async () => {
+    const result = await closePeriod(periodLabel);
+    setCloseModalOpen(false);
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success(result.data?.message || `Nómina de ${periodLabel} cerrada.`);
+    await loadData();
+    if (result.data?.next_month) setSelectedMonth(result.data.next_month);
   };
 
   const handleAddPayrollEntry = async (payload) => {
@@ -105,9 +172,9 @@ function PayrollPage({ theme, onToggleTheme }) {
       return;
     }
 
-    toast.success('Nomina registrada correctamente.');
+    toast.success('Nómina registrada correctamente.');
     setAddModalOpen(false);
-    await loadPayrolls();
+    await loadData();
   };
 
   const handleSubmitReceipt = async (payload) => {
@@ -122,7 +189,7 @@ function PayrollPage({ theme, onToggleTheme }) {
 
     toast.success('Recibo emitido y pago registrado correctamente.');
     setSelectedPayroll(null);
-    await loadPayrolls();
+    await loadData();
   };
 
   const handleConfirmDelete = async () => {
@@ -135,36 +202,70 @@ function PayrollPage({ theme, onToggleTheme }) {
       return;
     }
 
-    toast.success('Registro de nomina eliminado.');
+    toast.success('Registro de nómina eliminado.');
     setPayrollToDelete(null);
-    await loadPayrolls();
+    await loadData();
   };
 
   return (
     <DashboardLayout theme={theme} onToggleTheme={onToggleTheme}>
       <div className="page-title-row">
-        <h1 className="admin-page-title">Historial de nómina</h1>
+        <div>
+          <h1 className="admin-page-title">Nómina</h1>
+          <p className="admin-page-subtitle">Hoy es {getTodayLabel()}</p>
+        </div>
 
         <div className="page-actions-row">
-          <button type="button" className="admin-secondary-btn" disabled>
-            {currentPeriod}
-          </button>
+          <CustomDropdown
+            className="period-dropdown"
+            value={selectedMonth}
+            options={periodOptions}
+            onChange={setSelectedMonth}
+          />
 
-          <button type="button" className="admin-secondary-btn" onClick={() => setAddModalOpen(true)}>
-            + Nueva nómina
-          </button>
+          <span className={`period-status-badge ${isClosed ? 'period-status-closed' : ''}`}>
+            {isClosed ? 'Mes cerrado' : isFuture ? 'Próximo mes' : 'Mes abierto'}
+          </span>
 
-          <button type="button" className="admin-primary-btn" onClick={handleCloseMonth}>
-            Cerrar mes actual
-          </button>
+          {!isClosed && !isFuture ? (
+            <>
+              <button type="button" className="admin-secondary-btn" onClick={() => setAddModalOpen(true)}>
+                + Nueva nómina
+              </button>
+
+              <button type="button" className="admin-secondary-btn" onClick={handleGenerate}>
+                Generar nómina del mes
+              </button>
+
+              <button type="button" className="admin-primary-btn" onClick={handleAskClose}>
+                Cerrar {periodLabel}
+              </button>
+            </>
+          ) : null}
         </div>
       </div>
+
+      {isFuture ? (
+        <p className="period-notice">
+          La nómina de {periodLabel} se podrá generar a partir del primer día de ese mes.
+        </p>
+      ) : null}
+      {isClosed && selectedPeriod.closed_at ? (
+        <p className="period-notice">
+          Mes cerrado el{' '}
+          {new Date(selectedPeriod.closed_at).toLocaleDateString('es-SV', { dateStyle: 'long' })}. Los
+          registros quedan solo para consulta.
+        </p>
+      ) : null}
 
       <PayrollTable
         payrolls={formattedPayrolls}
         loading={loading}
         totalBaseSalary={totalBaseSalary}
-        totalPaidThisMonth={totalPaidThisMonth}
+        totalPaidThisMonth={totalPaid}
+        pendingCount={pendingCount}
+        periodLabel={periodLabel}
+        isClosed={isClosed}
         onEditPayroll={setSelectedPayroll}
         onDeletePayroll={setPayrollToDelete}
       />
@@ -182,8 +283,19 @@ function PayrollPage({ theme, onToggleTheme }) {
         onClose={() => setAddModalOpen(false)}
         onSubmit={handleAddPayrollEntry}
         employees={employees}
-        defaultPeriod={currentPeriod}
+        defaultPeriod={periodLabel}
         loading={loading}
+      />
+
+      <ConfirmDeleteModal
+        open={closeModalOpen}
+        onClose={() => setCloseModalOpen(false)}
+        onConfirm={handleConfirmClose}
+        title={`¿Cerrar la nómina de ${periodLabel}?`}
+        description={`Se guardará el resumen del mes (${periodPayrolls.length} empleado(s), ${formatMoney(
+          totalPaid
+        )} pagado) y ya no se podrá modificar. El mes siguiente quedará abierto para sus pagos.`}
+        confirmText="CERRAR MES"
       />
 
       <ConfirmDeleteModal

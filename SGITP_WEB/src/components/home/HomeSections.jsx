@@ -100,7 +100,7 @@ export function CategoryShowcase({ products }) {
           <button
             key={category.name}
             type="button"
-            className={`home-category-tile ${index % 2 ? 'home-category-arch' : ''}`}
+            className="home-category-tile"
             onClick={() => navigate(`/categories?categoria=${encodeURIComponent(category.name)}`)}
           >
             <span className="home-category-image">

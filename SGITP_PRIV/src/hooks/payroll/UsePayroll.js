@@ -90,6 +90,41 @@ function usePayroll() {
     }
   };
 
+  //Meses de nomina con su estado (Abierto/Cerrado) y totales
+  const getPeriods = useCallback(async () => {
+    try {
+      const data = await request("/periods");
+      return { success: true, data: Array.isArray(data) ? data : [] };
+    } catch (requestError) {
+      return {
+        success: false,
+        message: requestError.message || "No se pudieron obtener los meses de nomina.",
+        data: [],
+      };
+    }
+  }, []);
+
+  //Cerrar un mes: guarda su resumen, lo bloquea y abre el siguiente
+  const closePeriod = async (period) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await request("/close", {
+        method: "POST",
+        body: JSON.stringify({ period }),
+      });
+
+      return { success: true, data };
+    } catch (requestError) {
+      const message = requestError.message || "No se pudo cerrar el mes.";
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   //Actualizar nomina (bonos, deducciones, fecha de pago, estado)
   const updatePayroll = async (id, payload) => {
     try {
@@ -138,6 +173,8 @@ function usePayroll() {
     getPayrolls,
     createPayroll,
     generatePayroll,
+    getPeriods,
+    closePeriod,
     updatePayroll,
     deletePayroll,
   };

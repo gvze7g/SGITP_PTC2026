@@ -71,11 +71,11 @@ function ProductCard({ product, isFavorite = false, onToggleFavorite, showCatego
             </strong>
           </span>
         </div>
-        {fabric ? (
-          <p className="shop-card-fabric">
-            <Layers size={12} strokeWidth={1.6} /> Tela: {fabric}
-          </p>
-        ) : null}
+        {/* Tela y colores ocupan siempre su espacio, para que todas las tarjetas
+            de una fila midan lo mismo aunque a un producto le falte un dato. */}
+        <p className="shop-card-fabric">
+          <Layers size={12} strokeWidth={1.6} /> Tela: {fabric || 'Sin especificar'}
+        </p>
 
         {colors.length ? (
           <div className="shop-card-colors">
@@ -97,7 +97,9 @@ function ProductCard({ product, isFavorite = false, onToggleFavorite, showCatego
               {selectedColor}
             </span>
           </div>
-        ) : null}
+        ) : (
+          <div className="shop-card-colors" aria-hidden="true" />
+        )}
       </div>
     </article>
   );

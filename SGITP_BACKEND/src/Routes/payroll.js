@@ -11,6 +11,20 @@ router.get(
   payrollController.getPayrolls
 );
 
+router.get(
+  "/periods",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrator"),
+  payrollController.getPeriods
+);
+
+router.post(
+  "/close",
+  validateAuthCookie(["Employee"]),
+  validateEmployeeRole("Administrator"),
+  payrollController.closePeriod
+);
+
 router.post(
   "/generate",
   validateAuthCookie(["Employee"]),

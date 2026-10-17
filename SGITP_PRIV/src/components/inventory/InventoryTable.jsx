@@ -245,7 +245,7 @@ function InventoryTable({
                         marginTop: "4px",
                         padding: "2px 8px",
                         borderRadius: "999px",
-                        fontSize: "11px",
+                        fontSize: "14px",
                         fontWeight: 700,
                         color: "#fff",
                         backgroundColor: "#C0392B",
