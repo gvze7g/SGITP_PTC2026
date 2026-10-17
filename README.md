@@ -6,7 +6,7 @@
 * Leonel Adrián Ramos López
 * Diego Alejandro López Granados
 * Paul Melquisedec Cañas Palacios
-* Brandon Alejandro Orellana Cerónnnnnn
+* Brandon Alejandro Orellana Cerón
 
 ---
 
