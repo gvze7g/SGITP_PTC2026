@@ -75,8 +75,10 @@ function RegisterPage() {
         password: formData.password,
       });
 
-      toast.success('Cuenta creada correctamente.');
-      navigate('/login', { replace: true });
+      // Igual que en la app: la cuenta queda sin verificar hasta ingresar
+      // el codigo que llega al correo.
+      toast.success('Cuenta creada, revisa tu correo para verificarla.');
+      navigate('/verify-code', { replace: true, state: { email } });
     } catch (error) {
       toast.error(error.message ?? 'No se pudo crear la cuenta.');
     } finally {

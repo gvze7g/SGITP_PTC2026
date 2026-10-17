@@ -58,6 +58,25 @@ export async function registerCustomer(customer) {
   return data;
 }
 
+// El codigo se compara contra la cookie temporal que dejo POST /registerCustomer,
+// por eso solo se manda el codigo y credentials: 'include'.
+export async function verifyCustomerEmail(code) {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/registerCustomer/verifyCodeEmail`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ verificationCodeRequest: code }),
+    });
+  } catch (error) {
+    throw new Error('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
+  }
+
+  return parseCustomerResponse(response, 'No se pudo verificar el codigo.');
+}
+
 export async function loginCustomer(credentials) {
   let response;
 

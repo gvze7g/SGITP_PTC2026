@@ -3,23 +3,48 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AuthButton from '../../components/auth/AuthButton';
+import OtpInput from '../../components/auth/OtpInput';
+import ThemeToggle from '../../components/auth/ThemeToggle';
+import { verifyCustomerEmail } from '../../services/customerAuthService';
+
+const CODE_LENGTH = 6;
 
 function VerifyRegisterCodePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [code, setCode] = useState('');
-  const email = location.state?.email ?? 'tu correo';
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const email = location.state?.email ?? '';
+  const visibleEmail = email || 'tu correo';
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
 
-    if (code.trim().length !== 6) {
-      toast.error('El codigo debe tener exactamente 6 caracteres.');
+    if (code.length !== CODE_LENGTH) {
+      toast.error('El código debe tener exactamente 6 caracteres.');
       return;
     }
 
-    toast.success('Cuenta verificada correctamente.');
-    navigate('/login');
+    setIsSubmitting(true);
+
+    try {
+      await verifyCustomerEmail(code);
+      // Mensaje propio en español, igual que en la app movil.
+      toast.success('Cuenta verificada, ya puedes iniciar sesión.');
+      navigate('/login', { replace: true });
+    } catch (error) {
+      toast.error(error.message ?? 'No se pudo verificar el código.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // No existe un endpoint para reenviar el codigo de registro; el backend
+  // deja registrar de nuevo un correo que nunca se verifico y manda otro
+  // codigo, asi que se regresa al registro con el correo ya escrito.
+  const handleRegisterAgain = () => {
+    navigate('/register', { state: { email } });
   };
 
   return (
@@ -29,43 +54,38 @@ function VerifyRegisterCodePage() {
           &lt; Volver
         </button>
         <strong>PEQUES</strong>
-        <span />
+        <ThemeToggle />
       </header>
 
       <main className="verify-content">
         <form className="verify-card" onSubmit={handleSubmit} noValidate>
-          <h1>Ingresa tu codigo</h1>
+          <h1>Verifica tu cuenta</h1>
           <p>
-            Hemos enviado un codigo de verificacion de 6 digitos a
-            <strong>{email}</strong>
+            Enviamos un código de verificación de 6 caracteres a
+            <strong>{visibleEmail}</strong>
           </p>
 
-          <input
-            className="verify-code-input"
-            type="text"
-            maxLength={6}
+          <OtpInput
+            length={CODE_LENGTH}
             value={code}
-            onChange={(event) =>
-              setCode(event.target.value.toLowerCase().replace(/[^a-f0-9]/g, ''))
-            }
-            placeholder="-  -  -  -  -  -"
-            autoComplete="one-time-code"
-            aria-label="Codigo de verificacion"
+            onChange={setCode}
+            disabled={isSubmitting}
           />
 
-          <AuthButton type="submit" className="verify-button">
-            Verificar codigo
+          <AuthButton
+            type="submit"
+            className="verify-button"
+            disabled={isSubmitting || code.length !== CODE_LENGTH}
+          >
+            {isSubmitting ? 'Verificando...' : 'Verificar código'}
             <LockKeyhole size={16} strokeWidth={1.8} />
           </AuthButton>
 
           <div className="verify-resend">
-            <span>¿No recibiste el codigo?</span>
-            <button
-              type="button"
-              onClick={() => toast('Codigo reenviado correctamente.')}
-            >
+            <span>¿No recibiste el código o ya expiró?</span>
+            <button type="button" onClick={handleRegisterAgain}>
               <RotateCcw size={13} strokeWidth={1.8} />
-              Reenviar codigo
+              Registrarme de nuevo
             </button>
           </div>
         </form>
