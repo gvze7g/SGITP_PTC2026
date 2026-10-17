@@ -98,7 +98,7 @@ googleAuthController.google = async (req, res) => {
     });
   } catch (error) {
     console.log("google auth error: " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

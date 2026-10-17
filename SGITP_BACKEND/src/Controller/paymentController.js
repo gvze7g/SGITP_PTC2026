@@ -1,3 +1,4 @@
+import { validatePastDate } from "../utils/dates.js";
 import paymentModel from "../Model/payment.js";
 
 const paymentController = {};
@@ -9,7 +10,7 @@ paymentController.getPayments = async (req, res) => {
     return res.status(200).json(payments);
   } catch (error) {
     console.log("getPayments error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -19,13 +20,13 @@ paymentController.getPaymentById = async (req, res) => {
     const payment = await paymentModel.findById(req.params.id);
 
     if (!payment) {
-      return res.status(404).json({ message: "Payment not found" });
+      return res.status(404).json({ message: "Pago no encontrado" });
     }
 
     return res.status(200).json(payment);
   } catch (error) {
     console.log("getPaymentById error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -42,6 +43,11 @@ paymentController.insertPayment = async (req, res) => {
       payment_date,
     } = req.body;
 
+    const dateError = validatePastDate(payment_date, { label: "fecha de pago", minDate: "2000-01-01" });
+    if (dateError) {
+      return res.status(400).json({ message: dateError });
+    }
+
     const newPayment = new paymentModel({
       employee_id,
       period,
@@ -55,12 +61,12 @@ paymentController.insertPayment = async (req, res) => {
     await newPayment.save();
 
     return res.status(201).json({
-      message: "Payment saved successfully",
+      message: "Pago guardado correctamente",
       payment: newPayment,
     });
   } catch (error) {
     console.log("insertPayment error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -77,6 +83,11 @@ paymentController.updatePayment = async (req, res) => {
       payment_date,
     } = req.body;
 
+    const dateError = validatePastDate(payment_date, { label: "fecha de pago", minDate: "2000-01-01" });
+    if (dateError) {
+      return res.status(400).json({ message: dateError });
+    }
+
     const updatedPayment = await paymentModel.findByIdAndUpdate(
       req.params.id,
       {
@@ -92,16 +103,16 @@ paymentController.updatePayment = async (req, res) => {
     );
 
     if (!updatedPayment) {
-      return res.status(404).json({ message: "Payment not found" });
+      return res.status(404).json({ message: "Pago no encontrado" });
     }
 
     return res.status(200).json({
-      message: "Payment updated successfully",
+      message: "Pago actualizado correctamente",
       payment: updatedPayment,
     });
   } catch (error) {
     console.log("updatePayment error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -111,13 +122,13 @@ paymentController.deletePayment = async (req, res) => {
     const deletedPayment = await paymentModel.findByIdAndDelete(req.params.id);
 
     if (!deletedPayment) {
-      return res.status(404).json({ message: "Payment not found" });
+      return res.status(404).json({ message: "Pago no encontrado" });
     }
 
-    return res.status(200).json({ message: "Payment deleted successfully" });
+    return res.status(200).json({ message: "Pago eliminado correctamente" });
   } catch (error) {
     console.log("deletePayment error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

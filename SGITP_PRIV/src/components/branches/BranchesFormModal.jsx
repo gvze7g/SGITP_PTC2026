@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
 import DateField from "../ui/DateField";
+import { fromStoredDate, getPastDateError, toDateInputValue, today } from "../../utils/dateRules";
 
 const BRANCH_STATUS_OPTIONS = [
   { value: "Active", label: "Activa" },
@@ -38,7 +39,7 @@ function BranchFormModal({
         address: branchData.address ?? "",
         phone: branchData.phone ?? "",
         email: branchData.email ?? "",
-        openingDate: branchData.opening_date ? new Date(branchData.opening_date) : null,
+        openingDate: fromStoredDate(branchData.opening_date),
         status: branchData.isActive === false ? "Inactive" : "Active",
       });
     } else {
@@ -82,7 +83,7 @@ function BranchFormModal({
       phone: formData.phone.trim(),
       email: formData.email.trim(),
       opening_date: formData.openingDate
-        ? formData.openingDate.toISOString().split("T")[0]
+        ? toDateInputValue(formData.openingDate)
         : null,
       isActive: formData.status === "Active",
     };
@@ -118,6 +119,12 @@ function BranchFormModal({
 
     if (formData.email.trim() && !emailRegex.test(formData.email.trim())) {
       toast.error("Ingresa un correo valido para la sucursal.");
+      return false;
+    }
+
+    const dateError = getPastDateError(formData.openingDate, "fecha de apertura");
+    if (dateError) {
+      toast.error(dateError);
       return false;
     }
 
@@ -192,7 +199,7 @@ function BranchFormModal({
                   </div>
 
                   <div className="branch-form-group">
-                    <label>Email</label>
+                    <label>Correo electrónico</label>
                     <input
                       type="email"
                       className="form-editable-input"
@@ -209,7 +216,8 @@ function BranchFormModal({
                     value={formData.openingDate}
                     onChange={(date) => handleChange("openingDate", date)}
                     placeholder="Seleccionar fecha"
-                    maxDate={new Date()}
+                    minDate={new Date(1900, 0, 1)}
+                    maxDate={today()}
                   />
 
                   <CustomDropdown

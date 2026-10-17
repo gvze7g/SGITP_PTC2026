@@ -20,7 +20,14 @@ const months = [
   "Diciembre",
 ];
 
-const years = Array.from({ length: 80 }, (_, index) => getYear(new Date()) - index);
+// Años del selector: entre minDate y maxDate (antes solo iba hacia atras
+// desde el año actual, asi que no se podia elegir un año futuro).
+function getYearOptions(minDate, maxDate) {
+  const currentYear = getYear(new Date());
+  const lastYear = maxDate ? getYear(maxDate) : currentYear + 5;
+  const firstYear = minDate ? getYear(minDate) : currentYear - 100;
+  return Array.from({ length: lastYear - firstYear + 1 }, (_, index) => lastYear - index);
+}
 
 const DateInputButton = forwardRef(function DateInputButton(
   { value, onClick, placeholder, disabled },
@@ -51,6 +58,16 @@ function DateField({
   maxDate,
   disabled = false,
 }) {
+  const years = getYearOptions(minDate, maxDate);
+  // Si hoy queda fuera del rango (ej. nacimiento: maximo hace 18 años), el
+  // calendario abre en el limite permitido y no en un mes bloqueado.
+  const now = new Date();
+  const openToDate =
+    value ||
+    (maxDate && maxDate < now ? maxDate : null) ||
+    (minDate && minDate > now ? minDate : null) ||
+    undefined;
+
   return (
     <div className="app-field-group">
       {label ? <label>{label}</label> : null}
@@ -62,6 +79,7 @@ function DateField({
         dateFormat="dd/MM/yyyy"
         minDate={minDate}
         maxDate={maxDate}
+        openToDate={openToDate}
         disabled={disabled}
         calendarClassName="app-datepicker-calendar"
         popperClassName="app-datepicker-popper"

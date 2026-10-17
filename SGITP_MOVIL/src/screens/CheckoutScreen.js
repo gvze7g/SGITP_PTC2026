@@ -324,9 +324,10 @@ export function CheckoutScreen({ navigation, route }) {
           </AppText>
 
           {items.map((item) => (
-            <View key={item.productId?._id} style={styles.summaryItemRow}>
+            <View key={item._id} style={styles.summaryItemRow}>
               <AppText variant="bodyMedium" style={styles.summaryItemName} numberOfLines={1}>
                 {item.quantity}x {item.productId?.name}
+                {item.size ? ` (${[item.size, item.color].filter(Boolean).join(' / ')})` : ''}
               </AppText>
               <AppText variant="bodyMedium">${Number(item.subtotal ?? 0).toFixed(2)}</AppText>
             </View>

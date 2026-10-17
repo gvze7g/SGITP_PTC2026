@@ -21,17 +21,17 @@ export function useCart() {
   const invalidateCart = () => queryClient.invalidateQueries({ queryKey: ['cart'] });
 
   const addItemMutation = useMutation({
-    mutationFn: ({ productId, quantity }) =>
+    mutationFn: ({ productId, quantity, size, color }) =>
       request('/cart/mine', {
         method: 'POST',
-        body: JSON.stringify({ productId, quantity }),
+        body: JSON.stringify({ productId, quantity, size, color }),
       }),
     onSuccess: invalidateCart,
   });
 
   const updateItemMutation = useMutation({
-    mutationFn: ({ productId, quantity }) =>
-      request(`/cart/mine/${productId}`, {
+    mutationFn: ({ itemId, quantity }) =>
+      request(`/cart/mine/${itemId}`, {
         method: 'PUT',
         body: JSON.stringify({ quantity }),
       }),
@@ -39,7 +39,7 @@ export function useCart() {
   });
 
   const removeItemMutation = useMutation({
-    mutationFn: (productId) => request(`/cart/mine/${productId}`, { method: 'DELETE' }),
+    mutationFn: (itemId) => request(`/cart/mine/${itemId}`, { method: 'DELETE' }),
     onSuccess: invalidateCart,
   });
 
@@ -60,9 +60,13 @@ export function useCart() {
     itemCount: items.reduce((total, item) => total + Number(item.quantity || 0), 0),
     total: cart?.total ?? 0,
     isLoading,
-    addItem: (productId, quantity = 1) => addItemMutation.mutateAsync({ productId, quantity }),
-    updateItem: (productId, quantity) => updateItemMutation.mutateAsync({ productId, quantity }),
-    removeItem: (productId) => removeItemMutation.mutateAsync(productId),
+    // size/color eligen la variante (el stock se lleva por talla y color);
+    // sin ellos el backend usa la primera variante con stock.
+    addItem: (productId, quantity = 1, { size, color } = {}) =>
+      addItemMutation.mutateAsync({ productId, quantity, size, color }),
+    // itemId es el _id de la línea del carrito (una por talla/color).
+    updateItem: (itemId, quantity) => updateItemMutation.mutateAsync({ itemId, quantity }),
+    removeItem: (itemId) => removeItemMutation.mutateAsync(itemId),
     checkout: (payload) => checkoutMutation.mutateAsync(payload),
   };
 }

@@ -9,6 +9,15 @@ import { StoreHeader } from '../components/StoreHeader';
 import { useTheme } from '../context/ThemeContext';
 import { useOrders } from '../hooks/useOrders';
 
+// El backend guarda el estado del pago en inglés (Pending/Paid) o en español
+// (ventas del POS); aquí siempre se muestra en español.
+const PAYMENT_STATUS_LABELS = {
+  Pending: 'Pendiente de pago',
+  Paid: 'Pagado',
+  Pagado: 'Pagado',
+  Cancelado: 'Cancelado',
+};
+
 function formatDate(value) {
   if (!value) return '';
   return new Date(value).toLocaleDateString('es-SV', {
@@ -60,7 +69,7 @@ export function OrdersScreen({ navigation }) {
                 </View>
                 <View style={styles.statusBadge}>
                   <AppText variant="bodySemiBold" style={styles.statusLabel}>
-                    {item.payment_status || 'Pendiente'}
+                    {PAYMENT_STATUS_LABELS[item.payment_status] ?? item.payment_status ?? 'Pendiente de pago'}
                   </AppText>
                 </View>
               </View>

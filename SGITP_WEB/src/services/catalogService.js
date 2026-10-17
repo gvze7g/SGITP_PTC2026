@@ -19,6 +19,16 @@ export function formatProductPrice(value) {
   }).format(Number(value || 0));
 }
 
+// Precio que paga quien esta viendo: el mayorista recibe wholesalePrice del
+// backend (solo a el se le envia); el resto paga el de oferta o el regular.
+export function getDisplayPrice(product) {
+  if (product?.isWholesaleView && Number(product.wholesalePrice) > 0) {
+    return Number(product.wholesalePrice);
+  }
+
+  return Number(product?.hasActiveOffer ? product.finalPrice : product?.price) || 0;
+}
+
 export function getProductMaterial(product) {
   const variant = product?.variants?.[0];
   return [variant?.color, variant?.fabric || product?.category]
@@ -104,4 +114,63 @@ export async function getPublicBranches() {
   }
 
   return parseResponse(response, 'No se pudieron obtener las tiendas.');
+}
+
+// Lista cerrada de categorias (agrupadas en Niña, Niño y Unisex), la misma
+// que usa el panel para crear productos.
+export async function getProductCategories() {
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}/products/catalog/categories`, {
+      credentials: 'include',
+    });
+  } catch {
+    throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
+  }
+
+  return parseResponse(response, 'No se pudieron obtener las categorias.');
+}
+
+const NEW_ARRIVAL_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+export function isNewProduct(product) {
+  return (
+    Boolean(product?.createdAt) &&
+    Date.now() - new Date(product.createdAt).getTime() < NEW_ARRIVAL_WINDOW_MS
+  );
+}
+
+export function getProductTotalStock(product) {
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  return variants.reduce((total, variant) => {
+    const stock = Number.parseInt(variant?.stock, 10);
+    return total + (Number.isFinite(stock) && stock > 0 ? stock : 0);
+  }, 0);
+}
+
+// Colores unicos del producto (un color con varias tallas sale una vez).
+export function getProductColors(product) {
+  const seen = new Map();
+  (product?.variants || []).forEach((variant) => {
+    const name = String(variant?.color || '').trim();
+    if (name && !seen.has(name)) seen.set(name, variant.colorHex || '#d8cfc4');
+  });
+  return [...seen.entries()].map(([name, hex]) => ({ name, hex }));
+}
+
+export function getProductFabrics(product) {
+  return [
+    ...new Set(
+      (product?.variants || []).map((variant) => String(variant?.fabric || '').trim()).filter(Boolean)
+    ),
+  ];
+}
+
+export function getProductSizes(product) {
+  return [
+    ...new Set(
+      (product?.variants || []).map((variant) => String(variant?.size || '').trim()).filter(Boolean)
+    ),
+  ];
 }

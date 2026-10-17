@@ -135,7 +135,7 @@ export function ContactScreen() {
             maxLength={50}
           />
           <TextField
-            label="Email"
+            label="Correo electrónico"
             placeholder="correo@ejemplo.com"
             value={email}
             onChangeText={setEmail}

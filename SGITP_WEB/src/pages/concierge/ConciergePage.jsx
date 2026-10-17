@@ -166,7 +166,7 @@ function ConciergePage() {
               <p>
                 <Mail size={14} strokeWidth={1.6} />
                 <span>
-                  <strong>Email</strong>
+                  <strong>Correo electrónico</strong>
                   consejeria@peques.com
                 </span>
               </p>

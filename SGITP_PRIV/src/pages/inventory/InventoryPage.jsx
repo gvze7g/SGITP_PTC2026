@@ -25,6 +25,7 @@ function InventoryPage({ theme, onToggleTheme }) {
     searchProductsByName,
     getProductsByPriceRange,
     getProductsCount,
+    getProductCategories,
     createProduct,
     updateProduct,
     deleteProduct,
@@ -42,10 +43,23 @@ function InventoryPage({ theme, onToggleTheme }) {
   // el usuario deja de teclear; lastQueryKeyRef evita repetir la misma consulta.
   const debouncedFilters = useDebounce(filters, 400);
   const lastQueryKeyRef = useRef("");
+  const [categoryGroups, setCategoryGroups] = useState([]);
   const [inventoryStats, setInventoryStats] = useState({
     totalProducts: 0,
     lowStockCount: 0,
   });
+
+  // Lista cerrada de categorías: el formulario solo deja elegir de aquí, así
+  // no se crean categorías mal escritas que dupliquen filtros en la tienda.
+  useEffect(() => {
+    getProductCategories().then((result) => {
+      if (result.success) {
+        setCategoryGroups(result.data);
+      } else {
+        toast.error(result.message);
+      }
+    });
+  }, [getProductCategories]);
 
   const loadStats = useCallback(async () => {
     const result = await getProductsCount();
@@ -142,7 +156,10 @@ function InventoryPage({ theme, onToggleTheme }) {
   };
 
   const handleSaveProduct = async (payload, isEditMode) => {
-    const validationMessage = validateProductPayload(payload);
+    const validationMessage = validateProductPayload(
+      payload,
+      categoryGroups.flatMap((group) => group.categories)
+    );
 
     if (validationMessage) {
       toast.error(validationMessage);
@@ -267,6 +284,7 @@ function InventoryPage({ theme, onToggleTheme }) {
         onClose={handleCloseCreateModal}
         onSubmit={handleSaveProduct}
         productData={selectedProduct}
+        categoryGroups={categoryGroups}
         loading={loading}
       />
 

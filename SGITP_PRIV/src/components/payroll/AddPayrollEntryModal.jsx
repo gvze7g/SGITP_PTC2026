@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
+import { getPayrollPeriodError } from "../../utils/dateRules";
 
 function AddPayrollEntryModal({ open, onClose, onSubmit, employees = [], defaultPeriod = "", loading = false }) {
   const [employeeId, setEmployeeId] = useState("");
@@ -31,8 +32,10 @@ function AddPayrollEntryModal({ open, onClose, onSubmit, employees = [], default
       return;
     }
 
-    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ]+( de)? \d{4}$/i.test(period.trim())) {
-      toast.error("Escribe el periodo como mes y año, por ejemplo: Noviembre de 2025.");
+    // Mes real y que ya haya llegado: no se genera nomina de meses futuros.
+    const periodError = getPayrollPeriodError(period);
+    if (periodError) {
+      toast.error(periodError);
       return;
     }
 

@@ -5,7 +5,8 @@ const limiter = rateLimit({
   max: 100,
   message: {
     status: 429,
-    error: "Too many request",
+    // "message" es lo que muestran la web, la app y el panel.
+    message: "Demasiadas solicitudes. Espera unos minutos e intenta de nuevo.",
   },
 });
 

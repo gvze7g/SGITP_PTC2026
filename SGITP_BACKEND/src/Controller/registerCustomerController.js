@@ -24,21 +24,20 @@ registerCustomerController.register = async (req, res) => {
       password,
       addresses,
       phone_numbers,
-      isVerified,
-      loginAttempts,
-      timeOut,
     } = req.body;
 
     // Limpieza básica de texto
     full_name = full_name?.trim();
     email = email?.trim();
 
-    // Si no envían tipo, por defecto será Client
-    customer_type = customer_type?.trim() || "Client";
-
-    if (!ALLOWED_CUSTOMER_TYPES.includes(customer_type)) {
-      return res.status(400).json({ message: "Invalid customer type" });
+    // El registro público siempre crea clientes minoristas. Solo un empleado
+    // puede volver mayorista a un cliente desde el panel (PUT /customer/:id);
+    // si se aceptara del body, cualquiera se registraría como mayorista para
+    // ver el stock y pagar el precio mayorista.
+    if (customer_type !== undefined && !ALLOWED_CUSTOMER_TYPES.includes(String(customer_type).trim())) {
+      return res.status(400).json({ message: "Tipo de cliente inválido" });
     }
+    customer_type = "Client";
 
     if (!full_name || !email || !password) {
       return res.status(400).json({ message: "Nombre, correo y contraseña son obligatorios" });
@@ -60,14 +59,21 @@ registerCustomerController.register = async (req, res) => {
         .json({ message: `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres` });
     }
 
-    // Evita registrar correos repetidos
+    // Evita registrar correos repetidos. Si la cuenta existe pero nunca se
+    // verificó (el código venció), se deja registrar de nuevo y se manda un
+    // código nuevo; si no, esa persona quedaría bloqueada para siempre ahora
+    // que el login exige el correo verificado.
     const existCustomer = await customerModel.findOne({ email });
-    if (existCustomer) {
-      return res.status(400).json({ message: "email already in use" });
+    if (existCustomer && existCustomer.isVerified !== false) {
+      return res.status(400).json({ message: "Este correo ya está registrado" });
     }
 
     // Encripta contraseña antes de guardar
     const passwordHash = await bcryptjs.hash(password, 10);
+
+    if (existCustomer) {
+      await customerModel.deleteOne({ _id: existCustomer._id, isVerified: false });
+    }
 
     const newCustomer = new customerModel({
       customer_type,
@@ -77,9 +83,11 @@ registerCustomerController.register = async (req, res) => {
       password: passwordHash,
       addresses,
       phone_numbers,
-      isVerified: isVerified || false,
-      loginAttempts,
-      timeOut,
+      // La cuenta solo se verifica con el código del correo; no se acepta
+      // isVerified/loginAttempts/timeOut desde el body.
+      isVerified: false,
+      loginAttempts: 0,
+      timeOut: null,
     });
 
     await newCustomer.save();
@@ -101,10 +109,10 @@ registerCustomerController.register = async (req, res) => {
 
     await sendEmail(email, "Verificación de cuenta", htmlContent);
 
-    return res.status(200).json({ message: "email send" });
+    return res.status(200).json({ message: "Te enviamos un código a tu correo" });
   } catch (error) {
     console.log("error " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -115,7 +123,7 @@ registerCustomerController.verifyCode = async (req, res) => {
 
     // Verifica que exista token de verificación
     if (!token) {
-      return res.status(401).json({ message: "Token missing or expired" });
+      return res.status(401).json({ message: "El código expiró, solicita uno nuevo" });
     }
 
     const decoded = jsonwebtoken.verify(token, config.JWT.secret);
@@ -123,7 +131,7 @@ registerCustomerController.verifyCode = async (req, res) => {
 
     // Compara código enviado por usuario vs código guardado
     if (verificationCodeRequest !== storedCode) {
-      return res.status(400).json({ message: "Invalid verification code" });
+      return res.status(400).json({ message: "El código ingresado no es válido" });
     }
 
     // Si el código es correcto, activa la cuenta
@@ -136,10 +144,10 @@ registerCustomerController.verifyCode = async (req, res) => {
     // Borra cookie de verificación al finalizar
     res.clearCookie("verificationTokenCookie", getClearCookieOptions());
 
-    return res.status(200).json({ message: "Account verified successfully" });
+    return res.status(200).json({ message: "Cuenta verificada correctamente" });
   } catch (error) {
     console.log("error " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

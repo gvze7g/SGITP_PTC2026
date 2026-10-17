@@ -1,4 +1,39 @@
 import promotionsModel from "../Model/promotions.js";
+import {
+  isWithinDateRange,
+  toDateString,
+  toStoredDate,
+  validateValidityDates,
+} from "../utils/dates.js";
+import { isValidObjectId } from "../utils/validators.js";
+
+// Fechas y porcentaje de un cupón. Devuelve { error } o { start, end, discount }.
+// El inicio y el final no pueden ser anteriores a hoy (al editar se acepta
+// una fecha que no cambió) y el final debe ser después del inicio.
+const parsePromotionPeriod = (body, previous = null) => {
+  const error = validateValidityDates(
+    { start: body.start_date, end: body.end_date },
+    {
+      previousStart: previous?.start_date,
+      previousEnd: previous?.end_date,
+      label: "el cupón",
+    }
+  );
+  if (error) return { error };
+
+  const start = toDateString(body.start_date);
+  const end = toDateString(body.end_date);
+  if (end <= start) {
+    return { error: "La fecha final del cupón debe ser posterior a la fecha de inicio" };
+  }
+
+  const discount = Number(body.discount_percentage);
+  if (!Number.isFinite(discount) || discount <= 0 || discount >= 100) {
+    return { error: "El descuento del cupón debe ser mayor que 0 y menor que 100" };
+  }
+
+  return { start: toStoredDate(start), end: toStoredDate(end), discount };
+};
 
 const promotionsController = {};
 
@@ -10,7 +45,7 @@ promotionsController.validateCoupon = async (req, res) => {
     const code = req.params.code?.trim();
 
     if (!code) {
-      return res.status(400).json({ message: "Coupon code is required" });
+      return res.status(400).json({ message: "El código del cupón es obligatorio" });
     }
 
     const promotion = await promotionsModel.findOne({
@@ -19,15 +54,13 @@ promotionsController.validateCoupon = async (req, res) => {
     });
 
     if (!promotion) {
-      return res.status(404).json({ message: "Invalid or inactive coupon code" });
+      return res.status(404).json({ message: "El código de descuento no existe o no está activo" });
     }
 
-    const now = new Date();
-    if (
-      (promotion.start_date && now < promotion.start_date) ||
-      (promotion.end_date && now > promotion.end_date)
-    ) {
-      return res.status(404).json({ message: "This coupon has expired" });
+    // Se compara por día en hora de El Salvador: el cupón vale todo el día
+    // de inicio y todo el día final.
+    if (!isWithinDateRange(promotion.start_date, promotion.end_date)) {
+      return res.status(404).json({ message: "Este cupón ya venció o todavía no está vigente" });
     }
 
     return res.status(200).json({
@@ -37,7 +70,7 @@ promotionsController.validateCoupon = async (req, res) => {
     });
   } catch (error) {
     console.log("validateCoupon error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -48,7 +81,7 @@ promotionsController.getPromotions = async (req, res) => {
     return res.status(200).json(promotions);
   } catch (error) {
     console.log("getPromotions error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -58,13 +91,13 @@ promotionsController.getPromotionById = async (req, res) => {
     const promotion = await promotionsModel.findById(req.params.id);
 
     if (!promotion) {
-      return res.status(404).json({ message: "Promotion not found" });
+      return res.status(404).json({ message: "Promoción no encontrada" });
     }
 
     return res.status(200).json(promotion);
   } catch (error) {
     console.log("getPromotionById error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -83,48 +116,41 @@ promotionsController.insertPromotion = async (req, res) => {
     coupon_code = coupon_code?.trim();
 
     if (!coupon_code) {
-      return res.status(400).json({ message: "Coupon code is required" });
+      return res.status(400).json({ message: "El código del cupón es obligatorio" });
     }
 
     const alphanumericRegex = /^[a-zA-Z0-9]+$/;
     if (!alphanumericRegex.test(coupon_code)) {
       return res.status(400).json({
-        message: "Coupon code must only contain letters and numbers",
+        message: "El código del cupón solo puede tener letras y números",
       });
     }
 
-    if (!start_date || !end_date) {
-      return res.status(400).json({
-        message: "Start date and end date are required",
-      });
+    if (coupon_code.length > 20) {
+      return res.status(400).json({ message: "El código no puede pasar de 20 caracteres" });
     }
 
-    const start = new Date(start_date);
-    const end = new Date(end_date);
-    const now = new Date();
-
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return res.status(400).json({ message: "Invalid date format" });
+    if (await promotionsModel.exists({ coupon_code })) {
+      return res.status(400).json({ message: "Ya existe un cupón con ese código" });
     }
 
-    if (end <= start) {
-      return res.status(400).json({
-        message: "End date must be after start date",
-      });
+    const period = parsePromotionPeriod(req.body);
+    if (period.error) {
+      return res.status(400).json({ message: period.error });
     }
 
-    let statusFinal = isActive !== undefined ? isActive : true;
+    const { start, end } = period;
 
-    if (statusFinal === true) {
-      if (now < start || now > end) {
-        statusFinal = false;
-      }
-    }
+    // isActive es solo el interruptor del admin. Antes se apagaba si hoy no
+    // estaba dentro del rango, y como ahora el inicio es a futuro, todo cupón
+    // nuevo habría nacido apagado para siempre. La vigencia por fechas se
+    // revisa al usarlo (validateCoupon y el checkout).
+    const statusFinal = isActive !== undefined ? Boolean(isActive) : true;
 
     const newPromotion = new promotionsModel({
       coupon_code,
       descriptions,
-      discount_percentage,
+      discount_percentage: period.discount,
       start_date: start,
       end_date: end,
       isActive: statusFinal,
@@ -133,12 +159,12 @@ promotionsController.insertPromotion = async (req, res) => {
     await newPromotion.save();
 
     return res.status(201).json({
-      message: "Promotion saved successfully",
+      message: "Promoción guardada correctamente",
       promotion: newPromotion,
     });
   } catch (error) {
     console.log("insertPromotion error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -158,51 +184,55 @@ promotionsController.updatePromotion = async (req, res) => {
       coupon_code = coupon_code?.trim();
 
       if (!coupon_code) {
-        return res.status(400).json({ message: "Coupon code cannot be empty" });
+        return res.status(400).json({ message: "El código del cupón no puede quedar vacío" });
       }
 
       const alphanumericRegex = /^[a-zA-Z0-9]+$/;
       if (!alphanumericRegex.test(coupon_code)) {
         return res.status(400).json({
-          message: "Coupon code must only contain letters and numbers",
+          message: "El código del cupón solo puede tener letras y números",
         });
       }
     }
 
-    if (!start_date || !end_date) {
-      return res.status(400).json({
-        message: "Both start date and end date are required to update periods",
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(404).json({ message: "Promoción no encontrada" });
+    }
+
+    const currentPromotion = await promotionsModel.findById(req.params.id);
+
+    if (!currentPromotion) {
+      return res.status(404).json({ message: "Promoción no encontrada" });
+    }
+
+    if (coupon_code !== undefined) {
+      if (coupon_code.length > 20) {
+        return res.status(400).json({ message: "El código no puede pasar de 20 caracteres" });
+      }
+
+      const duplicated = await promotionsModel.exists({
+        coupon_code,
+        _id: { $ne: currentPromotion._id },
       });
-    }
-
-    const start = new Date(start_date);
-    const end = new Date(end_date);
-    const now = new Date();
-
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return res.status(400).json({ message: "Invalid date format" });
-    }
-
-    if (end <= start) {
-      return res.status(400).json({
-        message: "End date must be after start date",
-      });
-    }
-
-    let statusFinal = isActive !== undefined ? isActive : true;
-
-    if (statusFinal === true) {
-      if (now < start || now > end) {
-        statusFinal = false;
+      if (duplicated) {
+        return res.status(400).json({ message: "Ya existe un cupón con ese código" });
       }
     }
+
+    const period = parsePromotionPeriod(req.body, currentPromotion);
+    if (period.error) {
+      return res.status(400).json({ message: period.error });
+    }
+
+    const { start, end } = period;
+    const statusFinal = isActive !== undefined ? Boolean(isActive) : currentPromotion.isActive;
 
     const updatedPromotion = await promotionsModel.findByIdAndUpdate(
       req.params.id,
       {
         coupon_code,
         descriptions,
-        discount_percentage,
+        discount_percentage: period.discount,
         start_date: start,
         end_date: end,
         isActive: statusFinal,
@@ -211,16 +241,16 @@ promotionsController.updatePromotion = async (req, res) => {
     );
 
     if (!updatedPromotion) {
-      return res.status(404).json({ message: "Promotion not found" });
+      return res.status(404).json({ message: "Promoción no encontrada" });
     }
 
     return res.status(200).json({
-      message: "Promotion updated successfully",
+      message: "Promoción actualizada correctamente",
       promotion: updatedPromotion,
     });
   } catch (error) {
     console.log("updatePromotion error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -230,13 +260,13 @@ promotionsController.deletePromotion = async (req, res) => {
     const deletedPromotion = await promotionsModel.findByIdAndDelete(req.params.id);
 
     if (!deletedPromotion) {
-      return res.status(404).json({ message: "Promotion not found" });
+      return res.status(404).json({ message: "Promoción no encontrada" });
     }
 
-    return res.status(200).json({ message: "Promotion deleted successfully" });
+    return res.status(200).json({ message: "Promoción eliminada correctamente" });
   } catch (error) {
     console.log("deletePromotion error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

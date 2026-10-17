@@ -23,11 +23,11 @@ recoveryPasswordController.sendRecoveryCode = async (req, res) => {
     } else if (userType === "Customer") {
       userFound = await customerModel.findOne({ email });
     } else {
-      return res.status(400).json({ message: "Invalid user type" });
+      return res.status(400).json({ message: "Tipo de usuario inválido" });
     }
 
     if (!userFound) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "No existe una cuenta con ese correo" });
     }
 
     // Generar código aleatorio de recuperación
@@ -47,10 +47,10 @@ recoveryPasswordController.sendRecoveryCode = async (req, res) => {
 
     await sendEmail(email, "Código de recuperación de contraseña", htmlContent);
 
-    return res.status(200).json({ message: "Recovery email sent" });
+    return res.status(200).json({ message: "Te enviamos un código de recuperación a tu correo" });
   } catch (error) {
     console.log("error: " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -61,14 +61,14 @@ recoveryPasswordController.verifyCode = async (req, res) => {
 
     // Verifica que exista token de recuperación
     if (!token) {
-      return res.status(401).json({ message: "Token missing or expired" });
+      return res.status(401).json({ message: "El código expiró, solicita uno nuevo" });
     }
 
     const decoded = jsonwebtoken.verify(token, config.JWT.secret);
 
     // Compara código recibido con el guardado
     if (code !== decoded.randomCode) {
-      return res.status(400).json({ message: "Invalid code" });
+      return res.status(400).json({ message: "El código ingresado no es válido" });
     }
 
     // Si es correcto, crea nuevo token marcado como "verified"
@@ -80,10 +80,10 @@ recoveryPasswordController.verifyCode = async (req, res) => {
 
     res.cookie("recoveryCookie", newToken, getAuthCookieOptions(15 * 60 * 1000));
 
-    return res.status(200).json({ message: "Code verified successfully" });
+    return res.status(200).json({ message: "Código verificado correctamente" });
   } catch (error) {
     console.log("error: " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -99,20 +99,20 @@ recoveryPasswordController.newPassword = async (req, res) => {
 
     // Validar que ambas contraseñas coincidan
     if (newPassword !== confirmNewPassword) {
-      return res.status(400).json({ message: "Passwords don't match" });
+      return res.status(400).json({ message: "Las contraseñas no coinciden" });
     }
 
     const token = req.cookies.recoveryCookie;
 
     if (!token) {
-      return res.status(401).json({ message: "Token missing or expired" });
+      return res.status(401).json({ message: "El código expiró, solicita uno nuevo" });
     }
 
     const decoded = jsonwebtoken.verify(token, config.JWT.secret);
 
     // Solo permite cambiar contraseña si ya verificó el código
     if (!decoded.verified) {
-      return res.status(400).json({ message: "Code not verified" });
+      return res.status(400).json({ message: "Primero debes verificar el código" });
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
@@ -137,16 +137,16 @@ recoveryPasswordController.newPassword = async (req, res) => {
         }
       );
     } else {
-      return res.status(400).json({ message: "Invalid user type" });
+      return res.status(400).json({ message: "Tipo de usuario inválido" });
     }
 
     // Limpia cookie de recuperación al finalizar
     res.clearCookie("recoveryCookie", getClearCookieOptions());
 
-    return res.status(200).json({ message: "Password updated successfully" });
+    return res.status(200).json({ message: "Contraseña actualizada correctamente" });
   } catch (error) {
     console.log("error: " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

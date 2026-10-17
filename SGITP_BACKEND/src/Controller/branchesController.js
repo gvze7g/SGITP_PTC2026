@@ -1,3 +1,4 @@
+import { toDateString, toStoredDate, validatePastDate } from "../utils/dates.js";
 import branchesModel from "../Model/branches.js";
 
 const branchesController = {};
@@ -9,7 +10,7 @@ branchesController.getBranches = async (req, res) => {
     return res.status(200).json(branches);
   } catch (error) {
     console.log("getBranches error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -23,7 +24,7 @@ branchesController.getPublicBranches = async (req, res) => {
     return res.status(200).json(branches);
   } catch (error) {
     console.log("getPublicBranches error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -33,13 +34,13 @@ branchesController.getBranchById = async (req, res) => {
     const branch = await branchesModel.findById(req.params.id);
 
     if (!branch) {
-      return res.status(404).json({ message: "Branch not found" });
+      return res.status(404).json({ message: "Sucursal no encontrada" });
     }
 
     return res.status(200).json(branch);
   } catch (error) {
     console.log("getBranchById error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -48,24 +49,30 @@ branchesController.insertBranch = async (req, res) => {
   try {
     const { name, address, phone, email, isActive, opening_date } = req.body;
 
+    // La apertura ya ocurrió: no puede ser una fecha futura.
+    const dateError = validatePastDate(opening_date, { label: "fecha de apertura" });
+    if (dateError) {
+      return res.status(400).json({ message: dateError });
+    }
+
     const newBranch = new branchesModel({
       name,
       address,
       phone,
       email,
       isActive,
-      opening_date,
+      opening_date: toDateString(opening_date) ? toStoredDate(toDateString(opening_date)) : null,
     });
 
     await newBranch.save();
 
     return res.status(201).json({
-      message: "Branch saved successfully",
+      message: "Sucursal guardada correctamente",
       branch: newBranch,
     });
   } catch (error) {
     console.log("insertBranch error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -73,6 +80,12 @@ branchesController.insertBranch = async (req, res) => {
 branchesController.updateBranch = async (req, res) => {
   try {
     const { name, address, phone, email, isActive, opening_date } = req.body;
+
+    // La apertura ya ocurrió: no puede ser una fecha futura.
+    const dateError = validatePastDate(opening_date, { label: "fecha de apertura" });
+    if (dateError) {
+      return res.status(400).json({ message: dateError });
+    }
 
     const updatedBranch = await branchesModel.findByIdAndUpdate(
       req.params.id,
@@ -82,22 +95,22 @@ branchesController.updateBranch = async (req, res) => {
         phone,
         email,
         isActive,
-        opening_date,
+        opening_date: toDateString(opening_date) ? toStoredDate(toDateString(opening_date)) : null,
       },
       { new: true }
     );
 
     if (!updatedBranch) {
-      return res.status(404).json({ message: "Branch not found" });
+      return res.status(404).json({ message: "Sucursal no encontrada" });
     }
 
     return res.status(200).json({
-      message: "Branch updated successfully",
+      message: "Sucursal actualizada correctamente",
       branch: updatedBranch,
     });
   } catch (error) {
     console.log("updateBranch error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -107,13 +120,13 @@ branchesController.deleteBranch = async (req, res) => {
     const deletedBranch = await branchesModel.findByIdAndDelete(req.params.id);
 
     if (!deletedBranch) {
-      return res.status(404).json({ message: "Branch not found" });
+      return res.status(404).json({ message: "Sucursal no encontrada" });
     }
 
-    return res.status(200).json({ message: "Branch deleted successfully" });
+    return res.status(200).json({ message: "Sucursal eliminada correctamente" });
   } catch (error) {
     console.log("deleteBranch error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

@@ -83,7 +83,7 @@ export function validatePromotionPayload(payload) {
   return "";
 }
 
-export function validateProductPayload(payload) {
+export function validateProductPayload(payload, allowedCategories = []) {
   const getValue = (key) => {
     if (payload instanceof FormData) return payload.get(key);
     return payload?.[key];
@@ -94,8 +94,14 @@ export function validateProductPayload(payload) {
     return "La descripcion del producto es obligatoria.";
   }
   if (isBlank(getValue("category"))) return "La categoria es obligatoria.";
-  if (!isNonNegativeNumber(getValue("price"))) return "El precio debe ser valido.";
-  if (!isNonNegativeNumber(getValue("cost"))) return "El costo debe ser valido.";
+  if (allowedCategories.length > 0 && !allowedCategories.includes(getValue("category"))) {
+    return "Selecciona una categoria de la lista.";
+  }
+  if (!isPositiveNumber(getValue("price"))) return "El precio debe ser mayor que 0.";
+  if (!isPositiveNumber(getValue("cost"))) return "El precio mayorista debe ser mayor que 0.";
+  if (Number(getValue("cost")) > Number(getValue("price"))) {
+    return "El precio mayorista no puede ser mayor que el precio regular.";
+  }
 
   return "";
 }

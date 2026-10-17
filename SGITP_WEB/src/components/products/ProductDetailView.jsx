@@ -18,6 +18,10 @@ function ProductDetailView({
   isFavorite,
   favoriteBusy,
   onToggleFavorite,
+  quantity,
+  maxQuantity,
+  onChangeQuantity,
+  addingToCart,
   onAddToCart,
   onBack,
   onOpenStoreSearch,
@@ -67,6 +71,7 @@ function ProductDetailView({
         ) : (
           <p className="product-price">{product.price}</p>
         )}
+        {product.priceNote ? <p className="product-price-note">{product.priceNote}</p> : null}
 
         <p className="product-description">{product.description}</p>
 
@@ -117,10 +122,41 @@ function ProductDetailView({
           </p>
         ) : null}
 
+        {product.inStock ? (
+          <div className="product-quantity-block">
+            <span className="product-block-label">Cantidad</span>
+            <div className="quantity-control product-quantity-control" aria-label="Cantidad a agregar">
+              <button
+                type="button"
+                aria-label="Reducir cantidad"
+                onClick={() => onChangeQuantity(quantity - 1)}
+                disabled={quantity <= 1}
+              >
+                -
+              </button>
+              <span>{String(quantity).padStart(2, '0')}</span>
+              {/* No se deshabilita al llegar al maximo: el clic muestra la alerta del limite */}
+              <button
+                type="button"
+                aria-label="Aumentar cantidad"
+                onClick={() => onChangeQuantity(quantity + 1)}
+                className={quantity >= maxQuantity ? 'quantity-at-limit' : ''}
+              >
+                +
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="product-actions">
-          <button type="button" className="product-cart-btn" onClick={onAddToCart} disabled={!product.inStock}>
+          <button
+            type="button"
+            className="product-cart-btn"
+            onClick={onAddToCart}
+            disabled={!product.inStock || addingToCart}
+          >
             <ShoppingBag size={17} strokeWidth={1.8} />
-            Añadir al carrito
+            {addingToCart ? 'Agregando...' : 'Añadir al carrito'}
           </button>
           <button
             type="button"

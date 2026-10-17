@@ -11,9 +11,14 @@ import { SearchInput } from '../components/SearchInput';
 import { StoreHeader } from '../components/StoreHeader';
 import { useTheme } from '../context/ThemeContext';
 import { useProducts } from '../hooks/useProducts';
-import { getActiveOffer } from '../utils/offers';
+import { getActiveOffer, getWholesalePrice } from '../utils/offers';
 
 const PAGE_SIZE = 6;
+
+// Ordena por el precio que paga quien está viendo (el mayorista tiene el suyo).
+function sortPrice(product) {
+  return getWholesalePrice(product) ?? product.price ?? 0;
+}
 
 // Chip especial que no es una categoría real: filtra los productos que
 // tienen una oferta activa hoy (ver utils/offers.js).
@@ -71,9 +76,9 @@ export function CollectionScreen({ route, navigation }) {
 
     const sortKey = SORT_MODES[sortIndex].key;
     if (sortKey === 'precio-asc') {
-      result = [...result].sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+      result = [...result].sort((a, b) => sortPrice(a) - sortPrice(b));
     } else if (sortKey === 'precio-desc') {
-      result = [...result].sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+      result = [...result].sort((a, b) => sortPrice(b) - sortPrice(a));
     }
 
     return result;

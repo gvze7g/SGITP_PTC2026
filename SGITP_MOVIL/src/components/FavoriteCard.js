@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../hooks/useCart';
 import { useFavorites } from '../context/FavoritesContext';
 import { useToast } from '../context/ToastContext';
-import { getActiveOffer, getDiscountedPrice } from '../utils/offers';
+import { getActiveOffer, getDiscountedPrice, getWholesalePrice } from '../utils/offers';
 import { AppText } from './AppText';
 import { Button } from './Button';
 
@@ -23,7 +23,8 @@ export function FavoriteCard({ product, onPress }) {
   const { addItem } = useCart();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const imageUrl = product.images?.[0]?.image;
-  const offer = getActiveOffer(product);
+  const wholesalePrice = getWholesalePrice(product);
+  const offer = wholesalePrice ? null : getActiveOffer(product);
 
   async function handleAddToCart() {
     setIsAddingToCart(true);
@@ -82,7 +83,7 @@ export function FavoriteCard({ product, onPress }) {
           </View>
         ) : (
           <AppText variant="muted" style={styles.price}>
-            ${Number(product.price ?? 0).toFixed(2)} USD
+            ${Number(wholesalePrice ?? product.price ?? 0).toFixed(2)} USD
           </AppText>
         )}
 

@@ -36,7 +36,7 @@ export function LoginScreen({ navigation }) {
         name="email"
         render={({ field }) => (
           <TextField
-            placeholder="Email"
+            placeholder="Correo electrónico"
             value={field.value}
             onChangeText={field.onChange}
             keyboardType="email-address"

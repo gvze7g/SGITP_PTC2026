@@ -8,7 +8,7 @@ const router = Router();
 // para que Express no confunda "validate" con un id de promocion.
 router.get(
   "/validate/:code",
-  validateAuthCookie(["Customer", "Employee"]),
+  validateAuthCookie(["Customer"]),
   promotionsController.validateCoupon
 );
 

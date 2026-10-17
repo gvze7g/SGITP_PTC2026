@@ -26,7 +26,8 @@ export async function getMyCart() {
   return parseResponse(response, 'No se pudo cargar el carrito.');
 }
 
-export async function addItemToCart(productId, quantity = 1) {
+// size/color identifican la variante: el stock se lleva por talla y color.
+export async function addItemToCart(productId, quantity = 1, { size, color } = {}) {
   let response;
 
   try {
@@ -34,7 +35,7 @@ export async function addItemToCart(productId, quantity = 1) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ productId, quantity }),
+      body: JSON.stringify({ productId, quantity, size, color }),
     });
   } catch (error) {
     throw new Error('No se pudo conectar con el servidor. Enciende o reinicia el backend.');
@@ -43,11 +44,12 @@ export async function addItemToCart(productId, quantity = 1) {
   return parseResponse(response, 'No se pudo agregar el producto al carrito.');
 }
 
-export async function updateCartItem(productId, quantity) {
+// itemId es el _id de la linea del carrito (una por talla/color).
+export async function updateCartItem(itemId, quantity) {
   let response;
 
   try {
-    response = await fetch(`${API_URL}/cart/mine/${productId}`, {
+    response = await fetch(`${API_URL}/cart/mine/${itemId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -60,11 +62,11 @@ export async function updateCartItem(productId, quantity) {
   return parseResponse(response, 'No se pudo actualizar el carrito.');
 }
 
-export async function removeCartItem(productId) {
+export async function removeCartItem(itemId) {
   let response;
 
   try {
-    response = await fetch(`${API_URL}/cart/mine/${productId}`, {
+    response = await fetch(`${API_URL}/cart/mine/${itemId}`, {
       method: 'DELETE',
       credentials: 'include',
     });

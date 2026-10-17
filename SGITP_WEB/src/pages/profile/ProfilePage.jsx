@@ -1,6 +1,6 @@
 import PublicFooter from '../../components/home/PublicFooter';
 import PublicNavbar from '../../components/home/PublicNavbar';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -11,7 +11,7 @@ import {
   updateCustomerProfile,
 } from '../../services/customerAuthService';
 import { getMyOrders } from '../../services/cartService';
-import { formatProductPrice, getProductImage } from '../../services/catalogService';
+import { formatProductPrice, getDisplayPrice, getProductImage } from '../../services/catalogService';
 import { getMyFavorites, removeFavorite } from '../../services/favoriteService';
 import {
   addMyCard,
@@ -64,6 +64,15 @@ const EMPTY_CARD_FORM = { cardNumber: '', expiry: '', holderName: '' };
 
 const cleanAddressText = (value) => value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]/g, '');
 
+// El backend guarda el estado del pago en inglés (Pending/Paid) o en español
+// (ventas del POS); aquí siempre se muestra en español.
+const PAYMENT_STATUS_LABELS = {
+  Pending: 'Pendiente de pago',
+  Paid: 'Pagado',
+  Pagado: 'Pagado',
+  Cancelado: 'Cancelado',
+};
+
 const scrollToSection = (sectionId) => {
   document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
@@ -97,6 +106,15 @@ function getOrderTotal(order) {
 
 function ProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // El corazón del encabezado abre /profile#profile-favorites: se baja a esa
+  // sección cuando la página ya pintó su contenido.
+  useEffect(() => {
+    if (!location.hash) return undefined;
+    const timer = setTimeout(() => scrollToSection(location.hash.slice(1)), 400);
+    return () => clearTimeout(timer);
+  }, [location.hash]);
   const { user: customer, isLoading: loadingSession, logout, refreshUser } = useAuth();
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState('');
@@ -571,14 +589,14 @@ function ProfilePage() {
                         <span>Pedido no. {order._id.slice(-6).toUpperCase()}</span>
                         <h3>
                           {firstItem.name || product.name || 'Pedido Peques'}
-                          {extraItems ? ` + ${extraItems} mas` : ''}
+                          {extraItems ? ` + ${extraItems} más` : ''}
                         </h3>
                         <p>
                           Pedido el {formatOrderDate(order.sales_date || order.createdAt)}
                           <strong>{formatProductPrice(getOrderTotal(order))}</strong>
                         </p>
                       </div>
-                      <em>{order.payment_status || 'Pendiente'}</em>
+                      <em>{PAYMENT_STATUS_LABELS[order.payment_status] ?? order.payment_status ?? 'Pendiente de pago'}</em>
                     </article>
                     );
                   })
@@ -601,8 +619,8 @@ function ProfilePage() {
             <section className="profile-section" id="profile-favorites">
               <div className="profile-section-heading">
                 <h2>Favoritos</h2>
-                <button type="button" onClick={() => navigate('/clothes')}>
-                  Explorar catalogo
+                <button type="button" onClick={() => navigate('/categories')}>
+                  Explorar catálogo
                 </button>
               </div>
 
@@ -620,7 +638,7 @@ function ProfilePage() {
                           <span>{product.category || 'Producto'}</span>
                           <h3>{product.name || 'Producto'}</h3>
                           <p>
-                            <strong>{formatProductPrice(Number(product.price || 0))}</strong>
+                            <strong>{formatProductPrice(getDisplayPrice(product))}</strong>
                           </p>
                         </div>
                         <div className="profile-favorite-actions">

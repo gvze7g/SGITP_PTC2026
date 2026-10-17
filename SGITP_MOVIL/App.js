@@ -1,5 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
-import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +16,7 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { ToastProvider } from './src/context/ToastContext';
 import { useAppReady } from './src/hooks/useAppReady';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { SessionGuard } from './src/navigation/SessionGuard';
 
 // Le decimos a la app que mantenga la pantalla de carga nativa visible
 // hasta que nosotros digamos que ya está lista (esto se hace 1 sola vez,
@@ -20,6 +26,10 @@ SplashScreen.preventAutoHideAsync();
 // React Query guarda en caché lo que se pide al backend (ej. la lista de
 // productos) para no repetir la misma petición una y otra vez.
 const queryClient = new QueryClient();
+
+// Referencia a la navegación para que SessionGuard pueda sacar al usuario al
+// Login cuando se queda sin sesión, esté en la pantalla que esté.
+const navigationRef = createNavigationContainerRef();
 
 // Vive adentro de ThemeProvider para poder leer el tema activo: le pasa los
 // colores correctos a la barra de estado del teléfono y al fondo que usa
@@ -40,8 +50,9 @@ function AppContent() {
   };
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
       <RootNavigator />
+      <SessionGuard navigationRef={navigationRef} />
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
     </NavigationContainer>
   );

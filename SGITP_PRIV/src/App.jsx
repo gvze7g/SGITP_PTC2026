@@ -21,16 +21,16 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import usePageTitle from "./hooks/usePageTitle";
 
 const PAGE_TITLES = {
-  "/": "Iniciar sesion",
-  "/forgot-password": "Recuperar contrasena",
-  "/verify-code": "Verificar codigo",
-  "/reset-password": "Restablecer contrasena",
-  "/dashboard": "Dashboard",
+  "/": "Iniciar sesión",
+  "/forgot-password": "Recuperar contraseña",
+  "/verify-code": "Verificar código",
+  "/reset-password": "Restablecer contraseña",
+  "/dashboard": "Panel principal",
   "/inventory": "Inventario",
   "/point-of-sale": "Punto de venta",
   "/sales-history": "Historial de ventas",
   "/employees": "Empleados",
-  "/payroll": "Nomina",
+  "/payroll": "Nómina",
   "/clients": "Clientes",
   "/branches": "Sucursales",
   "/promotions": "Promociones",

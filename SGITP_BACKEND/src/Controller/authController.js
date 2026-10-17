@@ -16,7 +16,7 @@ authController.me = async (req, res) => {
 
       // Si no existe en base de datos, responde 404
       if (!employee) {
-        return res.status(404).json({ message: "Employee not found" });
+        return res.status(404).json({ message: "No encontramos un empleado con ese correo" });
       }
 
       // Si existe, responde 200 con el tipo y sus datos
@@ -33,7 +33,7 @@ authController.me = async (req, res) => {
 
       // Si no existe en base de datos, responde 404
       if (!customer) {
-        return res.status(404).json({ message: "Customer not found" });
+        return res.status(404).json({ message: "No encontramos una cuenta con ese correo" });
       }
 
       // Si existe, responde 200 con el tipo y sus datos
@@ -44,11 +44,11 @@ authController.me = async (req, res) => {
     }
 
     // Si el tipo de usuario no es válido o no está contemplado
-    return res.status(400).json({ message: "Invalid user type" });
+    return res.status(400).json({ message: "Tipo de usuario inválido" });
   } catch (error) {
     // Manejo de errores inesperados del servidor
     console.log("me error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

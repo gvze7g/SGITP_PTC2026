@@ -86,8 +86,8 @@ export function ProfileScreen({ navigation }) {
 
   async function handleLogout() {
     try {
+      // Al quedar sin sesión, SessionGuard manda al Login y limpia el historial.
       await logout();
-      navigation.getParent()?.replace('Login');
     } catch (error) {
       showToast(error.message, 'error');
     }

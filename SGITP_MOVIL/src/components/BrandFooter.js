@@ -13,7 +13,7 @@ export function BrandFooter() {
     <View style={styles.container}>
       <View style={styles.line} />
       <AppText variant="label" style={styles.tagline}>
-        Minimal Luxury Nursery
+        Ropa para bebés con elegancia
       </AppText>
       <AppText variant="muted" style={styles.copyright}>
         © 2024 PEQUES

@@ -7,6 +7,7 @@ import { config } from "../config.js";
 import { sendEmail } from "../utils/sendMailjet.js";
 import HTMLVerificationEmail from "../utils/sendMailVerification.js";
 import { getAuthCookieOptions, getClearCookieOptions } from "../utils/cookieOptions.js";
+import { toDateString, toStoredDate, validateEmployeeDates } from "../utils/dates.js";
 
 const registerEmployeeController = {};
 
@@ -25,9 +26,6 @@ registerEmployeeController.register = async (req, res) => {
       birth_date,
       hire_date,
       role,
-      isVerified,
-      loginAttempts,
-      timeOut,
     } = req.body;
 
     full_name = full_name?.trim();
@@ -35,12 +33,19 @@ registerEmployeeController.register = async (req, res) => {
     role = role?.trim() || "Employee";
 
     if (!ALLOWED_EMPLOYEE_ROLES.includes(role)) {
-      return res.status(400).json({ message: "Invalid employee role" });
+      return res.status(400).json({ message: "Rol de empleado inválido" });
+    }
+
+    // Nacimiento: mayor de 18 años. Contratación: puede ser antigua, pero no
+    // futura ni de cuando todavía era menor de edad.
+    const datesError = validateEmployeeDates({ birth_date, hire_date });
+    if (datesError) {
+      return res.status(400).json({ message: datesError });
     }
 
     const existEmployee = await employeeModel.findOne({ email });
     if (existEmployee) {
-      return res.status(400).json({ message: "email already in use" });
+      return res.status(400).json({ message: "Este correo ya está registrado" });
     }
 
     const passwordHash = await bcryptjs.hash(password, 10);
@@ -53,12 +58,13 @@ registerEmployeeController.register = async (req, res) => {
       password: passwordHash,
       addresses,
       phone_numbers,
-      birth_date,
-      hire_date,
+      birth_date: toStoredDate(toDateString(birth_date)),
+      hire_date: toStoredDate(toDateString(hire_date)),
       role,
-      isVerified: isVerified || false,
-      loginAttempts,
-      timeOut,
+      // Solo se verifica con el código del correo.
+      isVerified: false,
+      loginAttempts: 0,
+      timeOut: null,
     });
 
     await newEmployee.save();
@@ -77,10 +83,10 @@ registerEmployeeController.register = async (req, res) => {
 
     await sendEmail(email, "Verificación de cuenta", htmlContent);
 
-    return res.status(200).json({ message: "email send" });
+    return res.status(200).json({ message: "Te enviamos un código a tu correo" });
   } catch (error) {
     console.log("error " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -90,14 +96,14 @@ registerEmployeeController.verifyCode = async (req, res) => {
     const token = req.cookies.verificationTokenCookie;
 
     if (!token) {
-      return res.status(401).json({ message: "Token missing or expired" });
+      return res.status(401).json({ message: "El código expiró, solicita uno nuevo" });
     }
 
     const decoded = jsonwebtoken.verify(token, config.JWT.secret);
     const { email, verificationCode: storedCode } = decoded;
 
     if (verificationCodeRequest !== storedCode) {
-      return res.status(400).json({ message: "Invalid verification code" });
+      return res.status(400).json({ message: "El código ingresado no es válido" });
     }
 
     await employeeModel.findOneAndUpdate(
@@ -108,10 +114,10 @@ registerEmployeeController.verifyCode = async (req, res) => {
 
     res.clearCookie("verificationTokenCookie", getClearCookieOptions());
 
-    return res.status(200).json({ message: "Account verified successfully" });
+    return res.status(200).json({ message: "Cuenta verificada correctamente" });
   } catch (error) {
     console.log("error " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

@@ -11,7 +11,11 @@ const cartSchema = new Schema({
                 type: mongoose.Types.ObjectId,
                 ref: "Products"
             },
+            // Variante elegida (talla + color): el stock se lleva por variante
+            size: {type: String},
+            color: {type: String},
             quantity: {type: Number},
+            unitPrice: {type: Number},
             subtotal: {type: Number}
         }
     ],

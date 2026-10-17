@@ -3,6 +3,23 @@ import { useMemo, useState } from "react";
 
 const ITEMS_PER_PAGE = 6;
 
+// Los gastos se guardan con valores en inglés; en la tabla se muestran en español.
+const EXPENSE_TYPE_LABELS = {
+  Services: "Servicios",
+  Payroll: "Planilla",
+  Supplies: "Insumos",
+  Transport: "Transporte",
+  Other: "Otro",
+};
+
+const PAYMENT_METHOD_LABELS = {
+  Cash: "Efectivo",
+  Transfer: "Transferencia",
+  Card: "Tarjeta",
+};
+
+const getExpenseTypeLabel = (type) => EXPENSE_TYPE_LABELS[type] ?? type ?? "Otro";
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -12,7 +29,7 @@ function formatCurrency(value) {
 
 function formatDate(value) {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString();
+  return new Date(value).toLocaleDateString("es-SV", { timeZone: "UTC" });
 }
 
 function getTopCategory(expenses) {
@@ -26,7 +43,7 @@ function getTopCategory(expenses) {
     Object.entries(totals).sort((a, b) => b[1] - a[1])[0] || [];
 
   return {
-    category: category || "-",
+    category: category ? getExpenseTypeLabel(category) : "-",
     amount: amount || 0,
   };
 }
@@ -94,7 +111,7 @@ function ExpensesTable({
 
             <div className="expenses-category-cell">
               <span className="expenses-category-badge">
-                {expense.expense_type || "Other"}
+                {getExpenseTypeLabel(expense.expense_type)}
               </span>
             </div>
 
@@ -105,7 +122,7 @@ function ExpensesTable({
               {expense.branch_id?.name || expense.branch_name || "-"}
             </div>
             <div className="expenses-amount-cell">{formatCurrency(expense.amount)}</div>
-            <div className="expenses-method-cell">{expense.payment_method || "-"}</div>
+            <div className="expenses-method-cell">{PAYMENT_METHOD_LABELS[expense.payment_method] ?? expense.payment_method ?? "-"}</div>
 
             <div className="expenses-actions-cell">
               <button

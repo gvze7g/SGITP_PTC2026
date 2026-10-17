@@ -231,6 +231,26 @@ function useProducts() {
     }
   }, []);
 
+  //Obtener la lista fija de categorías (selector del formulario de producto)
+  const getProductCategories = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/products/catalog/categories`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await response.json().catch(() => []);
+
+      if (!response.ok) {
+        return { success: false, message: "No se pudieron obtener las categorías.", data: [] };
+      }
+
+      return { success: true, data: Array.isArray(data) ? data : [] };
+    } catch (err) {
+      console.log("getProductCategories error:", err);
+      return { success: false, message: "Error de conexión con el servidor.", data: [] };
+    }
+  }, []);
 
   //Crear productos
   const createProduct = async (formData) => {
@@ -326,6 +346,7 @@ function useProducts() {
     searchProductsByName,
     getProductsByPriceRange,
     getProductsCount,
+    getProductCategories,
     createProduct,
     updateProduct,
     deleteProduct,

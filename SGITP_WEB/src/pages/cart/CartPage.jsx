@@ -1,19 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ShieldCheck, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import PublicNavbar from '../../components/home/PublicNavbar';
+import PublicFooter from '../../components/home/PublicFooter';
 import { useAuth } from '../../context/AuthContext';
 import { getMyCart, removeCartItem, updateCartItem } from '../../services/cartService';
 import { getProductImage } from '../../services/catalogService';
 import { validateCoupon } from '../../services/promotionsService';
+import {
+  RETAIL_LIMIT_MESSAGE,
+  RETAIL_MAX_UNITS_PER_PRODUCT,
+  findVariant,
+  getVariantStock,
+  isWholesaleCustomer,
+} from '../../utils/purchaseRules';
 
 const formatPrice = (value) => `$${value.toFixed(2)}`;
 const QUANTITY_DEBOUNCE_MS = 500;
 
 function CartPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading: loadingSession } = useAuth();
+  const { isAuthenticated, isLoading: loadingSession, user } = useAuth();
+  const isWholesale = isWholesaleCustomer(user);
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,7 +31,7 @@ function CartPage() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponStatus, setCouponStatus] = useState('');
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
-  // Un temporizador por producto: varios clics en +/- se envian como una sola peticion.
+  // Un temporizador por linea: varios clics en +/- se envian como una sola peticion.
   const quantityTimersRef = useRef({});
   const cartItems = useMemo(() => cart?.products || [], [cart]);
   const subtotal = Number(cart?.total || 0);
@@ -59,9 +69,48 @@ function CartPage() {
     return () => Object.values(timers).forEach(clearTimeout);
   }, []);
 
+  // Stock de la talla/color de la linea y unidades del mismo producto en
+  // otras lineas (el limite minorista cuenta todas las tallas juntas).
+  const getLineLimits = (item) => {
+    const product = item.productId || {};
+    const stock = getVariantStock(findVariant(product, item.size, item.color));
+    const unitsInOtherLines = cartItems
+      .filter((other) => other._id !== item._id && other.productId?._id === product._id)
+      .reduce((sum, other) => sum + Number(other.quantity || 0), 0);
+
+    return { stock, unitsInOtherLines };
+  };
+
+  const getQuantityError = (item, nextQuantity) => {
+    const { stock, unitsInOtherLines } = getLineLimits(item);
+
+    if (!isWholesale && unitsInOtherLines + nextQuantity > RETAIL_MAX_UNITS_PER_PRODUCT) {
+      return RETAIL_LIMIT_MESSAGE;
+    }
+
+    if (nextQuantity > stock) {
+      if (stock <= 0) return `"${item.productId?.name || 'Producto'}" esta agotado en esa talla y color.`;
+      return isWholesale
+        ? `Solo hay ${stock} unidades disponibles de "${item.productId?.name || 'Producto'}".`
+        : `No hay mas unidades disponibles de "${item.productId?.name || 'Producto'}".`;
+    }
+
+    return '';
+  };
+
   const handleUpdateQuantity = (item, nextQuantity) => {
-    const productId = item.productId?._id;
-    if (!productId || nextQuantity < 1) return;
+    const itemId = item._id;
+    if (!itemId || !Number.isInteger(nextQuantity) || nextQuantity < 1) return;
+
+    // Al bajar siempre se deja (sirve para corregir una linea que se paso
+    // del stock); al subir se revisa el limite y el stock.
+    if (nextQuantity > Number(item.quantity || 0)) {
+      const quantityError = getQuantityError(item, nextQuantity);
+      if (quantityError) {
+        toast.error(quantityError);
+        return;
+      }
+    }
 
     // Actualizacion optimista: la cantidad y los totales cambian al instante
     // y el servidor solo recibe la cantidad final cuando el usuario deja de pulsar.
@@ -70,7 +119,7 @@ function CartPage() {
 
       let totalDelta = 0;
       const products = current.products.map((cartItem) => {
-        if (cartItem.productId?._id !== productId) return cartItem;
+        if (cartItem._id !== itemId) return cartItem;
 
         const quantity = Number(cartItem.quantity || 1);
         const unitPrice = Number(cartItem.subtotal || 0) / quantity;
@@ -82,32 +131,32 @@ function CartPage() {
       return { ...current, products, total: Number(current.total || 0) + totalDelta };
     });
 
-    clearTimeout(quantityTimersRef.current[productId]);
-    quantityTimersRef.current[productId] = setTimeout(async () => {
-      delete quantityTimersRef.current[productId];
+    clearTimeout(quantityTimersRef.current[itemId]);
+    quantityTimersRef.current[itemId] = setTimeout(async () => {
+      delete quantityTimersRef.current[itemId];
 
       try {
-        const data = await updateCartItem(productId, nextQuantity);
+        const data = await updateCartItem(itemId, nextQuantity);
         setCart(data);
       } catch (requestError) {
-        setError(requestError.message);
+        toast.error(requestError.message);
         loadCart();
       }
     }, QUANTITY_DEBOUNCE_MS);
   };
 
   const handleRemove = async (item) => {
-    const productId = item.productId?._id;
-    if (!productId) return;
+    const itemId = item._id;
+    if (!itemId) return;
 
-    clearTimeout(quantityTimersRef.current[productId]);
-    delete quantityTimersRef.current[productId];
+    clearTimeout(quantityTimersRef.current[itemId]);
+    delete quantityTimersRef.current[itemId];
 
     try {
-      const data = await removeCartItem(productId);
+      const data = await removeCartItem(itemId);
       setCart(data);
     } catch (requestError) {
-      setError(requestError.message);
+      toast.error(requestError.message);
     }
   };
 
@@ -137,6 +186,21 @@ function CartPage() {
   };
 
   const handleProceedToCheckout = () => {
+    if (cartItems.length === 0) {
+      toast.error('Tu carrito esta vacio.');
+      return;
+    }
+
+    // Si el stock bajo despues de agregar (otra persona compro), se avisa
+    // aqui en vez de dejar llegar al pago con una cantidad imposible.
+    for (const item of cartItems) {
+      const quantityError = getQuantityError(item, Number(item.quantity || 0));
+      if (quantityError) {
+        toast.error(quantityError);
+        return;
+      }
+    }
+
     navigate('/checkout', { state: { couponCode: appliedCoupon?.coupon_code || '' } });
   };
 
@@ -189,17 +253,18 @@ function CartPage() {
 
             {cartItems.map((item) => {
               const product = item.productId || {};
-              const variant = product.variants?.[0] || {};
+              const variant = findVariant(product, item.size, item.color) || {};
               const quantity = Number(item.quantity || 1);
+              const { stock } = getLineLimits(item);
 
               return (
-              <article key={product._id} className="cart-item">
+              <article key={item._id} className="cart-item">
                 <img src={getProductImage(product, 620)} alt={product.name} />
 
                 <div className="cart-item-copy">
                   <h2>{product.name || 'Producto'}</h2>
                   <p className="cart-item-color">
-                    Color: {variant.color || 'No definido'}
+                    Color: {item.color || 'No definido'}
                     {variant.colorHex ? (
                       <span
                         className="cart-item-color-swatch"
@@ -207,13 +272,22 @@ function CartPage() {
                       />
                     ) : null}
                   </p>
-                  <p>Talla: {variant.size || 'No definida'}</p>
+                  <p>Talla: {item.size || 'No definida'}</p>
+                  {isWholesale ? <p>Stock disponible: {stock}</p> : null}
+                  {quantity > stock ? (
+                    <p className="cart-item-warning">
+                      {stock > 0
+                        ? 'No hay suficientes unidades, reduce la cantidad.'
+                        : 'Agotado: elimina este producto para continuar.'}
+                    </p>
+                  ) : null}
 
                   <div className="quantity-control" aria-label={`Cantidad de ${product.name}`}>
                     <button
                       type="button"
                       aria-label="Reducir cantidad"
                       onClick={() => handleUpdateQuantity(item, quantity - 1)}
+                      disabled={quantity <= 1}
                     >
                       -
                     </button>
@@ -230,6 +304,7 @@ function CartPage() {
 
                 <div className="cart-item-side">
                   <span>{formatPrice(Number(item.subtotal || 0))}</span>
+                  {isWholesale ? <small>Precio mayorista</small> : null}
                   <button type="button" onClick={() => handleRemove(item)}>Eliminar</button>
                 </div>
               </article>
@@ -306,6 +381,8 @@ function CartPage() {
         </>
         )}
       </main>
+
+      <PublicFooter />
     </div>
   );
 }

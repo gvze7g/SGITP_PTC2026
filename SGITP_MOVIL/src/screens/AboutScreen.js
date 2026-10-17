@@ -18,7 +18,7 @@ const PILLARS = [
   },
   {
     icon: Palette,
-    title: 'Quiet Luxury',
+    title: 'Elegancia Serena',
     description:
       'Nuestra paleta de tonos neutros y siluetas limpias se integra perfectamente en el diseño de un hogar moderno y sofisticado.',
   },

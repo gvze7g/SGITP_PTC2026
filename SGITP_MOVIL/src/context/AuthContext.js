@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { request } from '../services/apiClient';
+import { request, setUnauthorizedHandler } from '../services/apiClient';
 
 // Nombre de la "casilla" donde guardamos el usuario en el almacenamiento
 // seguro del teléfono, para no perder la sesión al cerrar la app.
@@ -20,6 +21,23 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null); // datos del usuario logueado (o null si no hay sesión)
   const [isBootstrapping, setIsBootstrapping] = useState(true); // true mientras revisamos si ya había sesión guardada
   const [isSubmitting, setIsSubmitting] = useState(false); // true mientras se está iniciando sesión o registrando
+  const queryClient = useQueryClient();
+
+  // Borra la sesión local y todo lo que React Query guardó (carrito,
+  // favoritos, pedidos...), para que el siguiente usuario no vea datos del
+  // anterior. SessionGuard se encarga de mandar al Login.
+  const clearSession = useCallback(async () => {
+    setUser(null);
+    queryClient.clear();
+    await SecureStore.deleteItemAsync(USER_STORAGE_KEY);
+  }, [queryClient]);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      clearSession();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [clearSession]);
 
   // Al abrir la app: revisa si había un usuario guardado y le pregunta al
   // backend si esa sesión todavía es válida.
@@ -29,7 +47,9 @@ export function AuthProvider({ children }) {
         const cached = await SecureStore.getItemAsync(USER_STORAGE_KEY);
         if (cached) setUser(JSON.parse(cached));
 
-        const { user: freshUser } = await request('/auth/me', { method: 'GET' });
+        const { user: freshUser, userType } = await request('/auth/me', { method: 'GET' });
+        // La app es solo para clientes: una cookie de empleado no cuenta.
+        if (userType !== 'Customer') throw new Error('Not a customer session');
         setUser(freshUser);
         await SecureStore.setItemAsync(USER_STORAGE_KEY, JSON.stringify(freshUser));
       } catch {
@@ -75,10 +95,9 @@ export function AuthProvider({ children }) {
     try {
       await request('/logout', { method: 'POST' });
     } finally {
-      setUser(null);
-      await SecureStore.deleteItemAsync(USER_STORAGE_KEY);
+      await clearSession();
     }
-  }, []);
+  }, [clearSession]);
 
   // Actualiza nombre/teléfono del cliente logueado (pantalla "Mis Datos" /
   // "Editar Perfil") y refresca la sesión guardada con los datos nuevos.

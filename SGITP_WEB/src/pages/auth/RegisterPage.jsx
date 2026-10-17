@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AuthButton from '../../components/auth/AuthButton';
 import AuthCard from '../../components/auth/AuthCard';
@@ -14,11 +14,13 @@ import { lettersOnly } from '../../utils/inputFilters';
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { refreshUser } = useAuth();
 
+  // El bloque "Únete a la familia Peques" del Inicio manda el correo ya escrito.
   const [formData, setFormData] = useState({
     fullName: '',
-    email: '',
+    email: String(location.state?.email ?? '').slice(0, 100),
     password: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,10 +124,10 @@ function RegisterPage() {
             />
 
             <AuthInput
-              label="Email"
+              label="Correo electrónico"
               name="email"
               type="email"
-              placeholder="email@example.com"
+              placeholder="correo@ejemplo.com"
               value={formData.email}
               onChange={handleChange}
               autoComplete="email"

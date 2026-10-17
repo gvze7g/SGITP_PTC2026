@@ -1,3 +1,4 @@
+import { toDateString, toStoredDate, validatePastDate } from "../utils/dates.js";
 import spentModel from "../Model/spent.js";
 
 const spentController = {};
@@ -9,7 +10,7 @@ spentController.getSpent = async (req, res) => {
     return res.status(200).json(spent);
   } catch (error) {
     console.log("getSpent error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -19,13 +20,13 @@ spentController.getSpentById = async (req, res) => {
     const spent = await spentModel.findById(req.params.id);
 
     if (!spent) {
-      return res.status(404).json({ message: "Spent not found" });
+      return res.status(404).json({ message: "Gasto no encontrado" });
     }
 
     return res.status(200).json(spent);
   } catch (error) {
     console.log("getSpentById error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -41,10 +42,21 @@ spentController.insertSpent = async (req, res) => {
       branch_id,
     } = req.body;
 
+    // Un gasto registra algo que ya pasó: la fecha es obligatoria y no
+    // puede ser futura.
+    const dateError = validatePastDate(expense_date, {
+      label: "fecha del gasto",
+      required: true,
+      minDate: "2000-01-01",
+    });
+    if (dateError) {
+      return res.status(400).json({ message: dateError });
+    }
+
     const newSpent = new spentModel({
       descriptions,
       amount,
-      expense_date,
+      expense_date: toStoredDate(toDateString(expense_date)),
       expense_type,
       payment_method,
       branch_id,
@@ -53,12 +65,12 @@ spentController.insertSpent = async (req, res) => {
     await newSpent.save();
 
     return res.status(201).json({
-      message: "Spent saved successfully",
+      message: "Gasto guardado correctamente",
       spent: newSpent,
     });
   } catch (error) {
     console.log("insertSpent error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -74,12 +86,23 @@ spentController.updateSpent = async (req, res) => {
       branch_id,
     } = req.body;
 
+    // Un gasto registra algo que ya pasó: la fecha es obligatoria y no
+    // puede ser futura.
+    const dateError = validatePastDate(expense_date, {
+      label: "fecha del gasto",
+      required: true,
+      minDate: "2000-01-01",
+    });
+    if (dateError) {
+      return res.status(400).json({ message: dateError });
+    }
+
     const updatedSpent = await spentModel.findByIdAndUpdate(
       req.params.id,
       {
         descriptions,
         amount,
-        expense_date,
+        expense_date: toStoredDate(toDateString(expense_date)),
         expense_type,
         payment_method,
         branch_id,
@@ -88,16 +111,16 @@ spentController.updateSpent = async (req, res) => {
     );
 
     if (!updatedSpent) {
-      return res.status(404).json({ message: "Spent not found" });
+      return res.status(404).json({ message: "Gasto no encontrado" });
     }
 
     return res.status(200).json({
-      message: "Spent updated successfully",
+      message: "Gasto actualizado correctamente",
       spent: updatedSpent,
     });
   } catch (error) {
     console.log("updateSpent error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -107,13 +130,13 @@ spentController.deleteSpent = async (req, res) => {
     const deletedSpent = await spentModel.findByIdAndDelete(req.params.id);
 
     if (!deletedSpent) {
-      return res.status(404).json({ message: "Spent not found" });
+      return res.status(404).json({ message: "Gasto no encontrado" });
     }
 
-    return res.status(200).json({ message: "Spent deleted successfully" });
+    return res.status(200).json({ message: "Gasto eliminado correctamente" });
   } catch (error) {
     console.log("deleteSpent error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

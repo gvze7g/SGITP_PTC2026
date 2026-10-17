@@ -1,78 +1,65 @@
-import { useEffect, useState } from 'react';
-import { getPublicBranches } from '../../services/catalogService';
+import { ArrowUpRight } from 'lucide-react';
 
-function StoresSection() {
-  const [stores, setStores] = useState([]);
-  const [status, setStatus] = useState('');
+import { SectionHeading } from './HomeSections';
 
-  useEffect(() => {
-    let isMounted = true;
+// Mapa embebido de Google Maps a partir de la dirección de la sucursal (no
+// necesita llave de API). Si la sucursal no tiene dirección se busca por nombre.
+function getMapQuery(store) {
+  return encodeURIComponent(`${store.address || store.name}, El Salvador`);
+}
 
-    getPublicBranches()
-      .then((data) => {
-        if (isMounted) setStores(Array.isArray(data) ? data : []);
-      })
-      .catch((error) => {
-        if (isMounted) setStatus(error.message);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
+// "Nuestras tiendas" del Inicio: sucursales activas de la API con su mapa.
+function StoresSection({ stores, error }) {
   return (
-    <section className="public-section stores-section" id="tiendas">
-      <h2 className="public-section-title">Tiendas físicas</h2>
+    <section className="home-section" id="tiendas">
+      <SectionHeading eyebrow="Visítanos" title="Nuestras Tiendas" centered />
 
-      {status ? <p className="catalog-status-text">{status}</p> : null}
-      {!status && stores.length === 0 ? (
-        <p className="catalog-status-text">No hay tiendas disponibles.</p>
+      {error ? <p className="catalog-status-text">{error}</p> : null}
+      {!error && stores.length === 0 ? (
+        <p className="catalog-status-text">Pronto publicaremos nuestras tiendas.</p>
       ) : null}
 
-      <div className="stores-grid">
+      <div className="home-stores-grid">
         {stores.map((store, index) => {
-          const encodedAddress = encodeURIComponent(store.address || store.name);
-          const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+          const query = getMapQuery(store);
 
           return (
-            <article key={store._id || store.name} className="store-card">
-              <div className="store-title-row">
+            <article key={store._id || store.name} className="home-store-card">
+              <div className="home-store-map">
+                <iframe
+                  title={`Mapa de ${store.name}`}
+                  src={`https://maps.google.com/maps?q=${query}&z=15&output=embed`}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+
+              <div className="home-store-title">
                 <h3>{store.name}</h3>
                 <span>{String(index + 1).padStart(2, '0')}</span>
               </div>
 
-              <div className="store-meta-grid">
+              <div className="home-store-meta">
                 <div>
-                  <h4>Dirección</h4>
+                  <span className="shop-eyebrow shop-eyebrow-muted">Dirección</span>
                   <p>{store.address || 'Dirección por confirmar'}</p>
                   <p>El Salvador</p>
                 </div>
-
                 <div>
-                  <h4>Contacto</h4>
-                  <p>
-                    <span>Teléfono</span>
-                    <strong>{store.phone || 'Por confirmar'}</strong>
-                  </p>
-                  <p>
-                    <span>Apertura</span>
-                    <strong>
-                      {store.opening_date
-                        ? new Date(store.opening_date).toLocaleDateString('es-SV')
-                        : 'Por confirmar'}
-                    </strong>
-                  </p>
+                  <span className="shop-eyebrow shop-eyebrow-muted">Contacto</span>
+                  <p>{store.phone || 'Teléfono por confirmar'}</p>
+                  {store.email ? <p>{store.email}</p> : null}
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="store-map-link"
-                onClick={() => window.open(mapUrl, '_blank', 'noopener,noreferrer')}
+              <a
+                className="shop-link"
+                href={`https://www.google.com/maps/search/?api=1&query=${query}`}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                Ver en mapa <span>↗</span>
-              </button>
+                Ver en mapa <ArrowUpRight size={12} strokeWidth={1.8} />
+              </a>
             </article>
           );
         })}

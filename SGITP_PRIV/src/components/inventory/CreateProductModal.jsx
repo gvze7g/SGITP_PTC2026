@@ -4,6 +4,7 @@ import { ImagePlus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
 import DateField from "../ui/DateField";
+import { fromStoredDate, getValidityDatesError, toDateInputValue, today } from "../../utils/dateRules";
 
 const OFFER_ACTIVE_OPTIONS = [
   { value: "yes", label: "Sí" },
@@ -27,6 +28,10 @@ const EMPTY_VARIANT = {
   stock: "",
 };
 
+const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_PRICE = 100000;
+const MAX_STOCK = 100000;
+
 const EMPTY_FORM = {
   name: "",
   category: "",
@@ -42,12 +47,30 @@ function CreateProductModal({
   onClose,
   onSubmit,
   productData = null,
+  categoryGroups = [],
   loading = false,
 }) {
   const [formData, setFormData] = useState(EMPTY_FORM);
+  // Categoría guardada que ya no está en la lista (productos creados cuando
+  // se escribía a mano): se avisa para que el admin elija una válida.
+  const [legacyCategory, setLegacyCategory] = useState("");
   const [imageSlots, setImageSlots] = useState([null, null, null, null]);
   const fileInputRefs = useRef([]);
   const isEditMode = useMemo(() => Boolean(productData), [productData]);
+  const allowedCategories = useMemo(
+    () => categoryGroups.flatMap((group) => group.categories),
+    [categoryGroups]
+  );
+  const categoryOptions = useMemo(
+    () =>
+      categoryGroups.flatMap((group) =>
+        group.categories.map((category) => ({
+          value: category,
+          label: group.group === "Unisex" ? `${category} (Unisex)` : category,
+        }))
+      ),
+    [categoryGroups]
+  );
 
   const preventWheelChange = (event) => {
     event.target.blur();
@@ -58,10 +81,13 @@ function CreateProductModal({
 
     if (productData) {
       const existingOffer = productData.offers?.[0];
+      const savedCategory = productData.category || "";
+      const categoryIsValid = allowedCategories.includes(savedCategory);
+      setLegacyCategory(savedCategory && !categoryIsValid ? savedCategory : "");
 
       setFormData({
         name: productData.name || "",
-        category: productData.category || "",
+        category: categoryIsValid ? savedCategory : "",
         description: productData.description || "",
         price: productData.price || "",
         cost: productData.cost || "",
@@ -81,8 +107,8 @@ function CreateProductModal({
           ? {
               active: Boolean(existingOffer.active),
               value: existingOffer.value ?? "",
-              startDate: existingOffer.startDate ? new Date(existingOffer.startDate) : null,
-              endDate: existingOffer.endDate ? new Date(existingOffer.endDate) : null,
+              startDate: fromStoredDate(existingOffer.startDate),
+              endDate: fromStoredDate(existingOffer.endDate),
             }
           : { ...EMPTY_OFFER },
       });
@@ -100,6 +126,7 @@ function CreateProductModal({
 
       setImageSlots(slots);
     } else {
+      setLegacyCategory("");
       setFormData({
         ...EMPTY_FORM,
         variants: [{ ...EMPTY_VARIANT }],
@@ -107,7 +134,7 @@ function CreateProductModal({
       });
       setImageSlots([null, null, null, null]);
     }
-  }, [open, productData]);
+  }, [open, productData, allowedCategories]);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({
@@ -122,10 +149,11 @@ function CreateProductModal({
       return;
     }
 
-    const decimalRegex = /^\d*\.?\d*$/;
+    // Precios: hasta 2 decimales y sin pasar del máximo que acepta el backend.
+    const decimalRegex = /^\d*\.?\d{0,2}$/;
 
     if (!decimalRegex.test(value)) return;
-    if (Number(value) < 0) return;
+    if (Number(value) < 0 || Number(value) > MAX_PRICE) return;
 
     handleChange(field, value);
   };
@@ -148,7 +176,7 @@ function CreateProductModal({
 
     const decimalRegex = /^\d*\.?\d*$/;
     if (!decimalRegex.test(value)) return;
-    if (Number(value) < 0 || Number(value) > 100) return;
+    if (Number(value) < 0 || Number(value) >= 100) return;
 
     handleOfferChange("value", value);
   };
@@ -156,11 +184,13 @@ function CreateProductModal({
   const handleVariantChange = (index, field, value) => {
     // Stock: solo enteros. Talla: letras, numeros, espacios y guion (ej. 0-3M).
     // Color, diseño, bordado y tela: letras, numeros y espacios.
-    if (field === "stock" && !/^\d*$/.test(value)) return;
-    if (field === "size" && !/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 -]*$/.test(value)) return;
+    if (field === "stock" && (!/^\d*$/.test(value) || Number(value) > MAX_STOCK)) return;
+    if (field === "size" && (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 -]*$/.test(value) || value.length > 20)) {
+      return;
+    }
     if (
       ["color", "design", "embroidery", "fabric"].includes(field) &&
-      !/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]*$/.test(value)
+      (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]*$/.test(value) || value.length > 40)
     ) {
       return;
     }
@@ -238,8 +268,18 @@ function CreateProductModal({
       return false;
     }
 
+    if (formData.description.trim().length > MAX_DESCRIPTION_LENGTH) {
+      toast.error(`La descripción no puede pasar de ${MAX_DESCRIPTION_LENGTH} caracteres.`);
+      return false;
+    }
+
     if (!formData.category.trim()) {
-      toast.error("La categoría es obligatoria.");
+      toast.error("Selecciona una categoría.");
+      return false;
+    }
+
+    if (allowedCategories.length > 0 && !allowedCategories.includes(formData.category)) {
+      toast.error("Selecciona una categoría de la lista.");
       return false;
     }
 
@@ -250,6 +290,11 @@ function CreateProductModal({
 
     if (String(formData.cost).trim() === "" || !(Number(formData.cost) > 0)) {
       toast.error("El precio mayorista es obligatorio y debe ser mayor que 0.");
+      return false;
+    }
+
+    if (Number(formData.cost) > Number(formData.price)) {
+      toast.error("El precio mayorista no puede ser mayor que el precio regular.");
       return false;
     }
 
@@ -270,6 +315,16 @@ function CreateProductModal({
       return false;
     }
 
+    const variantKeys = formData.variants.map(
+      (variant) =>
+        `${String(variant.size).trim().toLowerCase()}|${String(variant.color ?? "").trim().toLowerCase()}`
+    );
+
+    if (new Set(variantKeys).size !== variantKeys.length) {
+      toast.error("Hay variantes repetidas con la misma talla y color.");
+      return false;
+    }
+
     const hasAtLeastOneImage = imageSlots.some((slot) => slot !== null);
 
     if (!hasAtLeastOneImage && !isEditMode) {
@@ -278,17 +333,26 @@ function CreateProductModal({
     }
 
     if (formData.offer.active) {
-      if (formData.offer.value === "" || Number(formData.offer.value) <= 0) {
-        toast.error("Ingresa un porcentaje de descuento válido para la oferta.");
+      if (
+        formData.offer.value === "" ||
+        Number(formData.offer.value) <= 0 ||
+        Number(formData.offer.value) >= 100
+      ) {
+        toast.error("El descuento de la oferta debe ser mayor que 0 y menor que 100.");
         return false;
       }
 
-      if (
-        formData.offer.startDate &&
-        formData.offer.endDate &&
-        formData.offer.startDate > formData.offer.endDate
-      ) {
-        toast.error("La fecha de inicio de la oferta no puede ser después de la fecha final.");
+      const existingOffer = productData?.offers?.[0];
+      const datesError = getValidityDatesError(
+        { start: formData.offer.startDate, end: formData.offer.endDate },
+        {
+          previousStart: fromStoredDate(existingOffer?.startDate),
+          previousEnd: fromStoredDate(existingOffer?.endDate),
+          label: "la oferta",
+        }
+      );
+      if (datesError) {
+        toast.error(datesError);
         return false;
       }
     }
@@ -304,8 +368,8 @@ function CreateProductModal({
     const payload = new FormData();
 
     // FormData permite enviar campos del producto junto con las imagenes nuevas.
-    payload.append("name", formData.name);
-    payload.append("description", formData.description);
+    payload.append("name", formData.name.trim());
+    payload.append("description", formData.description.trim());
     payload.append("category", formData.category);
     payload.append("price", formData.price || 0);
     payload.append("cost", formData.cost || 0);
@@ -316,8 +380,8 @@ function CreateProductModal({
         ? [
             {
               value: Number(formData.offer.value),
-              startDate: formData.offer.startDate,
-              endDate: formData.offer.endDate,
+              startDate: toDateInputValue(formData.offer.startDate),
+              endDate: toDateInputValue(formData.offer.endDate),
               active: true,
             },
           ]
@@ -557,20 +621,21 @@ function CreateProductModal({
                   </div>
 
                   <div className="modal-input-group">
-                    <span className="modal-section-label">CATEGORÍA</span>
-                    <input
-                      type="text"
-                      className="modal-line-input"
-                      placeholder="Ej: Ropa"
+                    <CustomDropdown
+                      label="CATEGORÍA"
                       value={formData.category}
-                      maxLength={40}
-                      onChange={(event) =>
-                        handleChange(
-                          "category",
-                          event.target.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü ]/g, "")
-                        )
+                      options={categoryOptions}
+                      placeholder={
+                        categoryOptions.length ? "Selecciona una categoría" : "Cargando categorías..."
                       }
+                      disabled={categoryOptions.length === 0}
+                      onChange={(value) => handleChange("category", value)}
                     />
+                    {legacyCategory && !formData.category ? (
+                      <small style={{ color: "#c0392b", marginTop: "4px" }}>
+                        La categoría guardada "{legacyCategory}" ya no existe. Elige una de la lista.
+                      </small>
+                    ) : null}
                   </div>
 
                   <div className="modal-input-group">
@@ -608,6 +673,7 @@ function CreateProductModal({
                     <textarea
                       className="modal-description-area"
                       value={formData.description}
+                      maxLength={MAX_DESCRIPTION_LENGTH}
                       onChange={(event) => handleChange("description", event.target.value)}
                       style={{ minHeight: "86px", resize: "none" }}
                     />
@@ -651,6 +717,7 @@ function CreateProductModal({
                     label="DESDE (OPCIONAL)"
                     value={formData.offer.startDate}
                     onChange={(date) => handleOfferChange("startDate", date)}
+                    minDate={today()}
                     disabled={!formData.offer.active}
                   />
 
@@ -658,7 +725,7 @@ function CreateProductModal({
                     label="HASTA (OPCIONAL)"
                     value={formData.offer.endDate}
                     onChange={(date) => handleOfferChange("endDate", date)}
-                    minDate={formData.offer.startDate}
+                    minDate={formData.offer.startDate || today()}
                     disabled={!formData.offer.active}
                   />
                 </div>

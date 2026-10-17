@@ -3,6 +3,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
 import DateField from "../ui/DateField";
+import {
+  addDays,
+  fromStoredDate,
+  getValidityDatesError,
+  toDateInputValue,
+  today,
+} from "../../utils/dateRules";
 
 const PROMOTION_STATUS_OPTIONS = [
   { value: true, label: "Activa" },
@@ -40,8 +47,8 @@ function PromotionFormModal({
           promotionData.discount_percentage !== null
             ? String(promotionData.discount_percentage)
             : "",
-        startDate: promotionData.start_date ? new Date(promotionData.start_date) : null,
-        endDate: promotionData.end_date ? new Date(promotionData.end_date) : null,
+        startDate: fromStoredDate(promotionData.start_date),
+        endDate: fromStoredDate(promotionData.end_date),
         isActive:
           typeof promotionData.isActive === "boolean" ? promotionData.isActive : true,
       });
@@ -99,6 +106,21 @@ function PromotionFormModal({
       return false;
     }
 
+    // Inicio y final desde hoy en adelante (al editar, una fecha que no se
+    // cambio se respeta aunque ya haya pasado).
+    const datesError = getValidityDatesError(
+      { start: formData.startDate, end: formData.endDate },
+      {
+        previousStart: fromStoredDate(promotionData?.start_date),
+        previousEnd: fromStoredDate(promotionData?.end_date),
+        label: "el cupon",
+      }
+    );
+    if (datesError) {
+      toast.error(datesError);
+      return false;
+    }
+
     if (formData.endDate <= formData.startDate) {
       toast.error("La fecha final debe ser posterior a la fecha de inicio.");
       return false;
@@ -106,8 +128,8 @@ function PromotionFormModal({
 
     const discount = Number(formData.discountPercentage || 0);
 
-    if (discount < 0 || discount > 100) {
-      toast.error("El descuento debe estar entre 0 y 100.");
+    if (!(discount > 0) || discount >= 100) {
+      toast.error("El descuento debe ser mayor que 0 y menor que 100.");
       return false;
     }
 
@@ -121,12 +143,8 @@ function PromotionFormModal({
       discount_percentage: formData.discountPercentage
         ? Number(formData.discountPercentage)
         : 0,
-      start_date: formData.startDate
-        ? formData.startDate.toISOString().split("T")[0]
-        : null,
-      end_date: formData.endDate
-        ? formData.endDate.toISOString().split("T")[0]
-        : null,
+      start_date: toDateInputValue(formData.startDate),
+      end_date: toDateInputValue(formData.endDate),
       isActive: formData.isActive,
     };
   };
@@ -204,6 +222,7 @@ function PromotionFormModal({
                     value={formData.startDate}
                     onChange={(date) => handleChange("startDate", date)}
                     placeholder="Seleccionar fecha"
+                    minDate={today()}
                   />
 
                   <DateField
@@ -211,7 +230,7 @@ function PromotionFormModal({
                     value={formData.endDate}
                     onChange={(date) => handleChange("endDate", date)}
                     placeholder="Seleccionar fecha"
-                    minDate={formData.startDate || undefined}
+                    minDate={formData.startDate ? addDays(formData.startDate, 1) : today()}
                   />
                 </div>
 

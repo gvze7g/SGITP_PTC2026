@@ -1,5 +1,6 @@
 import employeeModel from "../Model/employee.js";
 import bcryptjs from "bcryptjs";
+import { toDateString, toStoredDate, validateEmployeeDates } from "../utils/dates.js";
 
 // Aquí guardamos todas las funciones relacionadas con empleados
 const employeeController = {};
@@ -21,7 +22,7 @@ employeeController.getEmployees = async (req, res) => {
   } catch (error) {
     console.log("getEmployees error:", error);
     // Si algo falla, responde error interno
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -38,14 +39,14 @@ employeeController.getEmployeeById = async (req, res) => {
 
     // Si no existe, avisa
     if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
+      return res.status(404).json({ message: "No encontramos un empleado con ese correo" });
     }
 
     // Si existe, lo devuelve
     return res.status(200).json(employee);
   } catch (error) {
     console.log("getEmployeeById error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -72,6 +73,13 @@ employeeController.insertEmployee = async (req, res) => {
       position,
       base_salary,
     } = req.body;
+
+    // Nacimiento: mayor de 18 años. Contratación: puede ser antigua, pero no
+    // futura ni de cuando todavía era menor de edad.
+    const datesError = validateEmployeeDates({ birth_date, hire_date });
+    if (datesError) {
+      return res.status(400).json({ message: datesError });
+    }
 
     // Revisa si ya existe alguien con ese correo
     const existingEmployee = await employeeModel.findOne({ email });
@@ -107,8 +115,8 @@ employeeController.insertEmployee = async (req, res) => {
       branch_id: branch_id || null,
       addresses: Array.isArray(addresses) ? addresses : [],
       phone_numbers: Array.isArray(phone_numbers) ? phone_numbers : [],
-      birth_date: birth_date || null,
-      hire_date: hire_date || null,
+      birth_date: toStoredDate(toDateString(birth_date)),
+      hire_date: toStoredDate(toDateString(hire_date)),
       isVerified: isVerified ?? true,
       loginAttempts: loginAttempts ?? 0,
       timeOut: timeOut ?? null,
@@ -120,13 +128,13 @@ employeeController.insertEmployee = async (req, res) => {
     await newEmployee.save();
 
     return res.status(201).json({
-      message: "Employee saved successfully",
+      message: "Empleado guardado correctamente",
       employee: newEmployee,
     });
   } catch (error) {
     console.log("insertEmployee error:", error);
     return res.status(500).json({
-      message: "Internal server error",
+      message: "Ocurrió un error en el servidor, intenta de nuevo",
     });
   }
 };
@@ -162,19 +170,26 @@ employeeController.updateEmployee = async (req, res) => {
 
     // Validación simple del nombre
     if (!full_name || full_name.length < 3 || full_name.length > 50) {
-      return res.status(400).json({ message: "Invalid name" });
+      return res.status(400).json({ message: "El nombre debe tener entre 3 y 50 caracteres" });
     }
 
     // Validación simple del rol
     if (!ALLOWED_EMPLOYEE_ROLES.includes(role)) {
-      return res.status(400).json({ message: "Invalid employee role" });
+      return res.status(400).json({ message: "Rol de empleado inválido" });
+    }
+
+    // Nacimiento: mayor de 18 años. Contratación: puede ser antigua, pero no
+    // futura ni de cuando todavía era menor de edad.
+    const datesError = validateEmployeeDates({ birth_date, hire_date });
+    if (datesError) {
+      return res.status(400).json({ message: datesError });
     }
 
     // Busca al empleado que se quiere editar
     const employeeToUpdate = await employeeModel.findById(req.params.id);
 
     if (!employeeToUpdate) {
-      return res.status(404).json({ message: "Employee not found" });
+      return res.status(404).json({ message: "No encontramos un empleado con ese correo" });
     }
 
     // Mantiene la contraseña actual, a menos que llegue una nueva
@@ -196,8 +211,8 @@ employeeController.updateEmployee = async (req, res) => {
         password: updatedPassword,
         addresses,
         phone_numbers,
-        birth_date,
-        hire_date,
+        birth_date: toStoredDate(toDateString(birth_date)),
+        hire_date: toStoredDate(toDateString(hire_date)),
         role,
         isVerified,
         loginAttempts,
@@ -209,12 +224,12 @@ employeeController.updateEmployee = async (req, res) => {
     ).select("-password");
 
     return res.status(200).json({
-      message: "Employee updated successfully",
+      message: "Empleado actualizado correctamente",
       employee: updatedEmployee,
     });
   } catch (error) {
     console.log("updateEmployee error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -237,7 +252,7 @@ employeeController.deleteEmployee = async (req, res) => {
 
     if (!employeeFound) {
       return res.status(404).json({
-        message: "Employee not found",
+        message: "No encontramos un empleado con ese correo",
       });
     }
 
@@ -267,12 +282,12 @@ employeeController.deleteEmployee = async (req, res) => {
     await employeeModel.findByIdAndDelete(id);
 
     return res.status(200).json({
-      message: "Employee deleted successfully",
+      message: "Empleado eliminado correctamente",
     });
   } catch (error) {
     console.log("error: " + error);
     return res.status(500).json({
-      message: "Internal server error",
+      message: "Ocurrió un error en el servidor, intenta de nuevo",
     });
   }
 };

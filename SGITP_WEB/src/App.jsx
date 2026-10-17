@@ -13,7 +13,6 @@ import ProductDetailPage from './pages/products/ProductDetailPage';
 import CollectionPage from './pages/collections/CollectionPage';
 import CartPage from './pages/cart/CartPage';
 import CheckoutPage from './pages/checkout/CheckoutPage';
-import ClothesPage from './pages/clothes/ClothesPage';
 import AboutPage from './pages/about/AboutPage';
 import StoresPage from './pages/stores/StoresPage';
 import ProfilePage from './pages/profile/ProfilePage';
@@ -35,9 +34,8 @@ const PAGE_TITLES = {
   '/recovery-code': 'Código de recuperación',
   '/reset-password': 'Restablecer contraseña',
   '/home': 'Inicio',
-  '/collections': 'Categorias',
-  '/categories': 'Categorias',
-  '/clothes': 'Ropa',
+  '/collections': 'Colecciones',
+  '/categories': 'Colecciones',
   '/about': 'Acerca de nosotros',
   '/stores': 'Tiendas',
   '/profile': 'Perfil',
@@ -73,7 +71,6 @@ function AppRoutes() {
       <Route path="/home" element={<HomePage />} />
       <Route path="/collections" element={<CollectionPage />} />
       <Route path="/categories" element={<CollectionPage />} />
-      <Route path="/clothes" element={<ClothesPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/stores" element={<StoresPage />} />
       <Route path="/profile" element={<ProfilePage />} />

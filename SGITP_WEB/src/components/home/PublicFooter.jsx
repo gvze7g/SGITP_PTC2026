@@ -1,53 +1,33 @@
 import { useNavigate } from 'react-router-dom';
 
+const FOOTER_LINKS = [
+  { label: 'Colecciones', path: '/categories' },
+  { label: 'Tiendas', path: '/stores' },
+  { label: 'Nosotros', path: '/about' },
+  { label: 'Contacto', path: '/concierge' },
+  { label: 'Envíos y devoluciones', path: '/returns' },
+  { label: 'Privacidad', path: '/privacy' },
+  { label: 'Términos', path: '/terms' },
+];
+
 function PublicFooter() {
   const navigate = useNavigate();
 
   return (
-    <footer className="public-footer" id="nosotros">
-      <div>
-        <h2>PEQUES</h2>
-        <p>Artesania y diseño atemporal para el hogar moderno.</p>
-      </div>
+    <footer className="store-footer">
+      <button type="button" className="store-footer-logo" onClick={() => navigate('/home')}>
+        PEQUES
+      </button>
 
-      <div>
-        <h3>El estudio</h3>
-        <button type="button" onClick={() => navigate('/about')}>
-          Nuestra historia
-        </button>
-        <button type="button" onClick={() => navigate('/collections')}>
-          Colecciones
-        </button>
-        <button type="button" onClick={() => navigate('/stores')}>
-          Tiendas
-        </button>
-      </div>
+      <nav className="store-footer-links" aria-label="Enlaces del sitio">
+        {FOOTER_LINKS.map((link) => (
+          <button key={link.path} type="button" onClick={() => navigate(link.path)}>
+            {link.label}
+          </button>
+        ))}
+      </nav>
 
-      <div>
-        <h3>Soporte</h3>
-        <button type="button" onClick={() => navigate('/returns')}>
-          Envios y devoluciones
-        </button>
-        <button type="button" onClick={() => navigate('/concierge')}>
-          Contacto
-        </button>
-        <button type="button" onClick={() => navigate('/privacy')}>
-          Privacidad
-        </button>
-        <button type="button" onClick={() => navigate('/terms')}>
-          Terminos
-        </button>
-      </div>
-
-      <div>
-        <h3>Tu cuenta</h3>
-        <button type="button" onClick={() => navigate('/profile')}>
-          Mi perfil
-        </button>
-        <button type="button" onClick={() => navigate('/cart')}>
-          Carrito
-        </button>
-      </div>
+      <p>© {new Date().getFullYear()} Peques · El Salvador</p>
     </footer>
   );
 }

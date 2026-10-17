@@ -4,7 +4,11 @@ const salesController = {};
 //importo la colección que voy a ocupar
 import salesModel from "../Model/sales.js";
 import cartModel from "../Model/shopping_cart.js";
-import { discountVariantsStock } from "../utils/inventory.js";
+import { reserveStock } from "../utils/inventory.js";
+import { toCatalogProduct } from "../utils/pricing.js";
+import { isPositiveInteger, isValidObjectId } from "../utils/validators.js";
+
+const PRICE_TYPES = ["Retail", "Wholesale"];
 
 //SELECT
 salesController.getSales = async (req, res) => {
@@ -26,7 +30,7 @@ salesController.getSales = async (req, res) => {
     return res.status(200).json(sales);
   } catch (error) {
     console.log("Error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -39,7 +43,8 @@ const CONFIRMED_PAYMENT_STATUS = /^(paid|pagad[oa])$/i;
 
 salesController.getBestSellers = async (req, res) => {
   try {
-    const limit = Math.min(Number(req.query.limit || 5), 10);
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 10) : 5;
 
     const products = await salesModel.aggregate([
       { $match: { payment_status: CONFIRMED_PAYMENT_STATUS } },
@@ -82,10 +87,13 @@ salesController.getBestSellers = async (req, res) => {
       },
     ]);
 
-    return res.status(200).json(products);
+    // Mismo formato que el catálogo: sin "cost" salvo para el mayorista.
+    return res
+      .status(200)
+      .json(products.map((product) => toCatalogProduct(product, req.customerType)));
   } catch (error) {
     console.log("Error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -103,7 +111,7 @@ salesController.getMySales = async (req, res) => {
     return res.status(200).json(sales);
   } catch (error) {
     console.log("getMySales error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -115,6 +123,46 @@ salesController.insertSales = async (req, res) => {
 
     if (!employee_id && req.user?.userType === "Employee") {
       employee_id = req.user.id;
+    }
+
+    if (!Array.isArray(item_details) || item_details.length === 0) {
+      return res.status(400).json({ message: "Agrega al menos un producto a la venta" });
+    }
+
+    for (const item of item_details) {
+      if (!isValidObjectId(item?.product_id)) {
+        return res.status(400).json({ message: "Hay un producto inválido en la venta" });
+      }
+      if (!isPositiveInteger(item?.quantity)) {
+        return res.status(400).json({ message: "Cada producto debe tener una cantidad entera mayor que 0" });
+      }
+      if (!(Number(item?.unit_price) >= 0)) {
+        return res.status(400).json({ message: "Cada producto debe tener un precio válido" });
+      }
+    }
+
+    if (applied_price_type && !PRICE_TYPES.includes(applied_price_type)) {
+      return res.status(400).json({ message: "Tipo de precio inválido" });
+    }
+
+    if (shipping_phone && String(shipping_phone).length > 20) {
+      return res.status(400).json({ message: "El teléfono no puede pasar de 20 caracteres" });
+    }
+
+    if (shipping_address && String(shipping_address).length > 200) {
+      return res.status(400).json({ message: "La dirección no puede pasar de 200 caracteres" });
+    }
+
+    if (shipping_cost !== undefined && !(Number(shipping_cost) >= 0)) {
+      return res.status(400).json({ message: "El costo de envío debe ser un número positivo" });
+    }
+
+    // El POS ya bloquea vender más de lo que hay, pero se vuelve a revisar
+    // aquí: entre que el cajero armó la orden y confirmó, otra venta (web o
+    // app) pudo llevarse esas mismas unidades.
+    const stock = await reserveStock(item_details);
+    if (!stock.ok) {
+      return res.status(400).json({ message: stock.message });
     }
 
     //Guardo en la base de datos
@@ -132,13 +180,18 @@ salesController.insertSales = async (req, res) => {
       shipping_cost,
       item_details,
     });
-    await newSales.save();
-    await discountVariantsStock(item_details);
 
-    return res.status(201).json({ message: "Sales saved", sale: newSales });
+    try {
+      await newSales.save();
+    } catch (saveError) {
+      await stock.restore();
+      throw saveError;
+    }
+
+    return res.status(201).json({ message: "Venta registrada", sale: newSales });
   } catch (error) {
     console.log("Error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -149,13 +202,13 @@ salesController.deleteSales = async (req, res) => {
 
     //Validación por si no fue borrada la marca
     if (!deleteSales) {
-      return res.status(404).json({ message: "sales not found" });
+      return res.status(404).json({ message: "Venta no encontrada" });
     }
 
-    return res.status(200).json({ message: "sales deleted" });
+    return res.status(200).json({ message: "Venta eliminada" });
   } catch (error) {
     console.log("Error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -189,13 +242,13 @@ salesController.updateSales = async (req, res) => {
 
     //si no se actualiza
     if (!updatedSales) {
-      return res.status(404).json({ message: "sales not found" });
+      return res.status(404).json({ message: "Venta no encontrada" });
     }
 
-    return res.status(200).json({ message: "sales updated", sale: updatedSales });
+    return res.status(200).json({ message: "Venta actualizada", sale: updatedSales });
   } catch (error) {
     console.log("Error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

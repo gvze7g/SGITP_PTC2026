@@ -36,3 +36,13 @@ export function isValidCardExpiry(month, year) {
 
   return yearNumber > currentYear || (yearNumber === currentYear && monthNumber >= currentMonth);
 }
+
+export function isValidObjectId(value) {
+  return /^[a-f\d]{24}$/i.test(String(value ?? ""));
+}
+
+// Cantidades de carrito/venta: enteros positivos, sin decimales ni texto.
+export function isPositiveInteger(value) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0;
+}

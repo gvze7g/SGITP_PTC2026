@@ -2,18 +2,25 @@
 
 import express from "express";
 import SalesController from "../Controller/salesController.js";
-import { validateAuthCookie } from "../Middlewares/authMiddleware.js";
+import {
+  attachCustomerType,
+  validateAuthCookie,
+  validateEmployeeRole,
+} from "../Middlewares/authMiddleware.js";
 
 const router = express.Router();
 
+// Ventas e historial: solo administradores del panel.
+const adminOnly = [validateAuthCookie(["Employee"]), validateEmployeeRole("Administrator")];
+
 router
   .route("/")
-  .get(validateAuthCookie(["Employee"]), SalesController.getSales)
-  .post(validateAuthCookie(["Employee"]), SalesController.insertSales);
+  .get(...adminOnly, SalesController.getSales)
+  .post(...adminOnly, SalesController.insertSales);
 
 router
   .route("/best-sellers")
-  .get(SalesController.getBestSellers);
+  .get(attachCustomerType, SalesController.getBestSellers);
 
 router
   .route("/mine")
@@ -21,7 +28,7 @@ router
 
 router
     .route("/:id")
-    .put(validateAuthCookie(["Employee"]), SalesController.updateSales)
-    .delete(validateAuthCookie(["Employee"]), SalesController.deleteSales);
+    .put(...adminOnly, SalesController.updateSales)
+    .delete(...adminOnly, SalesController.deleteSales);
   
   export default router;

@@ -5,7 +5,7 @@ import { Heart } from 'lucide-react-native';
 
 import { useTheme } from '../context/ThemeContext';
 import { useFavorites } from '../context/FavoritesContext';
-import { getActiveOffer, getDiscountedPrice } from '../utils/offers';
+import { getActiveOffer, getDiscountedPrice, getWholesalePrice } from '../utils/offers';
 import { AppText } from './AppText';
 
 // Tarjeta de producto: foto + corazón de favorito + nombre + precio.
@@ -16,7 +16,8 @@ export function ProductCard({ product, onPress, style }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorite = isFavorite(product._id);
   const imageUrl = product.images?.[0]?.image;
-  const offer = getActiveOffer(product);
+  const wholesalePrice = getWholesalePrice(product);
+  const offer = wholesalePrice ? null : getActiveOffer(product);
 
   // Medimos el ancho real de la tarjeta (puede variar: en la grilla ocupa la
   // mitad de la pantalla, en las filas horizontales tiene un ancho fijo) y
@@ -74,7 +75,7 @@ export function ProductCard({ product, onPress, style }) {
         </View>
       ) : (
         <AppText variant="muted" style={styles.price}>
-          ${Number(product.price ?? 0).toFixed(2)} USD
+          ${Number(wholesalePrice ?? product.price ?? 0).toFixed(2)} USD
         </AppText>
       )}
     </Pressable>

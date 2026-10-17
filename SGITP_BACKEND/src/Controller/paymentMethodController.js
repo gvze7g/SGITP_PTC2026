@@ -16,7 +16,7 @@ paymentMethodController.getMyPaymentMethods = async (req, res) => {
     return res.status(200).json(cards);
   } catch (error) {
     console.log("getMyPaymentMethods error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -28,7 +28,7 @@ paymentMethodController.addMyPaymentMethod = async (req, res) => {
     const { brand, last4, expiry_month, expiry_year, holder_name, isPrimary = false } = req.body;
 
     if (!LAST4_PATTERN.test(last4 || "") || !CARD_BRANDS.includes(brand)) {
-      return res.status(400).json({ message: "Invalid card" });
+      return res.status(400).json({ message: "Los datos de la tarjeta no son válidos" });
     }
 
     if (!isValidCardExpiry(expiry_month, expiry_year)) {
@@ -63,10 +63,10 @@ paymentMethodController.addMyPaymentMethod = async (req, res) => {
 
     await newCard.save();
 
-    return res.status(201).json({ message: "Payment method saved", card: newCard });
+    return res.status(201).json({ message: "Tarjeta guardada", card: newCard });
   } catch (error) {
     console.log("addMyPaymentMethod error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -79,7 +79,7 @@ paymentMethodController.updateMyPaymentMethod = async (req, res) => {
     const card = await paymentMethodModel.findOne({ _id: req.params.id, customer_id });
 
     if (!card) {
-      return res.status(404).json({ message: "Payment method not found" });
+      return res.status(404).json({ message: "Tarjeta no encontrada" });
     }
 
     if (isPrimary) {
@@ -89,10 +89,10 @@ paymentMethodController.updateMyPaymentMethod = async (req, res) => {
     card.isPrimary = Boolean(isPrimary);
     await card.save();
 
-    return res.status(200).json({ message: "Payment method updated", card });
+    return res.status(200).json({ message: "Tarjeta actualizada", card });
   } catch (error) {
     console.log("updateMyPaymentMethod error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -107,7 +107,7 @@ paymentMethodController.deleteMyPaymentMethod = async (req, res) => {
     });
 
     if (!deletedCard) {
-      return res.status(404).json({ message: "Payment method not found" });
+      return res.status(404).json({ message: "Tarjeta no encontrada" });
     }
 
     if (deletedCard.isPrimary) {
@@ -118,10 +118,10 @@ paymentMethodController.deleteMyPaymentMethod = async (req, res) => {
       }
     }
 
-    return res.status(200).json({ message: "Payment method deleted" });
+    return res.status(200).json({ message: "Tarjeta eliminada" });
   } catch (error) {
     console.log("deleteMyPaymentMethod error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

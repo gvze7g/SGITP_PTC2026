@@ -60,7 +60,7 @@ export function SplashScreen({ navigation }) {
           PEQUES
         </AppText>
         <AppText variant="label" style={styles.tagline}>
-          Minimal Luxury Nursery
+          Ropa para bebés con elegancia
         </AppText>
       </Animated.View>
     </View>

@@ -56,10 +56,10 @@ function ForgotPasswordPage() {
 
           <div className="recovery-input-wrap">
             <AuthInput
-              label="Email"
+              label="Correo electrónico"
               name="email"
               type="email"
-              placeholder="email@example.com"
+              placeholder="correo@ejemplo.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"

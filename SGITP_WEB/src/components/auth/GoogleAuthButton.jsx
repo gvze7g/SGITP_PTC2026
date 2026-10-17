@@ -111,6 +111,8 @@ function GoogleAuthButton({ onSuccess, text = 'continue_with', variant = 'standa
             shape: 'rectangular',
             logo_alignment: 'left',
             width,
+            // Siempre en español, sin importar el idioma del navegador.
+            locale: 'es',
           });
         }
 

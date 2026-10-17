@@ -21,9 +21,10 @@ export async function getCurrentCustomer() {
     throw new Error(data.message ?? 'No se pudo obtener la sesion.');
   }
 
-  return ['Customer', 'Employee'].includes(data.userType)
-    ? { ...data.user, userType: data.userType }
-    : null;
+  // La tienda es solo para clientes: una sesion de empleado (del panel) no
+  // cuenta como sesion aqui, porque favoritos, direcciones, tarjetas y
+  // pedidos son rutas exclusivas de clientes.
+  return data.userType === 'Customer' ? { ...data.user, userType: data.userType } : null;
 }
 
 export async function registerCustomer(customer) {
@@ -79,37 +80,6 @@ export async function loginCustomer(credentials) {
     }
 
     throw new Error(data.message ?? 'Login failed');
-  }
-
-  return data;
-}
-
-export async function loginWebUser(credentials) {
-  try {
-    return await loginCustomer(credentials);
-  } catch (customerError) {
-    if (!customerError.message?.toLowerCase().includes('customer not found')) {
-      throw customerError;
-    }
-  }
-
-  let response;
-
-  try {
-    response = await fetch(`${API_URL}/loginEmployee`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(credentials),
-    });
-  } catch (error) {
-    throw new Error('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
-  }
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(data.message ?? 'No se pudo iniciar sesion.');
   }
 
   return data;

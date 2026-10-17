@@ -50,7 +50,7 @@ customerController.getCustomers = async (req, res) => {
     return res.status(200).json(customers);
   } catch (error) {
     console.log("error " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -74,18 +74,18 @@ customerController.insertCustomer = async (req, res) => {
     customer_type = customer_type?.trim() || "Client";
 
     if (!full_name || full_name.length < 3 || full_name.length > 50) {
-      return res.status(400).json({ message: "Invalid name" });
+      return res.status(400).json({ message: "El nombre debe tener entre 3 y 50 caracteres" });
     }
 
     if (!ALLOWED_CUSTOMER_TYPES.includes(customer_type)) {
-      return res.status(400).json({ message: "Invalid customer type" });
+      return res.status(400).json({ message: "Tipo de cliente inválido" });
     }
 
     if (email) {
       const existingCustomer = await customerModel.findOne({ email });
 
       if (existingCustomer) {
-        return res.status(400).json({ message: "email already in use" });
+        return res.status(400).json({ message: "Este correo ya está registrado" });
       }
     }
 
@@ -104,12 +104,12 @@ customerController.insertCustomer = async (req, res) => {
     await newCustomer.save();
 
     return res.status(201).json({
-      message: "Customer saved",
+      message: "Cliente guardado",
       customer: newCustomer,
     });
   } catch (error) {
     console.log("error " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -119,13 +119,13 @@ customerController.deleteCustomer = async (req, res) => {
     const deletedCustomer = await customerModel.findByIdAndDelete(req.params.id);
 
     if (!deletedCustomer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "No encontramos una cuenta con ese correo" });
     }
 
-    return res.status(200).json({ message: "Customer deleted" });
+    return res.status(200).json({ message: "Cliente eliminado" });
   } catch (error) {
     console.log("error " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -157,12 +157,12 @@ customerController.updateCustomer = async (req, res) => {
   // - mínimo 3 caracteres
   // - máximo 50 caracteres
   if (!full_name || full_name.length < 3 || full_name.length > 50) {
-  return res.status(400).json({ message: "Invalid name" });
+  return res.status(400).json({ message: "El nombre debe tener entre 3 y 50 caracteres" });
   }
 
   // Valida que el tipo de cliente esté dentro de los permitidos
     if (!ALLOWED_CUSTOMER_TYPES.includes(customer_type)) {
-    return res.status(400).json({ message: "Invalid customer type" });
+    return res.status(400).json({ message: "Tipo de cliente inválido" });
   }
 
     //Update actualiza el cliente
@@ -184,13 +184,13 @@ customerController.updateCustomer = async (req, res) => {
     );
 
     if (!updatedCustomer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "No encontramos una cuenta con ese correo" });
     }
 
-    return res.status(200).json({ message: "Customer updated" });
+    return res.status(200).json({ message: "Cliente actualizado" });
   } catch (error) {
     console.log("error " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -204,15 +204,15 @@ customerController.updateMyProfile = async (req, res) => {
     const trimmedPhone = main_phone?.trim() ?? "";
 
     if (trimmedName.length < 3 || trimmedName.length > 50) {
-      return res.status(400).json({ message: "Invalid name" });
+      return res.status(400).json({ message: "El nombre debe tener entre 3 y 50 caracteres" });
     }
 
     if (!NAME_PATTERN.test(trimmedName)) {
-      return res.status(400).json({ message: "Name can only contain letters" });
+      return res.status(400).json({ message: "El nombre solo puede tener letras" });
     }
 
     if (trimmedPhone && (!PHONE_PATTERN.test(trimmedPhone) || trimmedPhone.length > 12)) {
-      return res.status(400).json({ message: "Invalid phone number" });
+      return res.status(400).json({ message: "El teléfono debe tener entre 8 y 12 dígitos" });
     }
 
     const updatedCustomer = await customerModel
@@ -224,16 +224,16 @@ customerController.updateMyProfile = async (req, res) => {
       .select("-password");
 
     if (!updatedCustomer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "No encontramos una cuenta con ese correo" });
     }
 
     return res.status(200).json({
-      message: "Profile updated",
+      message: "Perfil actualizado",
       user: updatedCustomer,
     });
   } catch (error) {
     console.log("updateMyProfile error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -243,13 +243,13 @@ customerController.getMyAddresses = async (req, res) => {
     const customer = await customerModel.findById(req.user.id).select("addresses");
 
     if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "No encontramos una cuenta con ese correo" });
     }
 
     return res.status(200).json(customer.addresses || []);
   } catch (error) {
     console.log("getMyAddresses error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -266,7 +266,7 @@ customerController.addMyAddress = async (req, res) => {
     const customer = await customerModel.findById(req.user.id);
 
     if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "No encontramos una cuenta con ese correo" });
     }
 
     if (isPrimary) {
@@ -286,12 +286,12 @@ customerController.addMyAddress = async (req, res) => {
     await customer.save();
 
     return res.status(201).json({
-      message: "Address saved",
+      message: "Dirección guardada",
       addresses: customer.addresses,
     });
   } catch (error) {
     console.log("addMyAddress error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -303,13 +303,13 @@ customerController.updateMyAddress = async (req, res) => {
     const customer = await customerModel.findById(req.user.id);
 
     if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "No encontramos una cuenta con ese correo" });
     }
 
     const address = customer.addresses.id(req.params.addressId);
 
     if (!address) {
-      return res.status(404).json({ message: "Address not found" });
+      return res.status(404).json({ message: "Dirección no encontrada" });
     }
 
     if (addressError) {
@@ -331,12 +331,12 @@ customerController.updateMyAddress = async (req, res) => {
     await customer.save();
 
     return res.status(200).json({
-      message: "Address updated",
+      message: "Dirección actualizada",
       addresses: customer.addresses,
     });
   } catch (error) {
     console.log("updateMyAddress error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -346,13 +346,13 @@ customerController.deleteMyAddress = async (req, res) => {
     const customer = await customerModel.findById(req.user.id);
 
     if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "No encontramos una cuenta con ese correo" });
     }
 
     const address = customer.addresses.id(req.params.addressId);
 
     if (!address) {
-      return res.status(404).json({ message: "Address not found" });
+      return res.status(404).json({ message: "Dirección no encontrada" });
     }
 
     const wasPrimary = address.isPrimary;
@@ -366,12 +366,12 @@ customerController.deleteMyAddress = async (req, res) => {
     await customer.save();
 
     return res.status(200).json({
-      message: "Address deleted",
+      message: "Dirección eliminada",
       addresses: customer.addresses,
     });
   } catch (error) {
     console.log("deleteMyAddress error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

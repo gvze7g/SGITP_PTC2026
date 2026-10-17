@@ -1,20 +1,28 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import { ArrowLeft, Heart } from 'lucide-react-native';
+import { ArrowLeft, Heart, Minus, Plus } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Accordion } from '../components/Accordion';
 import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
 import { ProductCard } from '../components/ProductCard';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useToast } from '../context/ToastContext';
 import { useCart } from '../hooks/useCart';
 import { useProduct } from '../hooks/useProduct';
 import { useProducts } from '../hooks/useProducts';
-import { getActiveOffer, getDiscountedPrice } from '../utils/offers';
+import { getActiveOffer, getDiscountedPrice, getWholesalePrice } from '../utils/offers';
+import {
+  RETAIL_LIMIT_MESSAGE,
+  RETAIL_MAX_UNITS_PER_PRODUCT,
+  findVariant,
+  getVariantStock,
+  isWholesaleCustomer,
+} from '../utils/purchaseRules';
 
 // Aislado con memo() para que un tap en UNA miniatura no vuelva a renderizar
 // a las demás: si no, cada tap cambia activeImageIndex, re-renderiza toda
@@ -46,7 +54,10 @@ export function ProductDetailScreen({ route, navigation }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { showToast } = useToast();
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const isWholesale = isWholesaleCustomer(user);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   // Medimos el ancho real de la pantalla para decirle a la imagen principal
@@ -54,6 +65,16 @@ export function ProductDetailScreen({ route, navigation }) {
   const [imageWidth, setImageWidth] = useState(0);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+
+  // Al abrir un producto se preselecciona la primera variante con stock,
+  // para que "Agregar al carrito" siempre sepa qué talla/color llevar.
+  useEffect(() => {
+    const variants = product?.variants ?? [];
+    const firstAvailable = variants.find((variant) => getVariantStock(variant) > 0) ?? variants[0];
+    setSelectedColor(firstAvailable?.color || null);
+    setSelectedSize(firstAvailable?.size || null);
+    setQuantity(1);
+  }, [product?._id, product?.variants]);
 
   const handleSelectImage = useCallback((index) => setActiveImageIndex(index), []);
 
@@ -88,23 +109,90 @@ export function ProductDetailScreen({ route, navigation }) {
 
   const images = product.images ?? [];
   const favorite = isFavorite(product._id);
-  const offer = getActiveOffer(product);
+  const wholesalePrice = getWholesalePrice(product);
+  const offer = wholesalePrice ? null : getActiveOffer(product);
+  const selectedVariant = findVariant(product, selectedSize, selectedColor);
+  const selectedStock = getVariantStock(selectedVariant);
+  // Solo el mayorista ve cuántas unidades hay; el minorista solo si hay o no.
+  let stockLabel = 'Agotado';
+  if (selectedStock > 0) stockLabel = isWholesale ? `${selectedStock} unidades en stock` : 'Disponible';
+
+  function handleSelectColor(color) {
+    setSelectedColor(color);
+    setQuantity(1);
+    if (!findVariant(product, selectedSize, color)) {
+      const fallback = product.variants?.find((variant) => variant.color === color);
+      setSelectedSize(fallback?.size || null);
+    }
+  }
+
+  function handleSelectSize(size) {
+    setSelectedSize(size);
+    setQuantity(1);
+  }
+
+  // El minorista tiene un tope por producto y nadie puede pedir más de lo
+  // que hay en la talla/color elegida.
+  function getQuantityError(nextQuantity) {
+    if (!isWholesale && nextQuantity > RETAIL_MAX_UNITS_PER_PRODUCT) return RETAIL_LIMIT_MESSAGE;
+    if (nextQuantity > selectedStock) {
+      return isWholesale
+        ? `Solo hay ${selectedStock} unidades disponibles de esta talla y color`
+        : 'No hay más unidades disponibles de esta talla y color';
+    }
+    return null;
+  }
+
+  function handleChangeQuantity(nextQuantity) {
+    if (!Number.isInteger(nextQuantity) || nextQuantity < 1) return;
+    const error = getQuantityError(nextQuantity);
+    if (error) {
+      showToast(error, 'error');
+      return;
+    }
+    setQuantity(nextQuantity);
+  }
 
   // Busca si existe stock para la combinación de color y talla elegidas.
   function isSizeDisabled(size) {
     if (!selectedColor) return false;
     const variant = product.variants?.find((v) => v.color === selectedColor && v.size === size);
-    return variant ? Number(variant.stock) <= 0 : false;
+    // Una talla que no existe en el color elegido tampoco se puede escoger.
+    return variant ? getVariantStock(variant) <= 0 : true;
   }
 
   async function handleAddToCart() {
-    // El carrito del backend todavía no guarda color/talla por línea (solo
-    // productId + cantidad, ver shopping_cartController.js), así que la
-    // selección de arriba es solo para elegir stock visualmente.
+    if (!user) {
+      showToast('Inicia sesión para agregar productos al carrito', 'error');
+      return;
+    }
+    if (!selectedVariant) {
+      showToast('Selecciona una talla y un color', 'error');
+      return;
+    }
+    if (selectedStock <= 0) {
+      showToast('Esa combinación de talla y color está agotada', 'error');
+      return;
+    }
+    const error = getQuantityError(quantity);
+    if (error) {
+      showToast(error, 'error');
+      return;
+    }
+
     setIsAddingToCart(true);
     try {
-      await addItem(product._id, 1);
-      showToast('Producto agregado al carrito', 'success');
+      // El backend vuelve a validar stock y límite sumando lo que ya hay en
+      // el carrito, y responde con el mensaje exacto si no alcanza.
+      await addItem(product._id, quantity, {
+        size: selectedVariant.size,
+        color: selectedVariant.color,
+      });
+      showToast(
+        quantity === 1 ? 'Producto agregado al carrito' : `${quantity} unidades agregadas al carrito`,
+        'success'
+      );
+      setQuantity(1);
     } catch (error) {
       showToast(error.message, 'error');
     } finally {
@@ -190,9 +278,14 @@ export function ProductDetailScreen({ route, navigation }) {
             </View>
           ) : (
             <AppText variant="headingSemiBold" style={styles.price}>
-              ${Number(product.price ?? 0).toFixed(2)} USD
+              ${Number(wholesalePrice ?? product.price ?? 0).toFixed(2)} USD
             </AppText>
           )}
+          {wholesalePrice ? (
+            <AppText variant="label" style={styles.priceNote}>
+              Precio mayorista
+            </AppText>
+          ) : null}
 
           {product.description ? (
             <AppText variant="bodyRegular" style={styles.description}>
@@ -207,7 +300,7 @@ export function ProductDetailScreen({ route, navigation }) {
                 {colorsAvailable.map((color) => (
                   <Pressable
                     key={color.name}
-                    onPress={() => setSelectedColor(color.name)}
+                    onPress={() => handleSelectColor(color.name)}
                     style={[
                       styles.colorSwatch,
                       { backgroundColor: color.hex || color.name },
@@ -234,7 +327,7 @@ export function ProductDetailScreen({ route, navigation }) {
                     <Pressable
                       key={size}
                       disabled={disabled}
-                      onPress={() => setSelectedSize(size)}
+                      onPress={() => handleSelectSize(size)}
                       style={[
                         styles.sizePill,
                         selectedSize === size && styles.sizePillActive,
@@ -258,17 +351,56 @@ export function ProductDetailScreen({ route, navigation }) {
             </View>
           ) : null}
 
+          <AppText
+            variant="bodySemiBold"
+            style={[styles.stockLabel, selectedStock <= 0 && styles.stockLabelOut]}
+          >
+            {stockLabel}
+          </AppText>
+
+          {selectedStock > 0 ? (
+            <View style={styles.quantityRow}>
+              <AppText variant="label">Cantidad</AppText>
+              <View style={styles.stepper}>
+                <Pressable
+                  style={[styles.stepperButton, quantity <= 1 && styles.stepperButtonDisabled]}
+                  onPress={() => handleChangeQuantity(quantity - 1)}
+                  disabled={quantity <= 1}
+                  hitSlop={8}
+                >
+                  <Minus size={14} color={colors.text} />
+                </Pressable>
+                <AppText variant="bodySemiBold" style={styles.stepperValue}>
+                  {quantity}
+                </AppText>
+                {/* No se deshabilita en el máximo: el toque muestra la alerta del límite */}
+                <Pressable
+                  style={styles.stepperButton}
+                  onPress={() => handleChangeQuantity(quantity + 1)}
+                  hitSlop={8}
+                >
+                  <Plus size={14} color={colors.text} />
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
+
           <View style={styles.addToCartWrapper}>
-            <Button label="Agregar al carrito" loading={isAddingToCart} onPress={handleAddToCart} />
+            <Button
+              label={selectedStock > 0 ? 'Agregar al carrito' : 'Agotado'}
+              loading={isAddingToCart}
+              disabled={selectedStock <= 0}
+              onPress={handleAddToCart}
+            />
           </View>
 
-          <Accordion title="Materiales & Cuidado">
+          <Accordion title="Materiales y cuidado">
             <AppText variant="bodyRegular" style={styles.accordionText}>
               Lavar a mano o en ciclo suave con agua fría. No usar blanqueador. Secar a la sombra
               para conservar el color y la suavidad de la tela.
             </AppText>
           </Accordion>
-          <Accordion title="Envíos & Devoluciones">
+          <Accordion title="Envíos y devoluciones">
             <AppText variant="bodyRegular" style={styles.accordionText}>
               Envíos en 3-5 días hábiles. Puedes devolver el producto dentro de los primeros 30
               días si no ha sido usado.
@@ -448,6 +580,43 @@ function createStyles(colors) {
     },
     sizeLabelDisabled: {
       color: colors.textMuted,
+    },
+    priceNote: {
+      marginTop: 4,
+    },
+    stockLabel: {
+      marginTop: 20,
+      fontSize: 13,
+    },
+    stockLabelOut: {
+      color: colors.error,
+    },
+    quantityRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 16,
+    },
+    stepper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+    },
+    stepperButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepperButtonDisabled: {
+      opacity: 0.35,
+    },
+    stepperValue: {
+      minWidth: 20,
+      textAlign: 'center',
     },
     addToCartWrapper: {
       marginTop: 28,

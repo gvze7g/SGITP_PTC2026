@@ -14,12 +14,22 @@ loginEmployeeController.login = async (req, res) => {
     const userFound = await employeeModel.findOne({ email });
 
     if (!userFound) {
-      return res.status(404).json({ message: "Employee not found" });
+      return res.status(404).json({ message: "No encontramos un empleado con ese correo" });
     }
 
     // Revisar si la cuenta sigue bloqueada por intentos fallidos
     if (userFound.timeOut && userFound.timeOut > Date.now()) {
       return res.status(403).json({ message: "Cuenta bloqueada temporalmente" });
+    }
+
+    // El panel es solo para administradores; los demás empleados no tienen
+    // contraseña (antes bcrypt fallaba con un error 500 en ese caso).
+    if (userFound.role !== "Administrator" || !userFound.password) {
+      return res.status(403).json({ message: "Solo los administradores pueden ingresar al panel" });
+    }
+
+    if (!password || typeof password !== "string") {
+      return res.status(400).json({ message: "La contraseña es obligatoria" });
     }
 
     const isMatch = await bcrypt.compare(password, userFound.password);
@@ -71,7 +81,7 @@ loginEmployeeController.login = async (req, res) => {
     });
   } catch (error) {
     console.log("error: " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

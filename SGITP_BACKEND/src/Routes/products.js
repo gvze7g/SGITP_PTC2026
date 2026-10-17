@@ -1,6 +1,10 @@
 import { Router } from "express";
 import productController from "../Controller/productController.js";
-import { validateAuthCookie, validateEmployeeRole } from "../Middlewares/authMiddleware.js";
+import {
+  attachCustomerType,
+  validateAuthCookie,
+  validateEmployeeRole,
+} from "../Middlewares/authMiddleware.js";
 import upload from "../utils/cloudinaryConfig.js";
 
 const router = Router();
@@ -39,19 +43,28 @@ router.get(
 // confunda con un id de producto.
 router.get(
   "/catalog",
-  productController.getProducts
+  attachCustomerType,
+  productController.getCatalogProducts
+);
+
+// Lista cerrada de categorías (selector del panel y filtros de la tienda).
+router.get(
+  "/catalog/categories",
+  productController.getCategories
 );
 
 // Ofertas activas para la seccion publica "Ofertas" del Home. Va antes de
 // "/catalog/:id" para que Express no confunda "offers" con un id de producto.
 router.get(
   "/catalog/offers",
+  attachCustomerType,
   productController.getOfferProducts
 );
 
 router.get(
   "/catalog/:id",
-  productController.getProductById
+  attachCustomerType,
+  productController.getCatalogProductById
 );
 
 router.get(

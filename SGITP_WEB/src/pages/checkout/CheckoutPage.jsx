@@ -47,7 +47,8 @@ const SHIPPING_OPTIONS = {
   express: {
     label: 'Entrega expres',
     detail: 'Entrega al dia siguiente',
-    price: 25,
+    // Mismo costo que la app movil y que cobra el backend.
+    price: 5.9,
   },
 };
 
@@ -425,7 +426,7 @@ function CheckoutPage() {
                 />
               </label>
               <label className="checkout-field-full">
-                <span>Email</span>
+                <span>Correo electrónico</span>
                 <input
                   type="email"
                   name="email"
@@ -603,15 +604,14 @@ function CheckoutPage() {
 
             {checkoutItems.map((item) => {
               const product = item.productId || {};
-              const variant = product.variants?.[0] || {};
 
               return (
-              <article key={product._id}>
+              <article key={item._id}>
                 <img src={getProductImage(product, 420)} alt={product.name || 'Producto'} />
                 <div>
                   <h3>{product.name || 'Producto'}</h3>
                   <p>
-                    {variant.fabric || product.category || 'Producto'} / {variant.size || 'Sin talla'}
+                    {item.quantity} x {[item.size || 'Sin talla', item.color].filter(Boolean).join(' / ')}
                   </p>
                   <strong>{formatPrice(Number(item.subtotal || 0))}</strong>
                 </div>

@@ -14,7 +14,7 @@ loginCustomerController.login = async (req, res) => {
     const userFound = await customerModel.findOne({ email });
 
     if (!userFound) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "No encontramos una cuenta con ese correo" });
     }
 
     // Si la cuenta está bloqueada por intentos fallidos, no deja entrar
@@ -27,6 +27,10 @@ loginCustomerController.login = async (req, res) => {
       return res.status(400).json({
         message: "Esta cuenta fue creada con Google. Usa 'Continuar con Google' para iniciar sesión.",
       });
+    }
+
+    if (!password || typeof password !== "string") {
+      return res.status(400).json({ message: "La contraseña es obligatoria" });
     }
 
     const isMatch = await bcrypt.compare(password, userFound.password);
@@ -46,6 +50,15 @@ loginCustomerController.login = async (req, res) => {
 
       await userFound.save();
       return res.status(403).json({ message: "Contraseña incorrecta" });
+    }
+
+    // Sin verificar el correo no hay sesión: antes se podía comprar con una
+    // cuenta cuyo correo nunca se confirmó.
+    if (userFound.isVerified === false) {
+      return res.status(403).json({
+        message:
+          "Debes verificar tu correo antes de iniciar sesión. Regístrate de nuevo con este correo para recibir un código nuevo.",
+      });
     }
 
     // Si la contraseña es correcta, limpia intentos y desbloquea
@@ -78,7 +91,7 @@ loginCustomerController.login = async (req, res) => {
     });
   } catch (error) {
     console.log("error: " + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

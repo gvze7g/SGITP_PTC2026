@@ -1,14 +1,40 @@
 import cartModel from "../Model/shopping_cart.js";
+import customerModel from "../Model/customer.js";
 import productsModel from "../Model/products.js";
 import salesModel from "../Model/sales.js";
 import promotionsModel from "../Model/promotions.js";
-import { discountVariantsStock } from "../utils/inventory.js";
-import { isValidPhone } from "../utils/validators.js";
+import {
+  describeVariant,
+  findVariant,
+  getVariantStock,
+  reserveStock,
+  resolveVariant,
+} from "../utils/inventory.js";
+import { WHOLESALE_CUSTOMER_TYPE, getUnitPrice } from "../utils/pricing.js";
+import { isWithinDateRange } from "../utils/dates.js";
+import { isPositiveInteger, isValidObjectId, isValidPhone } from "../utils/validators.js";
 
 //Array de funciones
 const cartController = {};
 
 const CART_STATUS = "Active";
+
+// Un cliente minorista puede llevar como máximo estas unidades de un mismo
+// producto (sumando todas sus tallas/colores). El mayorista no tiene tope:
+// solo lo limita el stock.
+const RETAIL_MAX_UNITS_PER_PRODUCT = 4;
+const MAX_LINE_QUANTITY = 999;
+// Tarifas de envío: el costo lo pone el servidor según el método, no el
+// cliente (antes la web cobraba $25 y la app $5.90 por el mismo envío, y
+// cualquiera podía mandar shipping_cost: 0 en un exprés).
+const EXPRESS_SHIPPING_COST = 5.9;
+const STANDARD_SHIPPING_COST = 0;
+const getShippingCost = (method) =>
+  /expr[eé]s/i.test(String(method)) ? EXPRESS_SHIPPING_COST : STANDARD_SHIPPING_COST;
+
+const RETAIL_LIMIT_MESSAGE = `Alcanzaste el límite de compra de ${RETAIL_MAX_UNITS_PER_PRODUCT} unidades por producto para clientes minoristas`;
+
+const normalize = (value) => String(value ?? "").trim();
 
 // Revisa que el cupón exista, esté activo y dentro de su rango de fechas.
 // Nunca se confía en un porcentaje que mande el cliente: el descuento real
@@ -23,21 +49,93 @@ const findActiveCoupon = async (couponCode) => {
 
   if (!promotion) return null;
 
-  const now = new Date();
-  if (promotion.start_date && now < promotion.start_date) return null;
-  if (promotion.end_date && now > promotion.end_date) return null;
+  // Vale todo el día de inicio y todo el día final (hora de El Salvador).
+  if (!isWithinDateRange(promotion.start_date, promotion.end_date)) return null;
 
   return promotion;
 };
 
+// El tipo de cliente se lee de la base en cada petición (no del token): si un
+// admin lo pasa a mayorista, el cambio aplica sin tener que volver a entrar.
+// Un empleado comprando en la tienda pública paga como minorista.
+const getCustomerType = async (user) => {
+  if (user?.userType !== "Customer") return "Client";
+
+  const customer = await customerModel.findById(user.id).select("customer_type");
+  return customer?.customer_type || "Client";
+};
+
+const isWholesale = (customerType) => customerType === WHOLESALE_CUSTOMER_TYPE;
+
+// "cost" (precio mayorista) no se manda al carrito: cada línea ya trae su
+// unitPrice calculado según el tipo de cliente.
 const populateCart = (query) => {
   return query.populate(
     "products.productId",
-    "name description category images variants price cost"
+    "name description category images variants price offers"
   );
 };
 
-const recalculateCart = async (cart) => {
+const sendCart = async (res, cartId, customerType, status = 200) => {
+  const cart = await populateCart(cartModel.findById(cartId));
+
+  return res.status(status).json({
+    ...cart.toObject(),
+    customer_type: customerType,
+    max_units_per_product: isWholesale(customerType) ? null : RETAIL_MAX_UNITS_PER_PRODUCT,
+  });
+};
+
+const findActiveCart = (customerId) =>
+  cartModel.findOne({ customerId, status: CART_STATUS });
+
+// Las líneas se identifican por su _id (una por variante). Si llega un id de
+// producto (versiones anteriores de la web/app), se usa su primera línea.
+const findLine = (cart, lineOrProductId) =>
+  cart.products.find((item) => item._id?.toString() === lineOrProductId) ||
+  cart.products.find((item) => item.productId?.toString() === lineOrProductId) ||
+  null;
+
+const unitsOfProductInOtherLines = (cart, productId, excludeLineId) =>
+  cart.products
+    .filter(
+      (item) =>
+        item.productId?.toString() === productId.toString() &&
+        item._id?.toString() !== excludeLineId?.toString()
+    )
+    .reduce((total, item) => total + Number(item.quantity || 0), 0);
+
+const stockMessage = (product, variant, available, customerType) => {
+  const label = describeVariant(variant);
+  const name = `"${product.name}"${label ? ` (${label})` : ""}`;
+
+  if (available <= 0) return `${name} está agotado`;
+
+  // Solo el mayorista ve cuántas unidades hay en inventario.
+  return isWholesale(customerType)
+    ? `Solo hay ${available} unidades disponibles de ${name}`
+    : `No hay suficiente stock de ${name} para esa cantidad`;
+};
+
+// Revisa que una línea con "quantity" unidades quepa en el límite minorista
+// y en el stock de su variante. Devuelve el mensaje de error o null.
+const validateLineQuantity = ({ cart, product, variant, lineId, quantity, customerType }) => {
+  if (quantity > MAX_LINE_QUANTITY) {
+    return `No puedes agregar más de ${MAX_LINE_QUANTITY} unidades de un producto`;
+  }
+
+  if (!isWholesale(customerType)) {
+    const otherUnits = unitsOfProductInOtherLines(cart, product._id, lineId);
+    if (otherUnits + quantity > RETAIL_MAX_UNITS_PER_PRODUCT) return RETAIL_LIMIT_MESSAGE;
+  }
+
+  const available = getVariantStock(variant);
+  if (quantity > available) return stockMessage(product, variant, available, customerType);
+
+  return null;
+};
+
+const recalculateCart = async (cart, customerType) => {
   let total = 0;
   const products = [];
 
@@ -46,27 +144,41 @@ const recalculateCart = async (cart) => {
 
     if (!productFound) continue;
 
-    const quantity = Math.max(1, Number(item.quantity || 1));
-    const subtotal = Number(productFound.price || 0) * quantity;
+    const quantity = Math.max(1, Math.floor(Number(item.quantity || 1)));
+
+    // Líneas guardadas antes de que el carrito supiera de variantes: se les
+    // asigna la variante que el checkout les habría descontado.
+    let { size, color } = item;
+    if (size === undefined && color === undefined) {
+      const variant = resolveVariant(productFound, null, null, quantity);
+      size = normalize(variant?.size);
+      color = normalize(variant?.color);
+    }
+
+    const unitPrice = getUnitPrice(productFound, customerType);
+    const subtotal = Number((unitPrice * quantity).toFixed(2));
     total += subtotal;
 
     products.push({
+      _id: item._id,
       productId: productFound._id,
+      size,
+      color,
       quantity,
+      unitPrice,
       subtotal,
     });
   }
 
   cart.products = products;
-  cart.total = total;
+  cart.total = Number(total.toFixed(2));
   return cart;
 };
 
 cartController.getMyCart = async (req, res) => {
   try {
-    let cart = await populateCart(
-      cartModel.findOne({ customerId: req.user.id, status: CART_STATUS })
-    );
+    const customerType = await getCustomerType(req.user);
+    let cart = await findActiveCart(req.user.id);
 
     if (!cart) {
       cart = await cartModel.create({
@@ -75,30 +187,52 @@ cartController.getMyCart = async (req, res) => {
         total: 0,
         status: CART_STATUS,
       });
-
-      cart = await populateCart(cartModel.findById(cart._id));
+    } else {
+      // Los precios pueden haber cambiado (oferta nueva o vencida, cliente
+      // pasado a mayorista): se recalculan cada vez que se abre el carrito.
+      await recalculateCart(cart, customerType);
+      await cart.save();
     }
 
-    return res.status(200).json(cart);
+    return sendCart(res, cart._id, customerType);
   } catch (error) {
     console.log("getMyCart error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
 cartController.addItemToMyCart = async (req, res) => {
   try {
-    const { productId, quantity = 1 } = req.body;
+    const { productId, quantity = 1, size, color } = req.body;
+
+    if (!isValidObjectId(productId)) {
+      return res.status(400).json({ message: "Producto inválido" });
+    }
+
+    if (!isPositiveInteger(quantity)) {
+      return res.status(400).json({ message: "La cantidad debe ser un número entero mayor que 0" });
+    }
+
+    if (normalize(size).length > 40 || normalize(color).length > 40) {
+      return res.status(400).json({ message: "La talla o el color no son válidos" });
+    }
+
     const productFound = await productsModel.findById(productId);
 
     if (!productFound) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({ message: "Producto no encontrado" });
     }
 
-    let cart = await cartModel.findOne({
-      customerId: req.user.id,
-      status: CART_STATUS,
-    });
+    const requestedQuantity = Number(quantity);
+    const variant = resolveVariant(productFound, size, color, requestedQuantity);
+
+    if (!variant) {
+      return res.status(400).json({ message: "Selecciona una talla y un color disponibles" });
+    }
+
+    const customerType = await getCustomerType(req.user);
+
+    let cart = await findActiveCart(req.user.id);
 
     if (!cart) {
       cart = new cartModel({
@@ -110,81 +244,153 @@ cartController.addItemToMyCart = async (req, res) => {
     }
 
     const existingItem = cart.products.find(
-      (item) => item.productId?.toString() === productId
+      (item) =>
+        item.productId?.toString() === productId &&
+        normalize(item.size) === normalize(variant.size) &&
+        normalize(item.color) === normalize(variant.color)
     );
 
-    if (existingItem) {
-      existingItem.quantity = Number(existingItem.quantity || 0) + Number(quantity || 1);
-    } else {
-      cart.products.push({ productId, quantity: Number(quantity || 1), subtotal: 0 });
+    const nextQuantity = Number(existingItem?.quantity || 0) + requestedQuantity;
+    const errorMessage = validateLineQuantity({
+      cart,
+      product: productFound,
+      variant,
+      lineId: existingItem?._id,
+      quantity: nextQuantity,
+      customerType,
+    });
+
+    if (errorMessage) {
+      return res.status(400).json({ message: errorMessage });
     }
 
-    await recalculateCart(cart);
+    if (existingItem) {
+      existingItem.quantity = nextQuantity;
+    } else {
+      cart.products.push({
+        productId,
+        size: normalize(variant.size),
+        color: normalize(variant.color),
+        quantity: nextQuantity,
+        subtotal: 0,
+      });
+    }
+
+    await recalculateCart(cart, customerType);
     await cart.save();
 
-    const populatedCart = await populateCart(cartModel.findById(cart._id));
-    return res.status(200).json(populatedCart);
+    return sendCart(res, cart._id, customerType);
   } catch (error) {
     console.log("addItemToMyCart error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
+// PUT /cart/mine/:itemId — cambia la cantidad de una línea (0 la elimina).
 cartController.updateMyCartItem = async (req, res) => {
   try {
-    const { productId } = req.params;
+    const { itemId } = req.params;
     const { quantity } = req.body;
-    const cart = await cartModel.findOne({
-      customerId: req.user.id,
-      status: CART_STATUS,
-    });
+    const nextQuantity = Number(quantity);
 
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
+    if (!isValidObjectId(itemId)) {
+      return res.status(400).json({ message: "Producto inválido" });
     }
 
-    cart.products = cart.products.filter((item) => {
-      if (item.productId?.toString() !== productId) return true;
+    if (!Number.isInteger(nextQuantity) || nextQuantity < 0) {
+      return res.status(400).json({ message: "La cantidad debe ser un número entero de 0 o más" });
+    }
 
-      item.quantity = Number(quantity || 0);
-      return item.quantity > 0;
-    });
+    const cart = await findActiveCart(req.user.id);
 
-    await recalculateCart(cart);
+    if (!cart) {
+      return res.status(404).json({ message: "Carrito no encontrado" });
+    }
+
+    const line = findLine(cart, itemId);
+
+    if (!line) {
+      return res.status(404).json({ message: "Ese producto ya no está en tu carrito" });
+    }
+
+    const customerType = await getCustomerType(req.user);
+
+    if (nextQuantity === 0) {
+      cart.products.pull(line._id);
+    } else {
+      const productFound = await productsModel.findById(line.productId);
+
+      if (!productFound) {
+        return res.status(400).json({ message: "Este producto ya no existe, elimínalo del carrito" });
+      }
+
+      const variant =
+        line.size === undefined && line.color === undefined
+          ? resolveVariant(productFound, null, null, nextQuantity)
+          : findVariant(productFound, line.size, line.color);
+
+      if (!variant) {
+        return res
+          .status(400)
+          .json({ message: "La talla/color de este producto ya no está disponible, elimínalo del carrito" });
+      }
+
+      const errorMessage = validateLineQuantity({
+        cart,
+        product: productFound,
+        variant,
+        lineId: line._id,
+        quantity: nextQuantity,
+        customerType,
+      });
+
+      if (errorMessage) {
+        return res.status(400).json({ message: errorMessage });
+      }
+
+      line.quantity = nextQuantity;
+    }
+
+    await recalculateCart(cart, customerType);
     await cart.save();
 
-    const populatedCart = await populateCart(cartModel.findById(cart._id));
-    return res.status(200).json(populatedCart);
+    return sendCart(res, cart._id, customerType);
   } catch (error) {
     console.log("updateMyCartItem error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
 cartController.removeMyCartItem = async (req, res) => {
   try {
-    const { productId } = req.params;
-    const cart = await cartModel.findOne({
-      customerId: req.user.id,
-      status: CART_STATUS,
-    });
+    const { itemId } = req.params;
 
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
+    if (!isValidObjectId(itemId)) {
+      return res.status(400).json({ message: "Producto inválido" });
     }
 
-    cart.products = cart.products.filter(
-      (item) => item.productId?.toString() !== productId
-    );
+    const cart = await findActiveCart(req.user.id);
 
-    await recalculateCart(cart);
+    if (!cart) {
+      return res.status(404).json({ message: "Carrito no encontrado" });
+    }
+
+    const line = findLine(cart, itemId);
+
+    if (!line) {
+      return res.status(404).json({ message: "Ese producto ya no está en tu carrito" });
+    }
+
+    cart.products.pull(line._id);
+
+    const customerType = await getCustomerType(req.user);
+    await recalculateCart(cart, customerType);
     await cart.save();
 
-    const populatedCart = await populateCart(cartModel.findById(cart._id));
-    return res.status(200).json(populatedCart);
+    return sendCart(res, cart._id, customerType);
   } catch (error) {
     console.log("removeMyCartItem error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -194,7 +400,6 @@ cartController.checkoutMyCart = async (req, res) => {
       shipping_address,
       shipping_phone,
       shipping_method = "Standard",
-      shipping_cost = 0,
       payment_method = "Card",
       coupon_code,
     } = req.body;
@@ -207,7 +412,7 @@ cartController.checkoutMyCart = async (req, res) => {
     // sin haber pagado.
     const payment_status = "Pending";
 
-    if (!String(shipping_address ?? "").trim() || String(shipping_address).length > 200) {
+    if (!normalize(shipping_address) || String(shipping_address).length > 200) {
       return res.status(400).json({ message: "La dirección de envío es obligatoria" });
     }
 
@@ -217,13 +422,27 @@ cartController.checkoutMyCart = async (req, res) => {
         .json({ message: "El teléfono de contacto debe tener entre 8 y 12 dígitos" });
     }
 
-    const cart = await populateCart(
-      cartModel.findOne({ customerId: req.user.id, status: CART_STATUS })
-    );
+    if (!normalize(shipping_method) || String(shipping_method).length > 50) {
+      return res.status(400).json({ message: "Selecciona un método de envío válido" });
+    }
+
+    const shippingCost = getShippingCost(shipping_method);
+
+    if (!normalize(payment_method) || String(payment_method).length > 100) {
+      return res.status(400).json({ message: "Selecciona un método de pago válido" });
+    }
+
+    if (coupon_code && !/^[A-Za-z0-9]{1,20}$/.test(String(coupon_code).trim())) {
+      return res.status(400).json({ message: "El código de descuento no es válido" });
+    }
+
+    const cart = await findActiveCart(req.user.id);
 
     if (!cart || !cart.products?.length) {
-      return res.status(400).json({ message: "Cart is empty" });
+      return res.status(400).json({ message: "Tu carrito está vacío" });
     }
+
+    const customerType = await getCustomerType(req.user);
 
     // El porcentaje real sale de Promotions, nunca del body: si el cupón no
     // existe, no está activo o ya venció, se ignora en vez de fallar todo el
@@ -231,55 +450,134 @@ cartController.checkoutMyCart = async (req, res) => {
     const coupon = await findActiveCoupon(coupon_code);
     const discountPercentage = coupon ? Number(coupon.discount_percentage || 0) : 0;
 
-    const itemDetails = cart.products.map((item) => {
-      const product = item.productId || {};
-      const variant = product.variants?.[0] || {};
-      const basePrice = Number(product.price || 0);
+    // Se vuelve a validar todo con el inventario actual: entre que se armó
+    // el carrito y se paga, el stock pudo bajar por otras ventas.
+    const itemDetails = [];
+
+    for (const item of cart.products) {
+      const product = await productsModel.findById(item.productId);
+
+      if (!product) {
+        return res
+          .status(400)
+          .json({ message: "Un producto de tu carrito ya no existe, elimínalo para continuar" });
+      }
+
+      const quantity = Number(item.quantity || 0);
+      const variant =
+        item.size === undefined && item.color === undefined
+          ? resolveVariant(product, null, null, quantity)
+          : findVariant(product, item.size, item.color);
+
+      if (!variant) {
+        return res.status(400).json({
+          message: `La talla/color elegida de "${product.name}" ya no está disponible, elimínala del carrito`,
+        });
+      }
+
+      const errorMessage = validateLineQuantity({
+        cart,
+        product,
+        variant,
+        lineId: item._id,
+        quantity,
+        customerType,
+      });
+
+      if (errorMessage) {
+        return res.status(400).json({ message: errorMessage });
+      }
+
+      const basePrice = getUnitPrice(product, customerType);
       const finalPrice = discountPercentage > 0
         ? Number((basePrice * (1 - discountPercentage / 100)).toFixed(2))
         : basePrice;
 
-      return {
+      itemDetails.push({
         product_id: product._id,
         name: product.name,
-        selected_variant: [variant.size, variant.color].filter(Boolean).join(" / "),
-        quantity: item.quantity,
+        selected_variant: describeVariant(variant),
+        variant_size: normalize(variant.size),
+        variant_color: normalize(variant.color),
+        quantity,
         unit_price: finalPrice,
-      };
-    });
+      });
+    }
 
-    const sale = await salesModel.create({
-      sales_date: new Date(),
-      employee_id: req.user.userType === "Employee" ? req.user.id : undefined,
-      cart_id: cart._id,
-      origin: "Web",
-      applied_price_type: "Retail",
-      payment_method,
-      payment_status,
-      shipping_address,
-      shipping_phone,
-      shipping_method,
-      shipping_cost,
-      item_details: itemDetails,
-      coupon_code: coupon ? coupon.coupon_code : undefined,
-      discount_percentage: discountPercentage || undefined,
-    });
+    // Primero se aparta el stock (todo o nada) y luego se crea la venta, así
+    // dos clientes no pueden comprar la misma última unidad.
+    const stock = await reserveStock(itemDetails);
 
-    // El pedido ya quedo registrado; ahora se descuenta el stock vendido
-    // (antes solo lo hacia una venta creada desde el POS).
-    await discountVariantsStock(itemDetails);
+    if (!stock.ok) {
+      return res.status(400).json({ message: stock.message });
+    }
+
+    let sale;
+    try {
+      sale = await salesModel.create({
+        sales_date: new Date(),
+        employee_id: req.user.userType === "Employee" ? req.user.id : undefined,
+        cart_id: cart._id,
+        origin: "Web",
+        applied_price_type: isWholesale(customerType) ? "Wholesale" : "Retail",
+        payment_method: normalize(payment_method),
+        payment_status,
+        shipping_address: normalize(shipping_address),
+        shipping_phone: normalize(shipping_phone),
+        shipping_method: normalize(shipping_method),
+        shipping_cost: shippingCost,
+        item_details: itemDetails,
+        coupon_code: coupon ? coupon.coupon_code : undefined,
+        discount_percentage: discountPercentage || undefined,
+      });
+    } catch (saleError) {
+      await stock.restore();
+      throw saleError;
+    }
 
     cart.status = "Completed";
     await cart.save();
 
     return res.status(201).json({
-      message: "Order created",
+      message: "Pedido realizado",
       sale,
     });
   } catch (error) {
     console.log("checkoutMyCart error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
+};
+
+// ---------- CRUD de administración (solo empleados) ----------
+
+// Calcula subtotales y total de una lista { productId, quantity } enviada por
+// el panel; devuelve null si algún producto o cantidad es inválido.
+const buildAdminCartProducts = async (products) => {
+  if (!Array.isArray(products)) return null;
+
+  let total = 0;
+  const newProducts = [];
+
+  for (const item of products) {
+    if (!isValidObjectId(item?.productId) || !isPositiveInteger(item?.quantity)) return null;
+
+    const productFound = await productsModel.findById(item.productId);
+    if (!productFound) return null;
+
+    const subtotal = Number((Number(productFound.price || 0) * Number(item.quantity)).toFixed(2));
+    total += subtotal;
+
+    newProducts.push({
+      productId: item.productId,
+      size: normalize(item.size),
+      color: normalize(item.color),
+      quantity: Number(item.quantity),
+      unitPrice: Number(productFound.price || 0),
+      subtotal,
+    });
+  }
+
+  return { products: newProducts, total: Number(total.toFixed(2)) };
 };
 
 //SELECT
@@ -293,134 +591,116 @@ cartController.getAllCarts = async (req, res) => {
     return res.status(200).json(carts);
   } catch (error) {
     console.log("error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
 //SELECT by id
 cartController.getCartById = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(404).json({ message: "Carrito no encontrado" });
+    }
+
     const cart = await cartModel
       .findById(req.params.id)
       .populate("customerId", "full_name email")
       .populate("products.productId", "name price images variants description");
 
+    if (!cart) {
+      return res.status(404).json({ message: "Carrito no encontrado" });
+    }
+
     return res.status(200).json(cart);
   } catch (error) {
     console.log("error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
 //INSERT
 cartController.insertCart = async (req, res) => {
   try {
-    //#1- Solicito los datos a ingresar
     const { customerId, products, status } = req.body;
 
-    ///////////CALCULAR EL SUBTOTAL Y EL TOTAL///////
-
-    //Variable para guardar el total a pagar
-    let total = 0;
-
-    //Arreglo de productos
-    let newProducts = [];
-
-    //De todos los productos, voy a recorrer uno por uno
-    //calculando el subtotal y el total a pagar
-    for (let i = 0; i < products.length; i++) {
-      //Buscamos el producto en la base de datos
-      const productFound = await productsModel.findById(products[i].productId);
-
-      //Calcular el subtotal
-      const subtotal = productFound.price * products[i].quantity;
-
-      //Calcular el total
-      total += subtotal;
-
-      //guardamos el producto junto con la cantidad y el subtotal
-      newProducts.push({
-        productId: products[i].productId,
-        quantity: products[i].quantity,
-        subtotal: subtotal,
-      });
+    if (!isValidObjectId(customerId)) {
+      return res.status(400).json({ message: "Cliente inválido" });
     }
 
-    //Guardamos todo en la base de datos
+    const built = await buildAdminCartProducts(products);
+    if (!built) {
+      return res.status(400).json({ message: "Hay productos o cantidades inválidas en el carrito" });
+    }
+
     const newCart = new cartModel({
       customerId,
-      products: newProducts,
-      total,
-      status,
+      products: built.products,
+      total: built.total,
+      status: normalize(status) || CART_STATUS,
     });
 
     await newCart.save();
 
-    return res.status(200).json({ message: "Cart saved" });
+    return res.status(200).json({ message: "Carrito guardado" });
   } catch (error) {
     console.log("error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
 //UPDATE
 cartController.updateCart = async (req, res) => {
   try {
-    //#1- Solicitamos los datos que vamos a actualizar
     const { customerId, products, status } = req.body;
 
-    //////CALCULAR EL SUBTOTAL Y TOTAL
-    let total = 0;
-
-    let newProducts = [];
-
-    for (let i = 0; i < products.length; i++) {
-      //Buscar el producto
-      const productFound = await productsModel.findById(products[i].productId);
-      //Calculamos el subtotal
-      const subtotal = productFound.price * products[i].quantity;
-      //calculamos el total
-      total += subtotal;
-      //Guardamos el producto junto con el subtotal y la cantidad
-      newProducts.push({
-        productId: products[i].productId,
-        quantity: products[i].quantity,
-        subtotal: subtotal,
-      });
+    if (!isValidObjectId(req.params.id) || !isValidObjectId(customerId)) {
+      return res.status(400).json({ message: "Carrito o cliente inválido" });
     }
 
-    //Actualizo en la base de datos
+    const built = await buildAdminCartProducts(products);
+    if (!built) {
+      return res.status(400).json({ message: "Hay productos o cantidades inválidas en el carrito" });
+    }
+
     const updatedCart = await cartModel.findByIdAndUpdate(
       req.params.id,
       {
         customerId,
-        products: newProducts,
-        total,
-        status,
+        products: built.products,
+        total: built.total,
+        status: normalize(status) || CART_STATUS,
       },
       { new: true },
     );
 
-    return res.status(200).json({ message: "Cart updated" });
+    if (!updatedCart) {
+      return res.status(404).json({ message: "Carrito no encontrado" });
+    }
+
+    return res.status(200).json({ message: "Carrito actualizado" });
   } catch (error) {
     console.log("error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
 //ELIMINAR
 cartController.deleteCart = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(404).json({ message: "Carrito no encontrado" });
+    }
+
     const deleteCart = await cartModel.findByIdAndDelete(req.params.id);
 
     if (!deleteCart) {
-      return res.status(404).json({ message: "Cart not found" });
+      return res.status(404).json({ message: "Carrito no encontrado" });
     }
 
-    return res.status(200).json({ message: "Cart deleted" });
+    return res.status(200).json({ message: "Carrito eliminado" });
   } catch (error) {
     console.log("error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

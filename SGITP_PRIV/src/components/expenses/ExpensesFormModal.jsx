@@ -3,6 +3,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
 import DateField from "../ui/DateField";
+import { fromStoredDate, getPastDateError, toDateInputValue, today } from "../../utils/dateRules";
+
+const MIN_EXPENSE_DATE = new Date(2000, 0, 1);
 
 const EXPENSE_TYPE_OPTIONS = [
   { value: "Services", label: "Servicios" },
@@ -50,7 +53,7 @@ function ExpenseFormModal({
             : "",
         expenseType: expenseData.expense_type ?? "Services",
         paymentMethod: expenseData.payment_method ?? "Cash",
-        expenseDate: expenseData.expense_date ? new Date(expenseData.expense_date) : null,
+        expenseDate: fromStoredDate(expenseData.expense_date),
         branchId: expenseData.branch_id?._id ?? expenseData.branch_id ?? "",
       });
     } else {
@@ -77,7 +80,7 @@ function ExpenseFormModal({
       expense_type: formData.expenseType,
       payment_method: formData.paymentMethod,
       expense_date: formData.expenseDate
-        ? formData.expenseDate.toISOString().split("T")[0]
+        ? toDateInputValue(formData.expenseDate)
         : null,
       branch_id: formData.branchId || null,
     };
@@ -98,6 +101,12 @@ function ExpenseFormModal({
 
     if (!formData.expenseDate) {
       toast.error("Selecciona la fecha del gasto.");
+      return false;
+    }
+
+    const dateError = getPastDateError(formData.expenseDate, "fecha del gasto", MIN_EXPENSE_DATE);
+    if (dateError) {
+      toast.error(dateError);
       return false;
     }
 
@@ -195,7 +204,8 @@ function ExpenseFormModal({
                     value={formData.expenseDate}
                     onChange={(date) => handleChange("expenseDate", date)}
                     placeholder="Seleccionar fecha"
-                    maxDate={new Date()}
+                    minDate={MIN_EXPENSE_DATE}
+                    maxDate={today()}
                   />
                 </div>
 

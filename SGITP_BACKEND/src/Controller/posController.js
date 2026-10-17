@@ -11,7 +11,7 @@ posController.getPos = async (req, res) => {
     return res.status(200).json(pos);
   } catch (error) {
     console.log("Error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -25,10 +25,10 @@ posController.insertPos = async (req, res) => {
     const newPos = new posModel({customerId, employee_id, origin, shippingData, phone, sales_id });
     await newPos.save();
 
-    return res.status(201).json({ message: "Pos saved" });
+    return res.status(201).json({ message: "Venta del punto de venta registrada" });
   } catch (error) {
     console.log("Error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -39,13 +39,13 @@ posController.deletePos = async (req, res) => {
 
     //Validación por si no fue borrada la marca
     if (!deletePos) {
-      return res.status(404).json({ message: "pos not found" });
+      return res.status(404).json({ message: "Venta del punto de venta no encontrada" });
     }
 
-    return res.status(200).json({ message: "pos deleted" });
+    return res.status(200).json({ message: "Venta del punto de venta eliminada" });
   } catch (error) {
     console.log("Error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 
@@ -71,13 +71,13 @@ posController.updatePos = async (req, res) => {
 
     //si no se actualiza
     if (!updatedPos) {
-      return res.status(404).json({ mesage: "pos not found" });
+      return res.status(404).json({ message: "Venta del punto de venta no encontrada" });
     }
 
-    return res.status(200).json({ message: "pos updated" });
+    return res.status(200).json({ message: "Venta del punto de venta actualizada" });
   } catch (error) {
     console.log("Error" + error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Ocurrió un error en el servidor, intenta de nuevo" });
   }
 };
 

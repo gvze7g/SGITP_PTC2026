@@ -1,146 +1,260 @@
-import { LogOut, Menu, Moon, ShoppingBag, Sun, UserRound, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Building2,
+  Heart,
+  LogOut,
+  Menu,
+  Moon,
+  Search,
+  ShoppingBag,
+  ShoppingBasket,
+  Sun,
+  UserRound,
+  X,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { getMyCart } from '../../services/cartService';
+import { getMyFavorites } from '../../services/favoriteService';
+import { isWholesaleCustomer } from '../../utils/purchaseRules';
 
 const NAV_ITEMS = [
-  { key: 'categories', label: 'Categorias', path: '/categories' },
-  { key: 'clothes', label: 'Ropa', path: '/clothes' },
-  { key: 'about', label: 'Acerca de nosotros', path: '/about' },
+  { key: 'categories', label: 'Colecciones', path: '/categories' },
+  { key: 'about', label: 'Nosotros', path: '/about' },
   { key: 'stores', label: 'Tiendas', path: '/stores' },
 ];
+
+const EMPTY_COUNTS = { cart: 0, favorites: 0 };
+
+// Cantidad de favoritos y de prendas en el carrito del cliente. Se vuelve a
+// pedir cuando otra parte de la tienda avisa con "store-counts-changed".
+function useStoreCounts(isAuthenticated) {
+  const [counts, setCounts] = useState({ cart: 0, favorites: 0 });
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    let isMounted = true;
+
+    const loadCounts = () => {
+      Promise.all([getMyCart().catch(() => null), getMyFavorites().catch(() => [])]).then(
+        ([cart, favorites]) => {
+          if (!isMounted) return;
+          setCounts({
+            cart: (cart?.products || []).reduce((total, item) => total + Number(item.quantity || 0), 0),
+            favorites: Array.isArray(favorites) ? favorites.length : 0,
+          });
+        }
+      );
+    };
+
+    loadCounts();
+    window.addEventListener('store-counts-changed', loadCounts);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('store-counts-changed', loadCounts);
+    };
+  }, [isAuthenticated]);
+
+  return isAuthenticated ? counts : EMPTY_COUNTS;
+}
+
+function CountBadge({ value }) {
+  if (!value) return null;
+  return <span className="store-count-badge">{value > 9 ? '9+' : value}</span>;
+}
 
 function PublicNavbar({ activeItem = '' }) {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const searchInputRef = useRef(null);
   const { theme, toggleTheme } = useTheme();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const isDark = theme === 'dark';
+  const isWholesale = isWholesaleCustomer(user);
+  const counts = useStoreCounts(isAuthenticated);
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+  useEffect(() => {
+    if (isSearchOpen) searchInputRef.current?.focus();
+  }, [isSearchOpen]);
 
   const handleNavigate = (path) => {
-    closeMenu();
-
-    if (path.includes('#')) {
-      window.location.href = path;
-      return;
-    }
-
+    setIsMenuOpen(false);
     navigate(path);
   };
 
+  const handleSearch = (event) => {
+    event.preventDefault();
+    const query = searchText.trim().slice(0, 60);
+    setIsSearchOpen(false);
+    navigate(query ? `/categories?q=${encodeURIComponent(query)}` : '/categories');
+  };
+
   const handleLogout = async () => {
-    closeMenu();
+    setIsMenuOpen(false);
 
     try {
       await logout();
-      toast.success('Sesion cerrada correctamente.');
+      toast.success('Sesión cerrada correctamente.');
       navigate('/login', { replace: true });
     } catch (error) {
-      toast.error(error.message ?? 'No se pudo cerrar sesion.');
+      toast.error(error.message ?? 'No se pudo cerrar sesión.');
     }
   };
 
   return (
     <>
-      <header className="public-navbar">
-        <div className="public-nav-top">
+      <div className="store-announcement">Ropa para bebés · Visítanos en nuestras tiendas</div>
+
+      <header className="store-header">
+        <div className="store-header-row">
           <button
             type="button"
-            className="public-menu-toggle"
-            aria-label="Abrir menu"
+            className="store-icon-btn store-menu-toggle"
+            aria-label="Abrir menú"
             aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen(true)}
           >
-            <Menu size={18} strokeWidth={1.7} />
+            <Menu size={19} strokeWidth={1.6} />
           </button>
 
-          <button type="button" className="public-logo" onClick={() => navigate('/home')}>
+          <nav className={`store-nav ${isMenuOpen ? 'store-nav-open' : ''}`} aria-label="Navegación principal">
+            <div className="store-drawer-heading">
+              <strong>PEQUES</strong>
+              <button
+                type="button"
+                className="store-icon-btn"
+                aria-label="Cerrar menú"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <X size={19} strokeWidth={1.6} />
+              </button>
+            </div>
+
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                className={`store-nav-link ${activeItem === item.key ? 'store-nav-link-active' : ''}`}
+                onClick={() => handleNavigate(item.path)}
+              >
+                {item.label}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              className="store-nav-link store-nav-mobile-only"
+              onClick={() => handleNavigate('/profile')}
+            >
+              Mi perfil
+            </button>
+            <button
+              type="button"
+              className="store-nav-link store-nav-mobile-only"
+              onClick={() => handleNavigate('/profile#profile-favorites')}
+            >
+              Favoritos {counts.favorites ? `(${counts.favorites})` : ''}
+            </button>
+
+            {isAuthenticated ? (
+              <button type="button" className="store-nav-link store-nav-logout" onClick={handleLogout}>
+                <LogOut size={15} strokeWidth={1.7} /> Cerrar sesión
+              </button>
+            ) : null}
+          </nav>
+
+          <button type="button" className="store-logo" onClick={() => navigate('/home')}>
             PEQUES
           </button>
 
-          <nav
-            className={`public-nav-links ${isMenuOpen ? 'public-nav-links-open' : ''}`}
-            aria-label="Navegacion principal"
-          >
-        <div className="public-drawer-heading">
-          <button
-            type="button"
-            className="public-drawer-close"
-            aria-label="Cerrar menu"
-            onPointerDown={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              closeMenu();
-            }}
-            onMouseDown={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              closeMenu();
-            }}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              closeMenu();
-            }}
-          >
-            <X size={18} strokeWidth={1.7} />
-          </button>
-          <strong>PEQUES</strong>
-        </div>
-
-        <div className="public-nav-links-items">
-          {NAV_ITEMS.map((item) => (
+          <div className="store-actions">
+            {isAuthenticated ? (
+              <span
+                className={`store-customer-type ${isWholesale ? 'store-customer-wholesale' : ''}`}
+                title={
+                  isWholesale
+                    ? 'Cliente mayorista: ves precios mayoristas y el stock disponible'
+                    : 'Cliente minorista: máximo 4 unidades por producto'
+                }
+              >
+                {isWholesale ? (
+                  <Building2 size={13} strokeWidth={1.8} />
+                ) : (
+                  <ShoppingBasket size={13} strokeWidth={1.8} />
+                )}
+                <span>{isWholesale ? 'Mayorista' : 'Minorista'}</span>
+              </span>
+            ) : null}
             <button
-              key={item.key}
               type="button"
-              className={activeItem === item.key ? 'public-nav-link-active' : ''}
-              onClick={() => handleNavigate(item.path)}
+              className="store-icon-btn"
+              aria-label="Buscar"
+              aria-expanded={isSearchOpen}
+              onClick={() => setIsSearchOpen((open) => !open)}
             >
-              {item.label}
+              <Search size={17} strokeWidth={1.6} />
             </button>
-          ))}
-        </div>
-
-        <div className="public-nav-footer">
-          {isAuthenticated ? (
-            <button type="button" className="public-nav-logout" onClick={handleLogout}>
-              <LogOut size={16} strokeWidth={1.8} />
-              Cerrar sesion
-            </button>
-          ) : null}
-        </div>
-          </nav>
-
-          <div className="public-nav-actions">
             <button
               type="button"
-              className="public-theme-toggle"
+              className="store-icon-btn"
               aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
               onClick={toggleTheme}
             >
-              {isDark ? <Sun size={17} strokeWidth={1.7} /> : <Moon size={17} strokeWidth={1.7} />}
+              {isDark ? <Sun size={17} strokeWidth={1.6} /> : <Moon size={17} strokeWidth={1.6} />}
             </button>
-            <button type="button" aria-label="Carrito" onClick={() => navigate('/cart')}>
-              <ShoppingBag size={17} strokeWidth={1.6} />
-            </button>
-            <button type="button" aria-label="Perfil" onClick={() => navigate('/profile')}>
+            <button
+              type="button"
+              className="store-icon-btn store-hide-mobile"
+              aria-label="Mi perfil"
+              onClick={() => navigate('/profile')}
+            >
               <UserRound size={17} strokeWidth={1.6} />
+            </button>
+            <button
+              type="button"
+              className="store-icon-btn store-hide-mobile"
+              aria-label="Favoritos"
+              onClick={() => navigate('/profile#profile-favorites')}
+            >
+              <Heart size={17} strokeWidth={1.6} />
+              <CountBadge value={counts.favorites} />
+            </button>
+            <button type="button" className="store-icon-btn" aria-label="Carrito" onClick={() => navigate('/cart')}>
+              <ShoppingBag size={17} strokeWidth={1.6} />
+              <CountBadge value={counts.cart} />
             </button>
           </div>
         </div>
+
+        {isSearchOpen ? (
+          <form className="store-search" onSubmit={handleSearch} role="search">
+            <Search size={16} strokeWidth={1.6} />
+            <input
+              ref={searchInputRef}
+              type="search"
+              placeholder="Buscar prendas, telas o categorías"
+              value={searchText}
+              maxLength={60}
+              onChange={(event) => setSearchText(event.target.value)}
+            />
+            <button type="submit">Buscar</button>
+          </form>
+        ) : null}
       </header>
 
       <button
         type="button"
-        className={`public-nav-overlay ${isMenuOpen ? 'public-nav-overlay-open' : ''}`}
-        aria-label="Cerrar menu"
-        onClick={closeMenu}
+        className={`store-nav-overlay ${isMenuOpen ? 'store-nav-overlay-open' : ''}`}
+        aria-label="Cerrar menú"
+        tabIndex={isMenuOpen ? 0 : -1}
+        onClick={() => setIsMenuOpen(false)}
       />
     </>
   );

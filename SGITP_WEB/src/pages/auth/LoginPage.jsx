@@ -9,7 +9,7 @@ import PequesBrandPanel from '../../components/auth/PequesBrandPanel';
 import SocialAuthButtons from '../../components/auth/SocialAuthButtons';
 import ThemeToggle from '../../components/auth/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
-import { loginWebUser } from '../../services/customerAuthService';
+import { loginCustomer } from '../../services/customerAuthService';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await loginWebUser({
+      await loginCustomer({
         email: formData.email.trim(),
         password: formData.password,
       });
@@ -99,10 +99,10 @@ function LoginPage() {
 
           <form onSubmit={handleSubmit} noValidate className="auth-form auth-login-form">
             <AuthInput
-              label="Email"
+              label="Correo electrónico"
               name="email"
               type="email"
-              placeholder="email@example.com"
+              placeholder="correo@ejemplo.com"
               value={formData.email}
               onChange={handleChange}
               autoComplete="email"

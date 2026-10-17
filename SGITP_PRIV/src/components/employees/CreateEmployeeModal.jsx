@@ -4,6 +4,15 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import CustomDropdown from "../ui/CustomDropdown";
 import DateField from "../ui/DateField";
+import {
+  MAX_EMPLOYEE_AGE,
+  MIN_EMPLOYEE_AGE,
+  addYears,
+  fromStoredDate,
+  getEmployeeDatesError,
+  toDateInputValue,
+  today,
+} from "../../utils/dateRules";
 import useBranches from "../../hooks/branches/UseBranches";
 
 const EMPLOYEE_ROLE_OPTIONS = [
@@ -69,8 +78,8 @@ function CreateEmployeeModal({
           employeeData.base_salary !== undefined && employeeData.base_salary !== null
             ? String(employeeData.base_salary)
             : "",
-        hireDate: employeeData.hire_date ? new Date(employeeData.hire_date) : null,
-        birthDate: employeeData.birth_date ? new Date(employeeData.birth_date) : null,
+        hireDate: fromStoredDate(employeeData.hire_date),
+        birthDate: fromStoredDate(employeeData.birth_date),
         temporaryPassword: "",
       });
     } else {
@@ -227,6 +236,12 @@ function CreateEmployeeModal({
       return false;
     }
 
+    const datesError = getEmployeeDatesError(formData.birthDate, formData.hireDate);
+    if (datesError) {
+      toast.error(datesError);
+      return false;
+    }
+
     return true;
   };
 
@@ -246,10 +261,10 @@ function CreateEmployeeModal({
           ]
         : [],
       birth_date: formData.birthDate
-        ? formData.birthDate.toISOString().split("T")[0]
+        ? toDateInputValue(formData.birthDate)
         : null,
       hire_date: formData.hireDate
-        ? formData.hireDate.toISOString().split("T")[0]
+        ? toDateInputValue(formData.hireDate)
         : null,
       role: formData.role,
       branch_id: formData.branch || null,
@@ -369,7 +384,13 @@ function CreateEmployeeModal({
                       value={formData.hireDate}
                       onChange={(date) => handleChange("hireDate", date)}
                       placeholder="Seleccionar fecha"
-                      maxDate={new Date()}
+                      // Puede ser antigua, pero no futura ni antes de que cumpliera 18
+                      minDate={
+                        formData.birthDate
+                          ? addYears(formData.birthDate, MIN_EMPLOYEE_AGE)
+                          : addYears(today(), -(MAX_EMPLOYEE_AGE - MIN_EMPLOYEE_AGE))
+                      }
+                      maxDate={today()}
                     />
 
                     <DateField
@@ -377,7 +398,9 @@ function CreateEmployeeModal({
                       value={formData.birthDate}
                       onChange={(date) => handleChange("birthDate", date)}
                       placeholder="Seleccionar fecha"
-                      maxDate={new Date()}
+                      // Solo mayores de edad
+                      minDate={addYears(today(), -MAX_EMPLOYEE_AGE)}
+                      maxDate={addYears(today(), -MIN_EMPLOYEE_AGE)}
                     />
                   </div>
                 </div>

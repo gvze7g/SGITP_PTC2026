@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import DateField from "../ui/DateField";
+import { fromStoredDate, getPastDateError, toDateInputValue, today } from "../../utils/dateRules";
+
+const MIN_PAYMENT_DATE = new Date(2000, 0, 1);
 
 const EMPTY_PAYROLL = {
   employeeName: "",
@@ -24,9 +27,7 @@ function PayrollReceiptModal({ open, onClose, payrollData = null, onSubmit, load
         employeeName: payrollData.employeeName ?? "",
         role: payrollData.role ?? "",
         branch: payrollData.branch ?? "",
-        paymentDate: payrollData.paymentDateLong
-          ? new Date(payrollData.paymentDateLong)
-          : null,
+        paymentDate: fromStoredDate(payrollData.paymentDateLong),
         baseSalaryValue: payrollData.baseSalaryValue ?? "0.00",
         bonusesValue: payrollData.bonusesValue ?? "0.00",
         deductionsValue: payrollData.deductionsValue ?? "0.00",
@@ -51,8 +52,15 @@ function PayrollReceiptModal({ open, onClose, payrollData = null, onSubmit, load
       return;
     }
 
+    // Se registra un pago ya hecho: no puede ser una fecha futura.
+    const dateError = getPastDateError(formData.paymentDate, "fecha de pago", MIN_PAYMENT_DATE);
+    if (dateError) {
+      toast.error(dateError);
+      return;
+    }
+
     await onSubmit?.({
-      payment_date: formData.paymentDate.toISOString().split("T")[0],
+      payment_date: toDateInputValue(formData.paymentDate),
       bonuses: Number(formData.bonusesValue || 0),
       deductions: Number(formData.deductionsValue || 0),
       status: "Pagado",
@@ -94,6 +102,8 @@ function PayrollReceiptModal({ open, onClose, payrollData = null, onSubmit, load
                     setFormData((prev) => ({ ...prev, paymentDate: date }))
                   }
                   placeholder="Seleccionar fecha"
+                  minDate={MIN_PAYMENT_DATE}
+                  maxDate={today()}
                 />
 
                 <div className="payroll-summary-row-block">

@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Menu, ShoppingBag } from 'lucide-react-native';
+import { Building2, Menu, ShoppingBag, ShoppingBasket } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../hooks/useCart';
+import { isWholesaleCustomer } from '../utils/purchaseRules';
 import { AppText } from './AppText';
 import { HamburgerMenu } from './HamburgerMenu';
 
@@ -18,6 +20,9 @@ export function StoreHeader() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation();
   const { itemCount } = useCart();
+  const { user } = useAuth();
+  const isWholesale = isWholesaleCustomer(user);
+  const CustomerIcon = isWholesale ? Building2 : ShoppingBasket;
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
@@ -28,16 +33,30 @@ export function StoreHeader() {
       <AppText variant="wordmark" style={styles.wordmark}>
         PEQUES
       </AppText>
-      <Pressable hitSlop={12} onPress={() => navigation.navigate('Cart')} style={styles.cartIcon}>
-        <ShoppingBag size={22} color={colors.text} />
-        {itemCount > 0 ? (
-          <View style={styles.badge}>
-            <AppText variant="bodyBold" style={styles.badgeLabel}>
-              {itemCount > 9 ? '9+' : itemCount}
+      <View style={styles.rightGroup}>
+        {/* Tipo de cliente: el mayorista ve su precio y el stock; el minorista tiene tope de 4 por producto */}
+        {user ? (
+          <View style={[styles.customerType, isWholesale && styles.customerTypeWholesale]}>
+            <CustomerIcon size={12} color={isWholesale ? colors.error : colors.textMuted} />
+            <AppText
+              variant="bodyBold"
+              style={[styles.customerTypeLabel, isWholesale && styles.customerTypeLabelWholesale]}
+            >
+              {isWholesale ? 'Mayorista' : 'Minorista'}
             </AppText>
           </View>
         ) : null}
-      </Pressable>
+        <Pressable hitSlop={12} onPress={() => navigation.navigate('Cart')} style={styles.cartIcon}>
+          <ShoppingBag size={22} color={colors.text} />
+          {itemCount > 0 ? (
+            <View style={styles.badge}>
+              <AppText variant="bodyBold" style={styles.badgeLabel}>
+                {itemCount > 9 ? '9+' : itemCount}
+              </AppText>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
 
       <HamburgerMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
     </View>
@@ -61,6 +80,33 @@ function createStyles(colors) {
     wordmark: {
       fontSize: 16,
       letterSpacing: 4,
+    },
+    rightGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+    },
+    customerType: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+    },
+    customerTypeWholesale: {
+      borderColor: colors.error,
+    },
+    customerTypeLabel: {
+      fontSize: 10,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: colors.textMuted,
+    },
+    customerTypeLabelWholesale: {
+      color: colors.error,
     },
     cartIcon: {
       position: 'relative',
