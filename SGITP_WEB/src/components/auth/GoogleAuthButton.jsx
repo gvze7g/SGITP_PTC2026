@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useTheme } from '../../context/ThemeContext';
 import { loginWithGoogle } from '../../services/customerAuthService';
 import { GoogleGlyph } from './socialIcons';
 
@@ -52,6 +53,9 @@ function loadGoogleScript() {
 function GoogleAuthButton({ onSuccess, text = 'continue_with', variant = 'standard' }) {
   const containerRef = useRef(null);
   const [status, setStatus] = useState(GOOGLE_CLIENT_ID ? 'loading' : 'unconfigured');
+  const { theme } = useTheme();
+  // En modo oscuro Google ofrece su variante negra del botón.
+  const googleTheme = theme === 'dark' ? 'filled_black' : 'outline';
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) {
@@ -93,7 +97,7 @@ function GoogleAuthButton({ onSuccess, text = 'continue_with', variant = 'standa
         if (variant === 'circle') {
           google.accounts.id.renderButton(containerRef.current, {
             type: 'icon',
-            theme: 'outline',
+            theme: googleTheme,
             size: 'large',
             shape: 'circle',
           });
@@ -105,7 +109,7 @@ function GoogleAuthButton({ onSuccess, text = 'continue_with', variant = 'standa
 
           google.accounts.id.renderButton(containerRef.current, {
             type: 'standard',
-            theme: 'outline',
+            theme: googleTheme,
             size: 'large',
             text,
             shape: 'rectangular',
@@ -126,7 +130,7 @@ function GoogleAuthButton({ onSuccess, text = 'continue_with', variant = 'standa
     return () => {
       cancelled = true;
     };
-  }, [onSuccess, text, variant]);
+  }, [onSuccess, text, variant, googleTheme]);
 
   const isCircle = variant === 'circle';
 

@@ -409,6 +409,13 @@ button {
   min-height: 42px;
 }
 
+/* El iframe de Google no declara modo oscuro: si hereda color-scheme: dark
+   el navegador le pinta un fondo blanco opaco (el cuadrado blanco). */
+.google-auth-btn-wrapper iframe,
+.google-auth-circle-wrapper iframe {
+  color-scheme: light;
+}
+
 .auth-social-btn {
   display: flex;
   align-items: center;
@@ -4719,8 +4726,10 @@ body.theme-dark .home-store-map iframe {
   flex-direction: column;
   gap: 22px;
   max-height: calc(100vh - 130px);
+  padding-right: 16px;
   overflow-y: auto;
   scrollbar-width: thin;
+  scrollbar-gutter: stable;
 }
 
 .collection-filters-heading {
