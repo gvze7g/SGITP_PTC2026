@@ -300,7 +300,20 @@ CLOUDINARY_API_SECRET=
 
 EMAIL_USER=
 EMAIL_PASSWORD=
+
+# Opcional: credenciales del administrador inicial
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
 ```
+
+## Administrador inicial
+
+La primera vez que el backend se conecta a una base de datos sin ningún administrador, crea uno automáticamente para entrar al panel privado:
+
+* Correo: `admin@peques.com` (o el valor de `ADMIN_EMAIL`)
+* Contraseña: `Admin123!` (o el valor de `ADMIN_PASSWORD`)
+
+Si ya existe un administrador, no se crea nada. Se recomienda cambiar la contraseña después del primer ingreso.
 
 ---
 

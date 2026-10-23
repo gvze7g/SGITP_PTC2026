@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import dns from "node:dns";
 import { config } from "./src/config.js";
+import { seedAdmin } from "./src/utils/seedAdmin.js";
 
 if (config.db.dnsServers?.length) {
   dns.setServers(config.db.dnsServers);
@@ -30,6 +31,9 @@ const connection = mongoose.connection;
 connection.on("connected", () => {
   console.log("DB is connected");
 });
+
+// La primera conexión crea el administrador si la base aún no tiene uno.
+connection.once("connected", seedAdmin);
 
 connection.on("disconnected", () => {
   console.log("DB is disconnected");

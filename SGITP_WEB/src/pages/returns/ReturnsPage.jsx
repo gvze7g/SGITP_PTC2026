@@ -103,8 +103,8 @@ function ReturnsPage() {
 
         <section className="returns-contact">
           <img
-            src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1500&q=90"
-            alt="Atelier con prendas en tonos neutros"
+            src="https://images.unsplash.com/photo-1522771930-78848d9293e8?auto=format&fit=crop&w=1500&q=85"
+            alt="Habitacion infantil con prendas en tonos neutros"
           />
           <div className="returns-contact-card">
             <h2>Alguna consulta adicional?</h2>
